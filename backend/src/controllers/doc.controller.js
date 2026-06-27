@@ -1,11 +1,6 @@
 import DocModel from '../models/doc.model.js';
 import ChatModel from '../models/chat.model.js';
-import {
-  savePdfToGridFs,
-  deletePdfFromGridFs,
-} from '../services/storage/gridfs.service.js';
-import { answerDocumentQuestion } from '../services/qa.service.js';
-import { enqueueDocumentProcessing } from '../jobs/document.job.js';
+
 
 async function uploadDoc(req, res) {
   try {

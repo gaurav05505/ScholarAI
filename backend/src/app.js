@@ -3,6 +3,7 @@ import cors from 'cors';
 import cookieparser from 'cookie-parser'
 import authRoute from '../src/routes/auth.route.js'
 import docRoute from '../src/routes/doc.route.js'
+import chatRoutes from '../src/routes/chat.route.js'
 
 
 const app = express(); 
@@ -13,6 +14,8 @@ app.use(express.json());
 
 app.use('/auth' ,  authRoute);
 app.use('/docs', docRoute); 
+
+app.use("/api/chat", chatRoutes);
 
 app.get('/' , (req, res) => {
     res.send('server is running'); 
