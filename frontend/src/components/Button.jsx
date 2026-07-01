@@ -13,13 +13,13 @@ const Button = ({
       onClick={onClick}
       className={`
         w-full
-        h-14
+        h-11
         flex
         items-center
         gap-3
         px-4
         rounded-2xl
-        text-[16px]
+        text-[14px]
         text-[#1E1E1E]
         transition-all
         duration-200
@@ -35,7 +35,7 @@ const Button = ({
       `}
     >
       {showIcon && Icon && (
-        <Icon size={20} className="text-[#1E1E1E] shrink-0" />
+        <Icon size={18} className="text-[#1E1E1E] shrink-0" />
       )}
 
       <span>{text}</span>
