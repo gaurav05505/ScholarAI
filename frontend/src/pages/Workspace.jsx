@@ -1,13 +1,139 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback, memo } from 'react';
+import axios from 'axios';
 import {
   ArrowUpRight, AudioLines, Bolt, Clock3, Eclipse, FolderGit2, Map,
   MessageCircle, MessageSquareDot, MessagesSquare, StepBack, Trash2, UserRound,
   Menu, X, PanelLeftClose, PanelLeftOpen, FileText, ListChecks,
 } from 'lucide-react';
 
+const API_URL = 'http://localhost:5000/api/chat';
+
+/* ---------- markdown rendering ---------- */
+/*
+ * Lightweight markdown -> React renderer. Handles the subset of markdown that
+ * AI responses actually use: **bold**, *italic*, ***bold italic***, `inline code`,
+ * fenced ```code blocks```, bullet/numbered lists, links, and paragraphs.
+ * No external dependency needed for this scope, which keeps the bundle light
+ * and avoids a render pass through a full markdown engine for short chat turns.
+ */
+
+const INLINE_PATTERN = /(\*\*\*([^*]+?)\*\*\*)|(\*\*([^*]+?)\*\*)|(\*([^*]+?)\*)|(`([^`]+?)`)|(\[([^\]]+?)\]\(([^)]+?)\))/g;
+
+function renderInline(text, keyBase) {
+  const nodes = [];
+  let lastIndex = 0;
+  let match;
+  let i = 0;
+  INLINE_PATTERN.lastIndex = 0;
+
+  while ((match = INLINE_PATTERN.exec(text)) !== null) {
+    if (match.index > lastIndex) nodes.push(text.slice(lastIndex, match.index));
+    const key = `${keyBase}-${i++}`;
+
+    if (match[2] !== undefined) {
+      nodes.push(<strong key={key} className="font-semibold"><em>{match[2]}</em></strong>);
+    } else if (match[4] !== undefined) {
+      nodes.push(<strong key={key} className="font-semibold">{match[4]}</strong>);
+    } else if (match[6] !== undefined) {
+      nodes.push(<em key={key}>{match[6]}</em>);
+    } else if (match[8] !== undefined) {
+      nodes.push(
+        <code key={key} className="rounded-md bg-black/[0.06] px-1.5 py-0.5 text-[0.9em] font-mono">
+          {match[8]}
+        </code>
+      );
+    } else if (match[10] !== undefined) {
+      nodes.push(
+        <a
+          key={key}
+          href={match[11]}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline decoration-black/30 underline-offset-2 hover:decoration-black/60"
+        >
+          {match[10]}
+        </a>
+      );
+    }
+
+    lastIndex = INLINE_PATTERN.lastIndex;
+  }
+
+  if (lastIndex < text.length) nodes.push(text.slice(lastIndex));
+  return nodes;
+}
+
+function renderMarkdown(raw) {
+  if (!raw) return null;
+
+  // Split out fenced code blocks first so their contents are never touched
+  // by inline/list parsing.
+  const segments = raw.split(/```/);
+  const blocks = [];
+
+  segments.forEach((segment, segIdx) => {
+    const isCode = segIdx % 2 === 1;
+
+    if (isCode) {
+      const lines = segment.split('\n');
+      const firstLineIsLang = lines[0] && /^[a-zA-Z0-9_+-]*$/.test(lines[0].trim()) && lines.length > 1;
+      const code = (firstLineIsLang ? lines.slice(1) : lines).join('\n').replace(/^\n/, '').replace(/\n$/, '');
+      blocks.push(
+        <pre
+          key={`code-${segIdx}`}
+          className="my-2 overflow-x-auto rounded-xl bg-[#1E1E1E] px-4 py-3 text-[13px] leading-relaxed text-[#E8F5C8]"
+        >
+          <code className="font-mono">{code}</code>
+        </pre>
+      );
+      return;
+    }
+
+    const paragraphs = segment.split(/\n{2,}/).filter((p) => p.trim() !== '');
+
+    paragraphs.forEach((para, pIdx) => {
+      const lines = para.split('\n').filter((l) => l.trim() !== '');
+      const isBulletList = lines.length > 0 && lines.every((l) => /^\s*[-*]\s+/.test(l));
+      const isNumberedList = lines.length > 0 && lines.every((l) => /^\s*\d+[.)]\s+/.test(l));
+      const key = `p-${segIdx}-${pIdx}`;
+
+      if (isBulletList) {
+        blocks.push(
+          <ul key={key} className="my-1.5 list-disc space-y-1 pl-5">
+            {lines.map((line, lIdx) => (
+              <li key={`${key}-${lIdx}`}>{renderInline(line.replace(/^\s*[-*]\s+/, ''), `${key}-${lIdx}`)}</li>
+            ))}
+          </ul>
+        );
+      } else if (isNumberedList) {
+        blocks.push(
+          <ol key={key} className="my-1.5 list-decimal space-y-1 pl-5">
+            {lines.map((line, lIdx) => (
+              <li key={`${key}-${lIdx}`}>{renderInline(line.replace(/^\s*\d+[.)]\s+/, ''), `${key}-${lIdx}`)}</li>
+            ))}
+          </ol>
+        );
+      } else {
+        blocks.push(
+          <p key={key} className={pIdx > 0 || segIdx > 0 ? 'mt-2' : ''}>
+            {lines.map((line, lIdx) => (
+              <React.Fragment key={`${key}-${lIdx}`}>
+                {lIdx > 0 && <br />}
+                {renderInline(line, `${key}-${lIdx}`)}
+              </React.Fragment>
+            ))}
+          </p>
+        );
+      }
+    });
+  });
+
+  return blocks;
+}
+
 /* ---------- small building blocks ---------- */
 
-const NavButton = ({ text, icon: Icon, collapsed, active, onClick }) => (
+const NavButton = memo(({ text, icon: Icon, collapsed, active, onClick }) => (
   <button
     type="button"
     onClick={onClick}
@@ -19,7 +145,7 @@ const NavButton = ({ text, icon: Icon, collapsed, active, onClick }) => (
     <Icon size={18} className="shrink-0" />
     {!collapsed && <span className="truncate">{text}</span>}
   </button>
-);
+));
 
 const TABS = [
   { key: 'source', label: 'Source', icon: FileText },
@@ -35,7 +161,7 @@ const VIEWS = ['source', 'chats', 'roadmap', 'questions', 'allChats', 'allRoadma
 
 /* ---------- panel content for non-chat tabs ---------- */
 
-const InfoPanel = ({ title, body }) => (
+const InfoPanel = memo(({ title, body }) => (
   <div className="flex h-full flex-col items-center justify-center text-center px-6">
     <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full border-[4px] border-[#1E1E1E]/70">
       <div className="h-8 w-8 rounded-[48%_48%_42%_42%/58%_58%_40%_40%] border-[4px] border-[#1E1E1E]/70 border-b-transparent border-l-transparent border-r-transparent" />
@@ -43,9 +169,9 @@ const InfoPanel = ({ title, body }) => (
     <h2 className="text-[22px] font-medium text-[#1E1E1E]">{title}</h2>
     <p className="mt-2 max-w-sm text-[14px] text-black/45">{body}</p>
   </div>
-);
+));
 
-const ListPanel = ({ title, items, onOpen, emptyLabel }) => (
+const ListPanel = memo(({ title, items, onOpen, emptyLabel }) => (
   <div className="flex h-full flex-col">
     <h2 className="text-[20px] sm:text-[22px] font-medium text-[#1E1E1E] mb-4 sm:mb-6 px-1">{title}</h2>
     {items.length === 0 ? (
@@ -58,7 +184,7 @@ const ListPanel = ({ title, items, onOpen, emptyLabel }) => (
               key={item.id}
               type="button"
               onClick={() => onOpen(item.id)}
-              className="text-left rounded-2xl bg-white px-4 py-3.5 hover:bg-white/80 transition-colors"
+              className="text-left rounded-2xl bg-white px-4 py-3.5 transition-colors hover:bg-white/80"
             >
               <p className="text-[15px] font-medium text-[#1E1E1E] truncate">{item.title}</p>
               {'messages' in item && (
@@ -72,33 +198,87 @@ const ListPanel = ({ title, items, onOpen, emptyLabel }) => (
       </div>
     )}
   </div>
-);
+));
 
 /* ---------- chat panel ---------- */
 
-const ChatPanel = ({ chat, onSend }) => {
+// Three-dot "thinking" indicator, staggered so it reads as active work rather
+// than a stuck loader.
+const ThinkingIndicator = memo(() => (
+  <div className="flex items-center gap-1.5 px-1 py-1.5" aria-label="AI is thinking">
+    <span className="thinking-dot" style={{ animationDelay: '0ms' }} />
+    <span className="thinking-dot" style={{ animationDelay: '140ms' }} />
+    <span className="thinking-dot" style={{ animationDelay: '280ms' }} />
+  </div>
+));
+
+const MessageBubble = memo(({ message }) => {
+  const isUser = message.role === 'user';
+  const isThinking = !isUser && message.typing && message.text === 'Thinking...';
+  const content = useMemo(() => (isThinking ? null : renderMarkdown(message.text)), [message.text, isThinking]);
+
+  return (
+    <div className={`msg-in flex items-end gap-2 ${isUser ? 'justify-end' : 'justify-start'}`}>
+      {!isUser && (
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#A8F35A] text-[11px] font-medium text-[#1E1E1E]">
+          AI
+        </div>
+      )}
+
+      <div
+        className={`max-w-[80%] sm:max-w-[75%] rounded-2xl px-4 py-2.5 text-[14px] leading-relaxed shadow-[0_1px_2px_rgba(0,0,0,0.04)]
+          ${isUser ? 'bg-[#1E1E1E] text-white rounded-br-sm' : 'bg-white text-[#1E1E1E] rounded-bl-sm'}`}
+      >
+        {isThinking ? (
+          <ThinkingIndicator />
+        ) : (
+          <>
+            {content}
+            {message.typing && <span className="typing-caret" aria-hidden="true" />}
+          </>
+        )}
+      </div>
+
+      {isUser && (
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-black/10 text-[11px] font-medium text-[#1E1E1E]">
+          <UserRound size={14} />
+        </div>
+      )}
+    </div>
+  );
+});
+
+const ChatPanel = ({ chat, onSend, sending = false }) => {
   const [value, setValue] = useState('');
   const scrollRef = useRef(null);
+  const inputRef = useRef(null);
+
+  const lastMessage = chat?.messages?.[chat.messages.length - 1];
+  const scrollSignature = chat ? `${chat.id}:${chat.messages.length}:${lastMessage?.text?.length ?? 0}` : '';
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [chat?.messages?.length]);
+  }, [scrollSignature]);
 
-  const submit = () => {
+  const submit = useCallback(async () => {
     const text = value.trim();
-    if (!text) return;
-    onSend(text);
+    if (!text || sending) return;
     setValue('');
-  };
+    await onSend(text);
+    inputRef.current?.focus();
+  }, [value, sending, onSend]);
 
-  const handleKey = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      submit();
-    }
-  };
+  const handleKey = useCallback(
+    (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        submit();
+      }
+    },
+    [submit]
+  );
 
   const hasMessages = chat && chat.messages.length > 0;
 
@@ -107,36 +287,9 @@ const ChatPanel = ({ chat, onSend }) => {
       {hasMessages ? (
         <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto px-2 sm:px-4">
           <div className="flex flex-col gap-4 py-4">
-            {chat.messages.map((m) => {
-              const isUser = m.role === 'user';
-              return (
-                <div
-                  key={m.id}
-                  className={`flex items-end gap-2 ${isUser ? 'justify-end' : 'justify-start'}`}
-                >
-                  {!isUser && (
-                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#A8F35A] text-[11px] font-medium text-[#1E1E1E]">
-                      AI
-                    </div>
-                  )}
-
-                  <div
-                    className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-[14px] leading-relaxed
-                      ${isUser
-                        ? 'bg-[#1E1E1E] text-white rounded-br-sm'
-                        : 'bg-white text-[#1E1E1E] rounded-bl-sm'}`}
-                  >
-                    {m.text}
-                  </div>
-
-                  {isUser && (
-                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-black/10 text-[11px] font-medium text-[#1E1E1E]">
-                      <UserRound size={14} />
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+            {chat.messages.map((m) => (
+              <MessageBubble key={m.id} message={m} />
+            ))}
           </div>
         </div>
       ) : (
@@ -152,14 +305,15 @@ const ChatPanel = ({ chat, onSend }) => {
       )}
 
       <div className="mt-auto flex items-center gap-3 px-1 sm:px-4 pb-1">
-        <div className="flex h-14 flex-1 items-center gap-3 rounded-2xl border border-black/10 bg-white px-4">
+        <div className="flex h-14 flex-1 items-center gap-3 rounded-2xl border border-black/10 bg-white px-4 transition-shadow focus-within:border-black/20 focus-within:shadow-[0_0_0_3px_rgba(168,243,90,0.35)]">
           <AudioLines size={18} className="shrink-0 text-[#1E1E1E]/70" />
           <input
+            ref={inputRef}
             type="text"
             value={value}
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={handleKey}
-            placeholder="Start typing..."
+            placeholder={sending ? 'Waiting for a response...' : 'Start typing...'}
             className="w-full bg-transparent text-[14px] text-[#1E1E1E] outline-none placeholder:text-black/35"
           />
         </div>
@@ -167,7 +321,8 @@ const ChatPanel = ({ chat, onSend }) => {
         <button
           type="button"
           onClick={submit}
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#A8F35A] text-[#1E1E1E] transition-transform active:scale-[0.95]"
+          disabled={sending || !value.trim()}
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#A8F35A] text-[#1E1E1E] transition-all active:scale-[0.95] disabled:cursor-not-allowed disabled:opacity-40"
           aria-label="Send"
         >
           <ArrowUpRight size={20} />
@@ -206,61 +361,133 @@ const Workspace = () => {
   // roadmaps history (independent, not synced with chats)
   const [roadmaps, setRoadmaps] = useState(initialRoadmaps);
   const [activeRoadmapId, setActiveRoadmapId] = useState(initialRoadmaps[0].id);
+  const [sending, setSending] = useState(false);
 
   const activeChat = chats.find((c) => c.id === activeChatId);
   const activeRoadmap = roadmaps.find((r) => r.id === activeRoadmapId);
   const activeIndex = VIEWS.indexOf(activeTab);
 
-  const handleNewChat = () => {
+  const handleNewChat = useCallback(() => {
     const chat = { id: nextId(), title: 'New Chat', messages: [] };
     setChats((prev) => [chat, ...prev]);
     setActiveChatId(chat.id);
     setActiveTab('chats');
     setMobileOpen(false);
-  };
+  }, []);
 
-  const handleChatHistoryClick = (id) => {
+  const handleChatHistoryClick = useCallback((id) => {
     setActiveChatId(id);
     setActiveTab('chats');
     setMobileOpen(false);
-  };
+  }, []);
 
-  const handleRoadmapHistoryClick = (id) => {
+  const handleRoadmapHistoryClick = useCallback((id) => {
     setActiveRoadmapId(id);
     setActiveTab('roadmap');
     setMobileOpen(false);
-  };
+  }, []);
 
   // opening an item from the "All Chats" / "All Roadmaps" list views jumps
   // into the single chat/roadmap view, same as clicking a history item
-  const openChatFromList = (id) => handleChatHistoryClick(id);
-  const openRoadmapFromList = (id) => handleRoadmapHistoryClick(id);
+  const openChatFromList = handleChatHistoryClick;
+  const openRoadmapFromList = handleRoadmapHistoryClick;
 
-  const handleDeleteChat = (id) => {
+  const handleDeleteChat = useCallback((id) => {
     setChats((prev) => {
       const nextChats = prev.filter((chat) => chat.id !== id);
-      if (activeChatId === id && nextChats.length > 0) {
-        setActiveChatId(nextChats[0].id);
+      if (nextChats.length > 0) {
+        setActiveChatId((current) => (current === id ? nextChats[0].id : current));
       }
       return nextChats;
     });
-  };
+  }, []);
 
-  const handleSend = (text) => {
+  const updateTypingMessage = useCallback((chatId, typingId, text, typing) => {
     setChats((prev) =>
-      prev.map((c) => {
-        if (c.id !== activeChatId) return c;
-        const userMsg = { id: nextId(), role: 'user', text };
-        const aiMsg = {
-          id: nextId(),
-          role: 'ai',
-          text: `Here's a starting point on "${text}" — tell me more about what you'd like to dig into.`,
+      prev.map((chat) => {
+        if (chat.id !== chatId) return chat;
+        return {
+          ...chat,
+          messages: chat.messages.map((message) =>
+            message.id === typingId ? { ...message, text, typing } : message
+          ),
         };
-        const title = c.messages.length === 0 ? text.slice(0, 28) : c.title;
-        return { ...c, title, messages: [...c.messages, userMsg, aiMsg] };
       })
     );
-  };
+  }, []);
+
+  const typeAiResponse = useCallback(
+    async (chatId, typingId, responseText) => {
+      const characters = Array.from(responseText);
+
+      if (characters.length === 0) {
+        updateTypingMessage(chatId, typingId, 'No response received.', false);
+        return;
+      }
+
+      // Stream in small chunks rather than one character at a time: it reads
+      // just as "live" but cuts the number of renders/markdown re-parses by
+      // roughly 3-4x on longer responses.
+      const chunkSize = characters.length > 400 ? 4 : characters.length > 120 ? 3 : 1;
+      const delay = Math.max(8, Math.min(24, Math.round((1000 * chunkSize) / characters.length)));
+      let renderedText = '';
+
+      for (let i = 0; i < characters.length; i += chunkSize) {
+        renderedText += characters.slice(i, i + chunkSize).join('');
+        updateTypingMessage(chatId, typingId, renderedText, true);
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+
+      updateTypingMessage(chatId, typingId, responseText, false);
+    },
+    [updateTypingMessage]
+  );
+
+  const handleSend = useCallback(
+    async (text) => {
+      const chatId = activeChatId;
+      const currentChat = chats.find((c) => c.id === chatId);
+      const isFirstMessage = (currentChat?.messages?.length ?? 0) === 0;
+      const userMsg = { id: nextId(), role: 'user', text };
+      const typingId = nextId();
+
+      setSending(true);
+      setChats((prev) =>
+        prev.map((chat) => {
+          if (chat.id !== chatId) return chat;
+          return {
+            ...chat,
+            title: isFirstMessage ? text.slice(0, 28) : chat.title,
+            messages: [...chat.messages, userMsg, { id: typingId, role: 'ai', text: 'Thinking...', typing: true }],
+          };
+        })
+      );
+
+      try {
+        const response = await axios.post(API_URL, { message: text });
+        const aiText =
+          response.data?.response ||
+          response.data?.reply ||
+          response.data?.message ||
+          response.data?.text ||
+          'No response received.';
+
+        await typeAiResponse(chatId, typingId, aiText);
+      } catch (error) {
+        const errorMessage =
+          error.response?.data?.message ||
+          error.response?.data?.error ||
+          error.message ||
+          'Something went wrong. Please try again.';
+
+        updateTypingMessage(chatId, typingId, `Error: ${errorMessage}`, false);
+      } finally {
+        setSending(false);
+      }
+    },
+    [activeChatId, chats, typeAiResponse, updateTypingMessage]
+  );
 
   const sidebarWidthClass = collapsed ? 'lg:w-[88px]' : 'lg:w-[280px]';
 
@@ -382,7 +609,7 @@ const Workspace = () => {
             type="button"
             onClick={handleNewChat}
             title={collapsed ? 'New Chat' : undefined}
-            className={`flex w-full items-center gap-3 rounded-2xl bg-white p-4 text-[16px] transition-all
+            className={`flex w-full items-center gap-3 rounded-2xl bg-white p-4 text-[16px] transition-all hover:shadow-sm
               ${collapsed ? 'justify-center px-0' : ''}`}
           >
             <MessagesSquare size={20} color="#1E1E1E" className="shrink-0" />
@@ -479,7 +706,7 @@ const Workspace = () => {
               <InfoPanel title="Sources" body="Add documents, links, or notes you want ScolarAi to learn from." />
             </div>
             <div className="w-1/6 h-full px-2 sm:px-6 py-4 sm:py-10">
-              <ChatPanel chat={activeChat} onSend={handleSend} />
+              <ChatPanel chat={activeChat} onSend={handleSend} sending={sending} />
             </div>
             <div className="w-1/6 h-full px-4 sm:px-6 py-6 sm:py-10">
               <InfoPanel
@@ -513,6 +740,44 @@ const Workspace = () => {
       <style>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .msg-in { animation: msgIn 0.22s ease-out; }
+        @keyframes msgIn {
+          from { opacity: 0; transform: translateY(4px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .typing-caret {
+          display: inline-block;
+          width: 2px;
+          height: 14px;
+          margin-left: 2px;
+          vertical-align: -2px;
+          background: currentColor;
+          opacity: 0.75;
+          animation: caretBlink 0.9s steps(1) infinite;
+        }
+        @keyframes caretBlink {
+          0%, 50% { opacity: 0.75; }
+          50.01%, 100% { opacity: 0; }
+        }
+
+        .thinking-dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 999px;
+          background: #1E1E1E;
+          opacity: 0.35;
+          animation: thinkingBounce 1s ease-in-out infinite;
+        }
+        @keyframes thinkingBounce {
+          0%, 60%, 100% { transform: translateY(0); opacity: 0.35; }
+          30% { transform: translateY(-3px); opacity: 0.9; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .msg-in, .typing-caret, .thinking-dot { animation: none; }
+        }
       `}</style>
     </div>
   );
