@@ -6,13 +6,19 @@ export async function intentNode(userId , message){
     try {
         
         const Aires = await Aichat(intentPrompt , message); 
+        console.log(Aires);
+        
     
         let result; 
     
-        try {
+        if (typeof Aires === "string") {
+          try {
             result = JSON.parse(Aires);
-        } catch {
-            throw new Error("Invalid JSON returned by AI"); 
+          } catch {
+            throw new Error("Invalid JSON returned by AI");
+          }
+        } else {
+          result = Aires;
         }
     
         if (!result.intent) {
@@ -27,7 +33,7 @@ export async function intentNode(userId , message){
           };
         }
     
-        const session = await LearnSchema.Create({
+        const session = await LearnSchema.create({
             userId, 
             topic: result.topic, 
     
