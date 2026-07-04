@@ -8,68 +8,324 @@ import {
 
 const API_URL = 'http://localhost:5000/api/chat';
 
-/* ---------- markdown rendering ---------- */
-/*
- * Lightweight markdown -> React renderer. Handles the subset of markdown that
- * AI responses actually use: **bold**, *italic*, ***bold italic***, `inline code`,
- * fenced ```code blocks```, bullet/numbered lists, links, and paragraphs.
- * No external dependency needed for this scope, which keeps the bundle light
- * and avoids a render pass through a full markdown engine for short chat turns.
- */
-
-const INLINE_PATTERN = /(\*\*\*([^*]+?)\*\*\*)|(\*\*([^*]+?)\*\*)|(\*([^*]+?)\*)|(`([^`]+?)`)|(\[([^\]]+?)\]\(([^)]+?)\))/g;
+const INLINE_PATTERN = /(!\[([^\]]*?)\]\(([^)]+?)\))|(\[([^\]]+?)\]\(([^)]+?)\))|(\*\*\*([^*]+?)\*\*\*)|(\*\*([^*]+?)\*\*)|(\*([^*]+?)\*)|(`([^`]+?)`)/g;
 
 function renderInline(text, keyBase) {
+  if (!text) return null;
   const nodes = [];
   let lastIndex = 0;
   let match;
   let i = 0;
-  INLINE_PATTERN.lastIndex = 0;
 
-  while ((match = INLINE_PATTERN.exec(text)) !== null) {
-    if (match.index > lastIndex) nodes.push(text.slice(lastIndex, match.index));
+  // Create a fresh regex instance to avoid state sharing bugs
+  const regex = new RegExp(INLINE_PATTERN);
+
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      nodes.push(text.slice(lastIndex, match.index));
+    }
     const key = `${keyBase}-${i++}`;
 
-    if (match[2] !== undefined) {
-      nodes.push(<strong key={key} className="font-semibold"><em>{match[2]}</em></strong>);
-    } else if (match[4] !== undefined) {
-      nodes.push(<strong key={key} className="font-semibold">{match[4]}</strong>);
-    } else if (match[6] !== undefined) {
-      nodes.push(<em key={key}>{match[6]}</em>);
-    } else if (match[8] !== undefined) {
+    if (match[1] !== undefined) {
+      // Image
       nodes.push(
-        <code key={key} className="rounded-md bg-black/[0.06] px-1.5 py-0.5 text-[0.9em] font-mono">
-          {match[8]}
-        </code>
+        <img
+          key={key}
+          src={match[3]}
+          alt={match[2] || ''}
+          loading="lazy"
+          className="my-3 max-w-full rounded-xl border border-black/10 shadow-sm transition-transform duration-200 hover:scale-[1.01]"
+        />
       );
-    } else if (match[10] !== undefined) {
+    } else if (match[4] !== undefined) {
+      // Link
       nodes.push(
         <a
           key={key}
-          href={match[11]}
+          href={match[6]}
           target="_blank"
           rel="noopener noreferrer"
-          className="underline decoration-black/30 underline-offset-2 hover:decoration-black/60"
+          className="text-[#9aad2e] hover:text-[#889a24] underline underline-offset-4 decoration-[#9aad2e]/45 hover:decoration-[#889a24] transition-colors font-semibold"
         >
-          {match[10]}
+          {match[5]}
         </a>
+      );
+    } else if (match[7] !== undefined) {
+      // Bold italic
+      nodes.push(<strong key={key} className="font-semibold"><em>{match[8]}</em></strong>);
+    } else if (match[9] !== undefined) {
+      // Bold
+      nodes.push(<strong key={key} className="font-semibold">{match[10]}</strong>);
+    } else if (match[11] !== undefined) {
+      // Italic
+      nodes.push(<em key={key} className="italic text-black/85">{match[12]}</em>);
+    } else if (match[13] !== undefined) {
+      // Inline code
+      nodes.push(
+        <code key={key} className="rounded-md bg-black/[0.06] dark:bg-black/[0.12] px-1.5 py-0.5 text-[0.875em] font-mono font-medium text-[#c83a3a] dark:text-[#f87171]">
+          {match[14]}
+        </code>
       );
     }
 
-    lastIndex = INLINE_PATTERN.lastIndex;
+    lastIndex = regex.lastIndex;
   }
 
-  if (lastIndex < text.length) nodes.push(text.slice(lastIndex));
+  if (lastIndex < text.length) {
+    nodes.push(text.slice(lastIndex));
+  }
   return nodes;
+}
+
+const CodeBlock = memo(({ language, code }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy code: ', err);
+    }
+  }, [code]);
+
+  return (
+    <div className="my-4 overflow-hidden rounded-xl border border-black/10 bg-[#1E1E1E] shadow-sm">
+      <div className="flex items-center justify-between bg-black/25 px-4 py-2 text-[11px] font-mono text-white/50 tracking-wider">
+        <span>{language.toUpperCase() || 'CODE'}</span>
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="flex items-center gap-1 rounded bg-white/10 px-2.5 py-1 text-[11px] font-medium text-white/80 transition-colors hover:bg-white/20 active:scale-95 cursor-pointer"
+        >
+          {copied ? 'COPIED!' : 'COPY'}
+        </button>
+      </div>
+      <pre className="overflow-x-auto p-4 text-[13.5px] leading-relaxed text-[#E8F5C8] font-mono whitespace-pre">
+        <code>{code}</code>
+      </pre>
+    </div>
+  );
+});
+
+function renderMarkdownBlocks(text, segmentIdx) {
+  const lines = text.split('\n');
+  const blocks = [];
+  let currentBlockType = null;
+  let accumulatedLines = [];
+
+  const flushBlock = (nextType = null) => {
+    if (accumulatedLines.length === 0) {
+      currentBlockType = nextType;
+      return;
+    }
+
+    const key = `blk-${segmentIdx}-${blocks.length}`;
+
+    if (currentBlockType === 'heading') {
+      const line = accumulatedLines[0];
+      const match = line.match(/^(#{1,6})\s+(.*)$/);
+      if (match) {
+        const level = match[1].length;
+        const textContent = match[2];
+        const headingClasses = {
+          1: 'text-2xl font-bold mt-6 mb-3 text-[#1E1E1E] border-b border-black/10 pb-1.5 tracking-tight',
+          2: 'text-xl font-semibold mt-5 mb-2.5 text-[#1E1E1E] tracking-tight',
+          3: 'text-lg font-semibold mt-4.5 mb-2 text-[#1E1E1E]/90',
+          4: 'text-md font-medium mt-4 mb-2 text-[#1E1E1E]/80',
+          5: 'text-sm font-medium mt-3.5 mb-1.5 text-[#1E1E1E]/70',
+          6: 'text-xs font-medium mt-3 mb-1.5 text-[#1E1E1E]/60 uppercase tracking-wider',
+        };
+        const Tag = `h${level}`;
+        blocks.push(
+          <Tag key={key} className={headingClasses[level] || 'font-bold'}>
+            {renderInline(textContent, key)}
+          </Tag>
+        );
+      }
+    } else if (currentBlockType === 'hr') {
+      blocks.push(
+        <hr key={key} className="my-6 border-0 border-t border-black/10" />
+      );
+    } else if (currentBlockType === 'blockquote') {
+      const content = accumulatedLines.join('\n');
+      blocks.push(
+        <blockquote key={key} className="my-4 border-l-4 border-[#A8F35A] bg-[#A8F35A]/5 px-4 py-2.5 text-[14.5px] italic text-[#1E1E1E]/80 rounded-r-lg">
+          {renderMarkdownBlocks(content, `${segmentIdx}-quote`)}
+        </blockquote>
+      );
+    } else if (currentBlockType === 'table') {
+      const tableLines = accumulatedLines.filter(l => l.trim() !== '');
+      if (tableLines.length > 0) {
+        const headersLine = tableLines[0];
+        let startRowIdx = 1;
+        if (tableLines[1] && tableLines[1].includes('-')) {
+          startRowIdx = 2;
+        }
+
+        const parseTableRow = (rowText) => {
+          let cells = rowText.split('|').map(c => c.trim());
+          if (rowText.startsWith('|')) cells.shift();
+          if (rowText.endsWith('|')) cells.pop();
+          return cells;
+        };
+
+        const headers = parseTableRow(headersLine);
+        const rows = tableLines.slice(startRowIdx).map(parseTableRow);
+
+        blocks.push(
+          <div key={key} className="my-4 w-full overflow-x-auto rounded-xl border border-black/10 bg-white shadow-sm">
+            <table className="w-full border-collapse text-left text-sm text-[#1E1E1E]">
+              <thead>
+                <tr className="border-b border-black/10 bg-[#A8F35A]/5 font-semibold text-[#1E1E1E]/95">
+                  {headers.map((h, i) => (
+                    <th key={`th-${i}`} className="px-4 py-3 font-semibold border-r last:border-r-0 border-black/5">
+                      {renderInline(h, `${key}-h-${i}`)}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-black/5">
+                {rows.map((row, rIdx) => (
+                  <tr key={`tr-${rIdx}`} className="hover:bg-black/[0.005] transition-colors odd:bg-white even:bg-black/[0.005]">
+                    {row.map((cell, cIdx) => (
+                      <td key={`td-${rIdx}-${cIdx}`} className="px-4 py-2.5 text-black/85 border-r last:border-r-0 border-black/5">
+                        {renderInline(cell, `${key}-r-${rIdx}-c-${cIdx}`)}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+      }
+    } else if (currentBlockType === 'list') {
+      const firstLine = accumulatedLines[0];
+      const isOrdered = /^\s*\d+\.\s+/.test(firstLine);
+
+      const items = accumulatedLines.map((line, idx) => {
+        let textContent = line;
+        let isTask = false;
+        let isChecked = false;
+
+        const indentMatch = line.match(/^(\s*)/);
+        const indentSpaces = indentMatch ? indentMatch[1].length : 0;
+
+        textContent = textContent.replace(/^\s*([-*+])\s+/, '');
+        textContent = textContent.replace(/^\s*\d+\.\s+/, '');
+
+        if (textContent.startsWith('[ ]') || textContent.toLowerCase().startsWith('[x]')) {
+          isTask = true;
+          isChecked = textContent.toLowerCase().startsWith('[x]');
+          textContent = textContent.slice(3).trim();
+        }
+
+        const itemKey = `${key}-li-${idx}`;
+        if (isTask) {
+          return (
+            <li key={itemKey} style={{ paddingLeft: `${indentSpaces * 4}px` }} className="flex items-start gap-2.5 list-none my-1">
+              <input
+                type="checkbox"
+                checked={isChecked}
+                readOnly
+                className="mt-1 h-4 w-4 shrink-0 rounded border-gray-300 text-[#9aad2e] focus:ring-[#9aad2e] cursor-default"
+              />
+              <span className={isChecked ? 'line-through text-black/45' : 'text-black/85'}>
+                {renderInline(textContent, itemKey)}
+              </span>
+            </li>
+          );
+        }
+
+        return (
+          <li key={itemKey} style={{ paddingLeft: `${indentSpaces * 4}px` }} className="my-0.5 leading-relaxed text-black/85">
+            {renderInline(textContent, itemKey)}
+          </li>
+        );
+      });
+
+      if (isOrdered) {
+        blocks.push(
+          <ol key={key} className="my-3 list-decimal space-y-1.5 pl-6 text-[14.5px]">
+            {items}
+          </ol>
+        );
+      } else {
+        const containsTasks = accumulatedLines.some(l => /^\s*[-*+]\s+\[[ xX]\]/i.test(l));
+        blocks.push(
+          <ul key={key} className={`my-3 space-y-1.5 text-[14.5px] ${containsTasks ? 'pl-1.5' : 'list-disc pl-6'}`}>
+            {items}
+          </ul>
+        );
+      }
+    } else if (currentBlockType === 'paragraph') {
+      const pText = accumulatedLines.join('\n');
+      blocks.push(
+        <p key={key} className="my-2.5 leading-relaxed text-[14.5px] text-[#1E1E1E]/90 whitespace-pre-line">
+          {renderInline(pText, key)}
+        </p>
+      );
+    }
+
+    accumulatedLines = [];
+    currentBlockType = nextType;
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    if (trimmed === '') {
+      flushBlock();
+      continue;
+    }
+
+    if (/^(?:---|---|___|\*\*\*)\s*$/.test(trimmed)) {
+      flushBlock('hr');
+      accumulatedLines.push(line);
+      flushBlock();
+    } else if (/^(#{1,6})\s+(.*)$/.test(line)) {
+      flushBlock('heading');
+      accumulatedLines.push(line);
+      flushBlock();
+    } else if (/^\s*>\s*(.*)$/.test(line)) {
+      const match = line.match(/^\s*>\s*(.*)$/);
+      const quoteText = match ? match[1] : '';
+      if (currentBlockType !== 'blockquote') {
+        flushBlock('blockquote');
+      }
+      accumulatedLines.push(quoteText);
+    } else if (line.includes('|')) {
+      if (currentBlockType !== 'table') {
+        flushBlock('table');
+      }
+      accumulatedLines.push(line);
+    } else if (/^\s*(?:[-*+])\s+(.*)$/.test(line) || /^\s*\d+\.\s+(.*)$/.test(line)) {
+      if (currentBlockType !== 'list') {
+        flushBlock('list');
+      }
+      accumulatedLines.push(line);
+    } else {
+      if (currentBlockType !== 'paragraph' && currentBlockType !== null) {
+        flushBlock('paragraph');
+      } else if (currentBlockType === null) {
+        currentBlockType = 'paragraph';
+      }
+      accumulatedLines.push(line);
+    }
+  }
+
+  flushBlock();
+  return blocks;
 }
 
 function renderMarkdown(raw) {
   if (!raw) return null;
 
-  // Split out fenced code blocks first so their contents are never touched
-  // by inline/list parsing.
   const segments = raw.split(/```/);
-  const blocks = [];
+  const elements = [];
 
   segments.forEach((segment, segIdx) => {
     const isCode = segIdx % 2 === 1;
@@ -77,58 +333,18 @@ function renderMarkdown(raw) {
     if (isCode) {
       const lines = segment.split('\n');
       const firstLineIsLang = lines[0] && /^[a-zA-Z0-9_+-]*$/.test(lines[0].trim()) && lines.length > 1;
+      const language = firstLineIsLang ? lines[0].trim() : '';
       const code = (firstLineIsLang ? lines.slice(1) : lines).join('\n').replace(/^\n/, '').replace(/\n$/, '');
-      blocks.push(
-        <pre
-          key={`code-${segIdx}`}
-          className="my-2 overflow-x-auto rounded-xl bg-[#1E1E1E] px-4 py-3 text-[13px] leading-relaxed text-[#E8F5C8]"
-        >
-          <code className="font-mono">{code}</code>
-        </pre>
+
+      elements.push(
+        <CodeBlock key={`code-${segIdx}`} language={language} code={code} />
       );
-      return;
+    } else {
+      elements.push(...renderMarkdownBlocks(segment, segIdx));
     }
-
-    const paragraphs = segment.split(/\n{2,}/).filter((p) => p.trim() !== '');
-
-    paragraphs.forEach((para, pIdx) => {
-      const lines = para.split('\n').filter((l) => l.trim() !== '');
-      const isBulletList = lines.length > 0 && lines.every((l) => /^\s*[-*]\s+/.test(l));
-      const isNumberedList = lines.length > 0 && lines.every((l) => /^\s*\d+[.)]\s+/.test(l));
-      const key = `p-${segIdx}-${pIdx}`;
-
-      if (isBulletList) {
-        blocks.push(
-          <ul key={key} className="my-1.5 list-disc space-y-1 pl-5">
-            {lines.map((line, lIdx) => (
-              <li key={`${key}-${lIdx}`}>{renderInline(line.replace(/^\s*[-*]\s+/, ''), `${key}-${lIdx}`)}</li>
-            ))}
-          </ul>
-        );
-      } else if (isNumberedList) {
-        blocks.push(
-          <ol key={key} className="my-1.5 list-decimal space-y-1 pl-5">
-            {lines.map((line, lIdx) => (
-              <li key={`${key}-${lIdx}`}>{renderInline(line.replace(/^\s*\d+[.)]\s+/, ''), `${key}-${lIdx}`)}</li>
-            ))}
-          </ol>
-        );
-      } else {
-        blocks.push(
-          <p key={key} className={pIdx > 0 || segIdx > 0 ? 'mt-2' : ''}>
-            {lines.map((line, lIdx) => (
-              <React.Fragment key={`${key}-${lIdx}`}>
-                {lIdx > 0 && <br />}
-                {renderInline(line, `${key}-${lIdx}`)}
-              </React.Fragment>
-            ))}
-          </p>
-        );
-      }
-    });
   });
 
-  return blocks;
+  return elements;
 }
 
 /* ---------- small building blocks ---------- */
@@ -212,7 +428,7 @@ const ThinkingIndicator = memo(() => (
   </div>
 ));
 
-const MessageBubble = memo(({ message }) => {
+const MessageBubble = memo(({ message, onOptionClick }) => {
   const isUser = message.role === 'user';
   const isThinking = !isUser && message.typing && message.text === 'Thinking...';
   const content = useMemo(() => (isThinking ? null : renderMarkdown(message.text)), [message.text, isThinking]);
@@ -235,6 +451,22 @@ const MessageBubble = memo(({ message }) => {
           <>
             {content}
             {message.typing && <span className="typing-caret" aria-hidden="true" />}
+            
+            {/* Render dynamically generated option buttons below question */}
+            {!message.typing && message.options && message.options.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {message.options.map((opt) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => onOptionClick && onOptionClick(opt)}
+                    className="rounded-xl bg-[#A8F35A]/10 hover:bg-[#A8F35A]/35 text-[#1E1E1E] px-3.5 py-1.5 text-[13px] font-semibold border border-[#A8F35A]/45 cursor-pointer transition-colors shadow-sm"
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            )}
           </>
         )}
       </div>
@@ -288,7 +520,7 @@ const ChatPanel = ({ chat, onSend, sending = false }) => {
         <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto px-2 sm:px-4">
           <div className="flex flex-col gap-4 py-4">
             {chat.messages.map((m) => (
-              <MessageBubble key={m.id} message={m} />
+              <MessageBubble key={m.id} message={m} onOptionClick={onSend} />
             ))}
           </div>
         </div>
@@ -466,7 +698,12 @@ const Workspace = () => {
 
       try {
         const response = await axios.post(API_URL, { message: text });
+        
+        const nextQuestion = response.data?.nextQuestion;
+        const options = nextQuestion?.options || [];
+        
         const aiText =
+          nextQuestion?.question ||
           response.data?.response ||
           response.data?.reply ||
           response.data?.message ||
@@ -474,6 +711,20 @@ const Workspace = () => {
           'No response received.';
 
         await typeAiResponse(chatId, typingId, aiText);
+
+        if (options.length > 0) {
+          setChats((prev) =>
+            prev.map((chat) => {
+              if (chat.id !== chatId) return chat;
+              return {
+                ...chat,
+                messages: chat.messages.map((message) =>
+                  message.id === typingId ? { ...message, options } : message
+                ),
+              };
+            })
+          );
+        }
       } catch (error) {
         const errorMessage =
           error.response?.data?.message ||
