@@ -443,7 +443,7 @@ const MessageBubble = memo(({ message, onOptionClick }) => {
 
       <div
         className={`max-w-[80%] sm:max-w-[75%] rounded-2xl px-4 py-2.5 text-[14px] leading-relaxed shadow-[0_1px_2px_rgba(0,0,0,0.04)]
-          ${isUser ? 'bg-[#1E1E1E] text-white rounded-br-sm' : 'bg-white text-[#1E1E1E] rounded-bl-sm'}`}
+          ${isUser ? 'bg-[#1E1E1E] text-white rounded-br-sm user-message-bubble' : 'bg-white text-[#1E1E1E] rounded-bl-sm'}`}
       >
         {isThinking ? (
           <ThinkingIndicator />
@@ -1029,6 +1029,21 @@ const Workspace = () => {
         @media (prefers-reduced-motion: reduce) {
           .msg-in, .typing-caret, .thinking-dot { animation: none; }
         }
+
+        .user-message-bubble p { color: rgba(255, 255, 255, 0.9) !important; }
+        .user-message-bubble li { color: rgba(255, 255, 255, 0.85) !important; }
+        .user-message-bubble li span { color: rgba(255, 255, 255, 0.85) !important; }
+        .user-message-bubble li span.line-through { color: rgba(255, 255, 255, 0.45) !important; }
+        .user-message-bubble a { color: #A8F35A !important; }
+        .user-message-bubble em { color: rgba(255, 255, 255, 0.85) !important; }
+        .user-message-bubble strong { color: #ffffff !important; }
+        .user-message-bubble code { color: #f87171 !important; background-color: rgba(255, 255, 255, 0.1) !important; }
+        .user-message-bubble h1,
+        .user-message-bubble h2,
+        .user-message-bubble h3,
+        .user-message-bubble h4,
+        .user-message-bubble h5,
+        .user-message-bubble h6 { color: #ffffff !important; }
       `}</style>
     </div>
   );
