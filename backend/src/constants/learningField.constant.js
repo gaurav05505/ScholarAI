@@ -1,6 +1,6 @@
 export const Learning_Fields = [
     "track", 
-    "experience", 
+    "level", 
     "goal", 
     "weeklyHours", 
     "learningStyle", 

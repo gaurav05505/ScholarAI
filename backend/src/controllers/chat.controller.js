@@ -1,16 +1,43 @@
 import { chatWithLLM } from "../services/llm.service.js";
 import { intentNode } from "../node/intent.node.js";
+import { contextNode } from "../node/context.node.js";
+import LearnSchema from "../models/Learn.Schema.js";
+import Aichat from "../utils/aiClint.util.js";
 import mongoose from "mongoose";
 
 export async function chat(req, res) {
   try {
-    const { message, userId } = req.body;
+    const { message, userId, sessionId } = req.body;
 
     if (!message) {
       return res.status(400).json({
         success: false,
         message: "Message is required",
       });
+    }
+
+    if (sessionId) {
+      const session = await LearnSchema.findById(sessionId);
+      if (session && session.status === "completed") {
+        const tutorPrompt = `You are ScolarAI, an AI learning tutor.
+The user is learning the topic: "${session.topic}".
+Their profile/context:
+- Track/Focus: ${session.context?.track || 'General'}
+- Level: ${session.context?.level || 'Beginner'}
+- Goal: ${session.context?.goal || 'General study'}
+- Learning Style: ${session.context?.learningStyle || 'Standard'}
+
+Help the user by answering their questions contextually, explaining concepts, or guiding them through their roadmap modules. Make your response clean, professional, and formatted in rich Markdown.`;
+
+        const answer = await Aichat(tutorPrompt, message);
+        return res.status(200).json({
+          success: true,
+          response: answer,
+        });
+      }
+
+      const contextResult = await contextNode(sessionId, message);
+      return res.status(200).json(contextResult);
     }
 
     // Generate or use a standard userId for the session

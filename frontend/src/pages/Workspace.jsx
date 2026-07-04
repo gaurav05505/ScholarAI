@@ -416,6 +416,146 @@ const ListPanel = memo(({ title, items, onOpen, emptyLabel }) => (
   </div>
 ));
 
+/* ---------- roadmap panel ---------- */
+const RoadmapPanel = memo(({ roadmap, onToggleTopic, onTopicClick }) => {
+  const [expandedPhases, setExpandedPhases] = useState({});
+
+  if (!roadmap) {
+    return <InfoPanel title="Roadmap" body="Your personalized learning path for this roadmap will show up here." />;
+  }
+
+  if (!roadmap.phases || roadmap.phases.length === 0) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center text-center px-6">
+        <h2 className="text-[22px] font-medium text-[#1E1E1E]">{roadmap.title}</h2>
+        <p className="mt-2 max-w-sm text-[14px] text-black/45">Loading your custom learning roadmap...</p>
+      </div>
+    );
+  }
+
+  let totalTopics = 0;
+  let completedTopics = 0;
+  roadmap.phases.forEach((phase) => {
+    phase.modules.forEach((mod) => {
+      mod.topics.forEach((topic) => {
+        totalTopics++;
+        if (topic.completed) {
+          completedTopics++;
+        }
+      });
+    });
+  });
+
+  const progressPercent = totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
+
+  const togglePhase = (idx) => {
+    setExpandedPhases(prev => ({
+      ...prev,
+      [idx]: !prev[idx]
+    }));
+  };
+
+  return (
+    <div className="flex h-full flex-col overflow-hidden px-1 sm:px-3">
+      {/* Title block */}
+      <div className="mb-6 rounded-2xl bg-white p-5 border border-black/5 shadow-sm shrink-0">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <span className="rounded-full bg-[#A8F35A]/25 px-2.5 py-1 text-xs font-semibold uppercase text-[#5b9610] tracking-wider">
+              {roadmap.topic || 'Learning Path'}
+            </span>
+            <h2 className="mt-2 text-xl sm:text-2xl font-semibold text-[#1E1E1E] leading-snug">{roadmap.title}</h2>
+            <p className="mt-2 text-sm text-black/60 leading-relaxed max-w-2xl">{roadmap.description}</p>
+          </div>
+          <div className="flex flex-col items-end justify-center shrink-0 min-w-[120px]">
+            <span className="text-2xl font-bold text-[#1E1E1E]">{progressPercent}%</span>
+            <span className="text-[12px] text-black/45 uppercase font-medium tracking-wide">Progress</span>
+            <div className="mt-2 h-2 w-full rounded-full bg-black/[0.07] overflow-hidden min-w-[100px]">
+              <div
+                className="h-full rounded-full bg-[#A8F35A] transition-all duration-500 ease-out"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Phases scrollable container */}
+      <div className="flex-1 overflow-y-auto pr-1 space-y-4 no-scrollbar">
+        {roadmap.phases.map((phase, phaseIdx) => {
+          const isExpanded = expandedPhases[phaseIdx] !== false; // expanded by default
+          return (
+            <div key={phaseIdx} className="rounded-2xl border border-black/5 bg-white shadow-sm overflow-hidden">
+              {/* Phase Header */}
+              <button
+                type="button"
+                onClick={() => togglePhase(phaseIdx)}
+                className="flex w-full items-center justify-between p-4 text-left hover:bg-black/[0.01] transition-colors border-l-4 border-[#A8F35A]"
+              >
+                <div>
+                  <h3 className="font-semibold text-lg text-[#1E1E1E]">{phase.name}</h3>
+                  <p className="text-[13px] text-black/50 mt-0.5">{phase.description}</p>
+                </div>
+                <span className="text-[12px] text-black/45 font-semibold px-2 py-1 bg-black/[0.04] rounded-md shrink-0">
+                  {isExpanded ? 'COLLAPSE' : 'EXPAND'}
+                </span>
+              </button>
+
+              {/* Phase Modules */}
+              {isExpanded && (
+                <div className="p-4 bg-black/[0.005] border-t border-black/5 space-y-6">
+                  {phase.modules.map((mod, modIdx) => (
+                    <div key={modIdx} className="relative pl-4 before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[2px] before:bg-black/10">
+                      <h4 className="font-medium text-[15px] text-[#1E1E1E]">{mod.name}</h4>
+                      <p className="text-xs text-black/50 mt-0.5">{mod.description}</p>
+                      
+                      {/* Topics Checklist */}
+                      <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {mod.topics.map((topic, topicIdx) => (
+                          <div
+                            key={topicIdx}
+                            className={`flex items-center gap-3 p-2.5 rounded-xl border border-black/[0.03] transition-all bg-white hover:border-black/[0.07]
+                              ${topic.completed ? 'opacity-65 bg-black/[0.01]' : ''}`}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => onToggleTopic(roadmap.id, phaseIdx, modIdx, topicIdx)}
+                              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-all cursor-pointer
+                                ${topic.completed
+                                  ? 'bg-[#A8F35A] border-[#A8F35A] text-[#1E1E1E]'
+                                  : 'border-black/25 hover:border-black/40 bg-white'}`}
+                              aria-label={`Toggle completion of ${topic.name}`}
+                            >
+                              {topic.completed && (
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                              )}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => onTopicClick && onTopicClick(topic.name, roadmap.topic)}
+                              className={`text-left text-[13.5px] font-medium leading-tight truncate hover:text-[#9aad2e] hover:underline cursor-pointer
+                                ${topic.completed ? 'line-through text-black/45' : 'text-[#1E1E1E]'}`}
+                              title={`Click to learn ${topic.name} from First Principles`}
+                            >
+                              {topic.name}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+});
+
 /* ---------- chat panel ---------- */
 
 // Three-dot "thinking" indicator, staggered so it reads as active work rather
@@ -594,10 +734,79 @@ const Workspace = () => {
   const [roadmaps, setRoadmaps] = useState(initialRoadmaps);
   const [activeRoadmapId, setActiveRoadmapId] = useState(initialRoadmaps[0].id);
   const [sending, setSending] = useState(false);
+  const [modalData, setModalData] = useState(null);
+
 
   const activeChat = chats.find((c) => c.id === activeChatId);
   const activeRoadmap = roadmaps.find((r) => r.id === activeRoadmapId);
   const activeIndex = VIEWS.indexOf(activeTab);
+
+  // Lazy-load roadmap details from database when a roadmap is selected
+  useEffect(() => {
+    if (!activeRoadmapId) return;
+
+    const existing = roadmaps.find((r) => r.id === activeRoadmapId);
+    // Only fetch if we don't have phases data yet, and it is a 24-character ObjectId string
+    if (existing && !existing.phases && typeof activeRoadmapId === 'string' && activeRoadmapId.length === 24) {
+      axios.get(`http://localhost:5000/api/learning/roadmap/${activeRoadmapId}`)
+        .then((res) => {
+          if (res.data?.success && res.data?.roadmap) {
+            setRoadmaps((prev) =>
+              prev.map((r) => {
+                if (r.id === activeRoadmapId) {
+                  return {
+                    ...r,
+                    title: res.data.roadmap.title,
+                    topic: res.data.roadmap.topic,
+                    description: res.data.roadmap.description,
+                    phases: res.data.roadmap.phases,
+                  };
+                }
+                return r;
+              })
+            );
+          }
+        })
+        .catch((err) => console.error("Failed to fetch roadmap:", err));
+    }
+  }, [activeRoadmapId, roadmaps]);
+
+  const handleToggleTopic = useCallback(async (roadmapId, phaseIndex, moduleIndex, topicIndex) => {
+    // Optimistic UI updates
+    setRoadmaps((prev) =>
+      prev.map((r) => {
+        if (r.id !== roadmapId) return r;
+
+        const updatedPhases = r.phases.map((phase, pIdx) => {
+          if (pIdx !== phaseIndex) return phase;
+
+          const updatedModules = phase.modules.map((mod, mIdx) => {
+            if (mIdx !== moduleIndex) return mod;
+
+            const updatedTopics = mod.topics.map((topic, tIdx) => {
+              if (tIdx !== topicIndex) return topic;
+              return { ...topic, completed: !topic.completed };
+            });
+            return { ...mod, topics: updatedTopics };
+          });
+          return { ...phase, modules: updatedModules };
+        });
+
+        return { ...r, phases: updatedPhases };
+      })
+    );
+
+    // Call API in background
+    try {
+      await axios.post(`http://localhost:5000/api/learning/roadmap/${roadmapId}/toggle-topic`, {
+        phaseIndex,
+        moduleIndex,
+        topicIndex,
+      });
+    } catch (err) {
+      console.error("Failed to sync completion state with backend:", err);
+    }
+  }, []);
 
   const handleNewChat = useCallback(() => {
     const chat = { id: nextId(), title: 'New Chat', messages: [] };
@@ -676,6 +885,77 @@ const Workspace = () => {
     [updateTypingMessage]
   );
 
+  const handleCreateProject = useCallback(async () => {
+    if (!modalData) return;
+    try {
+      const res = await axios.post('http://localhost:5000/api/learning/create-project', {
+        sessionId: modalData.sessionId,
+        topic: modalData.topic
+      });
+      if (res.data?.success) {
+        alert(`Workspace created successfully!\nFiles written to: ${res.data.projectDir}`);
+      }
+    } catch (err) {
+      console.error("Failed to create project workspace:", err);
+      alert("Error creating workspace. Please try again.");
+    } finally {
+      setModalData(null);
+    }
+  }, [modalData]);
+
+  const handleStartTopicLesson = useCallback(async (topicName, roadmapSubject) => {
+    const chatId = nextId();
+    const userMsgId = nextId();
+    const typingId = nextId();
+    
+    const newChat = {
+      id: chatId,
+      title: `Lesson: ${topicName}`,
+      messages: [
+        { id: userMsgId, role: 'user', text: `Explain the topic: "${topicName}" using First-Principles thinking.` },
+        { id: typingId, role: 'ai', text: 'Thinking...', typing: true }
+      ],
+    };
+
+    setChats((prev) => [newChat, ...prev]);
+    setActiveChatId(chatId);
+    setActiveTab('chats');
+    setSending(true);
+
+    try {
+      const response = await axios.post('http://localhost:5000/api/learning/explain-topic', {
+        topic: topicName,
+        subject: roadmapSubject
+      });
+
+      const explanation = response.data?.explanation || 'Failed to generate explanation.';
+
+      await typeAiResponse(chatId, typingId, explanation);
+
+      // Log the query to projects queries.md in background
+      try {
+        await axios.post('http://localhost:5000/api/learning/log-query', {
+          subject: roadmapSubject,
+          query: `Explain: ${topicName}`,
+          response: explanation
+        });
+      } catch (fsErr) {
+        console.error("FS logging error:", fsErr);
+      }
+
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        'Something went wrong. Please try again.';
+
+      updateTypingMessage(chatId, typingId, `Error: ${errorMessage}`, false);
+    } finally {
+      setSending(false);
+    }
+  }, [typeAiResponse, updateTypingMessage]);
+
   const handleSend = useCallback(
     async (text) => {
       const chatId = activeChatId;
@@ -697,33 +977,58 @@ const Workspace = () => {
       );
 
       try {
-        const response = await axios.post(API_URL, { message: text });
+        const payload = { message: text };
+        if (currentChat?.sessionId) {
+          payload.sessionId = currentChat.sessionId;
+        }
+
+        const response = await axios.post(API_URL, payload);
         
         const nextQuestion = response.data?.nextQuestion;
         const options = nextQuestion?.options || [];
         
         const aiText =
           nextQuestion?.question ||
+          response.data?.message ||
           response.data?.response ||
           response.data?.reply ||
-          response.data?.message ||
           response.data?.text ||
           'No response received.';
 
         await typeAiResponse(chatId, typingId, aiText);
 
-        if (options.length > 0) {
-          setChats((prev) =>
-            prev.map((chat) => {
-              if (chat.id !== chatId) return chat;
-              return {
-                ...chat,
-                messages: chat.messages.map((message) =>
-                  message.id === typingId ? { ...message, options } : message
-                ),
-              };
-            })
-          );
+        const resSessionId = response.data?.sessionId;
+        const resStatus = response.data?.status;
+        const resRoadmap = response.data?.roadmap;
+
+        setChats((prev) =>
+          prev.map((chat) => {
+            if (chat.id !== chatId) return chat;
+            return {
+              ...chat,
+              sessionId: resSessionId || chat.sessionId,
+              learningStatus: resStatus || chat.learningStatus,
+              messages: chat.messages.map((message) =>
+                message.id === typingId ? { ...message, options } : message
+              ),
+            };
+          })
+        );
+
+        if (resRoadmap) {
+          const newRoadmapItem = {
+            id: resRoadmap._id,
+            title: resRoadmap.title,
+            topic: resRoadmap.topic,
+            description: resRoadmap.description,
+            phases: resRoadmap.phases,
+          };
+          setRoadmaps((prev) => [newRoadmapItem, ...prev.filter((r) => r.id !== newRoadmapItem.id)]);
+          setActiveRoadmapId(newRoadmapItem.id);
+          setActiveTab('roadmap');
+
+          // Open the workspace modal popup
+          setModalData({ sessionId: resSessionId, topic: resRoadmap.topic });
         }
       } catch (error) {
         const errorMessage =
@@ -959,11 +1264,8 @@ const Workspace = () => {
             <div className="w-1/6 h-full px-2 sm:px-6 py-4 sm:py-10">
               <ChatPanel chat={activeChat} onSend={handleSend} sending={sending} />
             </div>
-            <div className="w-1/6 h-full px-4 sm:px-6 py-6 sm:py-10">
-              <InfoPanel
-                title={activeRoadmap ? activeRoadmap.title : 'Roadmap'}
-                body="Your personalized learning path for this roadmap will show up here."
-              />
+            <div className="w-1/6 h-full px-2 sm:px-6 py-4 sm:py-8 overflow-hidden bg-white rounded-3xl">
+              <RoadmapPanel roadmap={activeRoadmap} onToggleTopic={handleToggleTopic} onTopicClick={handleStartTopicLesson} />
             </div>
             <div className="w-1/6 h-full px-4 sm:px-6 py-6 sm:py-10">
               <InfoPanel title="Important questions" body="Key questions worth revisiting will be collected here as you chat." />
@@ -987,6 +1289,33 @@ const Workspace = () => {
           </div>
         </div>
       </div>
+
+      {modalData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 animate-fade-in">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl border border-black/5 animate-scale-in">
+            <h3 className="text-[18px] font-semibold text-[#1E1E1E] mb-2">Create Learning Workspace?</h3>
+            <p className="text-[14px] text-black/60 mb-6 leading-relaxed">
+              We generated your roadmap for <strong>{modalData.topic}</strong>. Do you want to create a local workspace folder containing <code>roadmap.md</code> and <code>queries.md</code> files?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setModalData(null)}
+                className="rounded-xl bg-black/[0.05] hover:bg-black/[0.1] px-4 py-2.5 text-[14px] font-semibold text-black/70 cursor-pointer transition-colors"
+              >
+                No, Skip
+              </button>
+              <button
+                type="button"
+                onClick={handleCreateProject}
+                className="rounded-xl bg-[#A8F35A] hover:bg-[#97db51] px-4 py-2.5 text-[14px] font-semibold text-[#1E1E1E] cursor-pointer transition-colors shadow-sm"
+              >
+                Yes, Create Folder
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }

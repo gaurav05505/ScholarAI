@@ -17,15 +17,15 @@ const LearningSession = new mongoose.Schema({
         default: "", 
     },
     context: {
-        track: String , 
+        track: String, 
         level: String,
         goal: String, 
-        weeklyHours: Number, 
-        learningStyle: String , 
+        weeklyHours: String, 
+        learningStyle: String, 
     }, 
     currentField: {
         type: String, 
-        default: "Track", 
+        default: "track", 
     },
     roadmapId: {
         type: mongoose.Schema.Types.ObjectId, 

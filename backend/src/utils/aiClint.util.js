@@ -1,4 +1,7 @@
 import axios from "axios";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const client = axios.create({
   baseURL: "https://integrate.api.nvidia.com/v1",
@@ -11,7 +14,7 @@ const client = axios.create({
 async function AIChat(systemPrompt, userMessage) {
   try {
     const { data } = await client.post("/chat/completions", {
-      model: "moonshotai/kimi-k2.6",
+      model: "minimaxai/minimax-m3",
 
       messages: [
         {
