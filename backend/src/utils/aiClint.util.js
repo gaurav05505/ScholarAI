@@ -14,7 +14,7 @@ const client = axios.create({
 async function AIChat(systemPrompt, userMessage) {
   try {
     const { data } = await client.post("/chat/completions", {
-      model: "minimaxai/minimax-m3",
+      model: "meta/llama-3.1-70b-instruct",
 
       messages: [
         {

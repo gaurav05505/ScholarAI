@@ -3,7 +3,7 @@ import nvidia from "../config/nvidia.js";
 export async function chatWithLLM(message) {
   try {
     const response = await nvidia.post("/chat/completions", {
-      model: "minimaxai/minimax-m3",
+      model: "meta/llama-3.1-70b-instruct",
 
       messages: [
         {

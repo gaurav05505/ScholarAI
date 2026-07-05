@@ -1,15 +1,39 @@
 import {intentNode} from '../node/intent.node.js'; 
 import Roadmap from '../models/Roadmap.mode.js';
 import LearnSchema from '../models/Learn.Schema.js'; 
+import Project from '../models/Project.model.js';
+import UserModel from '../models/user.model.js';
 import { lessonPrompt } from '../Prompt/lesson.prompt.js';
 import Aichat from '../utils/aiClint.util.js'; 
-import fs from 'fs/promises';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import jwt from 'jsonwebtoken';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const workspaceRoot = path.resolve(__dirname, '../../../');
+const getActiveUser = async (req) => {
+    if (req.user && req.user._id) {
+        return req.user._id;
+    }
+    
+    try {
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.startsWith("Bearer")) {
+            const token = authHeader.split(" ")[1];
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            const user = await UserModel.findById(decoded.id);
+            if (user) return user._id;
+        }
+    } catch (err) {
+        // ignore
+    }
+
+    let defaultUser = await UserModel.findOne({ email: "scolar.learner@scolarai.com" });
+    if (!defaultUser) {
+        defaultUser = await UserModel.create({
+            name: "Scolar Learner",
+            email: "scolar.learner@scolarai.com",
+            password: "defaultpassword123"
+        });
+    }
+    return defaultUser._id;
+};
 
 export const startLearning = async(req , res) => {
     try {
@@ -113,7 +137,7 @@ export const toggleTopicCompletion = async(req, res) => {
     }
 }
 
-export const createProjectFiles = async (req, res) => {
+export const createProject = async (req, res) => {
     try {
         const { sessionId, topic } = req.body;
         if (!sessionId || !topic) {
@@ -139,54 +163,119 @@ export const createProjectFiles = async (req, res) => {
             });
         }
 
-        // Format the roadmap to markdown
-        let md = `# 🗺️ Learning Roadmap: ${roadmap.title}\n\n`;
-        md += `**Subject**: ${roadmap.topic}\n`;
-        md += `**Description**: ${roadmap.description}\n\n`;
-        md += `--- \n\n`;
+        const activeUserId = await getActiveUser(req);
 
-        roadmap.phases.forEach((phase, pIdx) => {
-            md += `## 🚀 Phase ${pIdx + 1}: ${phase.name}\n`;
-            md += `> ${phase.description}\n\n`;
-
-            phase.modules.forEach((mod, mIdx) => {
-                md += `### 📦 Module ${pIdx + 1}.${mIdx + 1}: ${mod.name}\n`;
-                md += `*${mod.description}*\n\n`;
-                md += `**Topics Checklist**:\n`;
-                mod.topics.forEach((top) => {
-                    const status = top.completed ? 'x' : ' ';
-                    md += `- [${status}] ${top.name}\n`;
-                });
-                md += `\n`;
+        let project = await Project.findOne({ sessionId: session._id });
+        if (!project) {
+            project = await Project.create({
+                user: activeUserId,
+                topic: roadmap.topic,
+                title: roadmap.title,
+                description: roadmap.description,
+                roadmapId: roadmap._id,
+                sessionId: session._id,
+                chats: []
             });
-            md += `--- \n\n`;
-        });
-
-        // Slugify topic for folder name
-        const folderSlug = topic.replace(/[^a-zA-Z0-9-_]/g, '_').toLowerCase();
-        const projectDir = path.join(workspaceRoot, 'projects', folderSlug);
-
-        // Create folders
-        await fs.mkdir(projectDir, { recursive: true });
-
-        // Write files
-        const roadmapPath = path.join(projectDir, 'roadmap.md');
-        const queriesPath = path.join(projectDir, 'queries.md');
-
-        await fs.writeFile(roadmapPath, md, 'utf8');
-
-        // Create queries file if it doesn't exist
-        try {
-            await fs.access(queriesPath);
-        } catch {
-            const initialQueriesContent = `# 💬 Study Notes & Queries: ${topic}\n\nThis file logs all your questions and AI explanations for this topic.\n\n`;
-            await fs.writeFile(queriesPath, initialQueriesContent, 'utf8');
         }
+
+        // Mark project as created in the session
+        session.projectCreated = true;
+        await session.save();
 
         return res.status(200).json({
             success: true,
-            message: "Project files successfully generated!",
-            projectDir: `projects/${folderSlug}`
+            message: "Project successfully created in database!",
+            project,
+            projectCreated: true
+        });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+}
+
+export const listProjects = async (req, res) => {
+    try {
+        const activeUserId = await getActiveUser(req);
+        const projects = await Project.find({ user: activeUserId }).sort({ updatedAt: -1 });
+        return res.status(200).json({
+            success: true,
+            projects
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+}
+
+export const getProjectDetails = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const project = await Project.findById(id).populate('roadmapId');
+        if (!project) {
+            return res.status(404).json({
+                success: false,
+                message: "Project not found."
+            });
+        }
+        return res.status(200).json({
+            success: true,
+            project
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+}
+
+export const saveProjectChat = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { chat } = req.body;
+        
+        if (!id || !chat || !chat.id || !chat.title || !chat.messages) {
+            return res.status(400).json({
+                success: false,
+                message: "projectId, and chat (with id, title, messages) are required."
+            });
+        }
+
+        const project = await Project.findById(id);
+        if (!project) {
+            return res.status(404).json({
+                success: false,
+                message: "Project not found."
+            });
+        }
+
+        const existingIdx = project.chats.findIndex(c => c.id === chat.id || c.title === chat.title);
+        if (existingIdx > -1) {
+            project.chats[existingIdx].messages = chat.messages;
+            project.chats[existingIdx].title = chat.title;
+            project.chats[existingIdx].id = chat.id;
+        } else {
+            project.chats.push({
+                id: chat.id,
+                title: chat.title,
+                messages: chat.messages
+            });
+        }
+
+        await project.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Project chat saved successfully!"
         });
 
     } catch (error) {
@@ -208,7 +297,6 @@ export const explainTopic = async (req, res) => {
             });
         }
 
-        // Interpolate prompt
         const formattedPrompt = lessonPrompt
             .replace('${topic}', topic)
             .replace('${subject}', subject);
@@ -228,30 +316,79 @@ export const explainTopic = async (req, res) => {
     }
 }
 
-export const logQuery = async (req, res) => {
+export const listRoadmaps = async (req, res) => {
     try {
-        const { subject, query, response } = req.body;
-        if (!subject || !query || !response) {
+        const activeUserId = await getActiveUser(req);
+        const roadmaps = await Roadmap.find({ userId: activeUserId }).sort({ updatedAt: -1 });
+        return res.status(200).json({
+            success: true,
+            roadmaps
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+}
+
+export const renameRoadmap = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { title } = req.body;
+        if (!title) {
             return res.status(400).json({
                 success: false,
-                message: "subject, query, and response are required."
+                message: "title is required."
             });
         }
 
-        const folderSlug = subject.replace(/[^a-zA-Z0-9-_]/g, '_').toLowerCase();
-        const projectDir = path.join(workspaceRoot, 'projects', folderSlug);
-        const queriesPath = path.join(projectDir, 'queries.md');
-
-        // Check if directory exists (if not, we write it in projects folder)
-        await fs.mkdir(projectDir, { recursive: true });
-
-        const logEntry = `\n## ❓ Query: ${query}\n*Logged on: ${new Date().toLocaleString()}*\n\n${response}\n\n---\n`;
-
-        await fs.appendFile(queriesPath, logEntry, 'utf8');
+        const roadmap = await Roadmap.findByIdAndUpdate(id, { title }, { new: true });
+        if (!roadmap) {
+            return res.status(404).json({
+                success: false,
+                message: "Roadmap not found."
+            });
+        }
 
         return res.status(200).json({
             success: true,
-            message: "Query logged successfully!"
+            message: "Roadmap renamed successfully!",
+            roadmap
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+}
+
+export const renameProject = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { title } = req.body;
+        if (!title) {
+            return res.status(400).json({
+                success: false,
+                message: "title is required."
+            });
+        }
+
+        const project = await Project.findByIdAndUpdate(id, { title }, { new: true });
+        if (!project) {
+            return res.status(404).json({
+                success: false,
+                message: "Project not found."
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Project renamed successfully!",
+            project
         });
     } catch (error) {
         console.error(error);

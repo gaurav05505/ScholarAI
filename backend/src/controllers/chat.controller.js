@@ -2,6 +2,7 @@ import { chatWithLLM } from "../services/llm.service.js";
 import { intentNode } from "../node/intent.node.js";
 import { contextNode } from "../node/context.node.js";
 import LearnSchema from "../models/Learn.Schema.js";
+import Roadmap from "../models/Roadmap.mode.js";
 import Aichat from "../utils/aiClint.util.js";
 import mongoose from "mongoose";
 
@@ -19,6 +20,20 @@ export async function chat(req, res) {
     if (sessionId) {
       const session = await LearnSchema.findById(sessionId);
       if (session && session.status === "completed") {
+        let roadmapStructure = "No roadmap details available.";
+        if (session.roadmapId) {
+          const roadmapObj = await Roadmap.findById(session.roadmapId);
+          if (roadmapObj) {
+            roadmapStructure = roadmapObj.phases.map((phase, pIdx) => {
+              const modulesText = phase.modules.map((mod, mIdx) => {
+                const topicsText = mod.topics.map(t => `- ${t.name}`).join("\n");
+                return `Module ${pIdx+1}.${mIdx+1}: ${mod.name}\n${topicsText}`;
+              }).join("\n\n");
+              return `Phase ${pIdx+1}: ${phase.name}\n${modulesText}`;
+            }).join("\n\n---\n\n");
+          }
+        }
+
         const tutorPrompt = `You are ScolarAI, an AI learning tutor.
 The user is learning the topic: "${session.topic}".
 Their profile/context:
@@ -27,7 +42,12 @@ Their profile/context:
 - Goal: ${session.context?.goal || 'General study'}
 - Learning Style: ${session.context?.learningStyle || 'Standard'}
 
-Help the user by answering their questions contextually, explaining concepts, or guiding them through their roadmap modules. Make your response clean, professional, and formatted in rich Markdown.`;
+Their actual generated Roadmap is structured as follows:
+${roadmapStructure}
+
+Help the user by answering their questions contextually, explaining concepts, or guiding them through their roadmap. 
+IMPORTANT: Do NOT output or re-generate the entire syllabus or roadmap structure in your response. The user can already see the visual roadmap on their screen. Instead, refer to specific topics in their roadmap, guide them on what to click next, and answer their learning questions from first principles.
+Make your response clean, professional, and formatted in rich Markdown.`;
 
         const answer = await Aichat(tutorPrompt, message);
         return res.status(200).json({

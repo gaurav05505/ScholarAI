@@ -31,6 +31,10 @@ const LearningSession = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId, 
         ref: "Roadmap", 
         default: null 
+    },
+    projectCreated: {
+        type: Boolean,
+        default: false
     }
 
 } , {

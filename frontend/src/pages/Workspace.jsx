@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback, memo } from 'react';
 import axios from 'axios';
 import {
-  ArrowUpRight, AudioLines, Bolt, Clock3, Eclipse, FolderGit2, Map,
+  ArrowUpRight, AudioLines, Bolt, Clock3, Eclipse, FolderGit2, Map, Plus, Pencil,
   MessageCircle, MessageSquareDot, MessagesSquare, StepBack, Trash2, UserRound,
   Menu, X, PanelLeftClose, PanelLeftOpen, FileText, ListChecks,
 } from 'lucide-react';
@@ -373,7 +373,7 @@ const TABS = [
 // Full set of slides shown in the right panel. The first four are controlled by the
 // header tabs; the last two ("All Chats" / "All Roadmaps") are separate list views only
 // reachable from the sidebar — they are intentionally not the same as the header tabs.
-const VIEWS = ['source', 'chats', 'roadmap', 'questions', 'allChats', 'allRoadmaps'];
+const VIEWS = ['source', 'chats', 'roadmap', 'questions', 'allChats', 'allRoadmaps', 'projects'];
 
 /* ---------- panel content for non-chat tabs ---------- */
 
@@ -387,11 +387,17 @@ const InfoPanel = memo(({ title, body }) => (
   </div>
 ));
 
-const ListPanel = memo(({ title, items, onOpen, emptyLabel }) => (
+const ListPanel = memo(({ title, items, onOpen, emptyLabel, action }) => (
   <div className="flex h-full flex-col">
-    <h2 className="text-[20px] sm:text-[22px] font-medium text-[#1E1E1E] mb-4 sm:mb-6 px-1">{title}</h2>
+    <div className="flex items-center justify-between mb-4 sm:mb-6 px-1">
+      <h2 className="text-[20px] sm:text-[22px] font-medium text-[#1E1E1E]">{title}</h2>
+      {action}
+    </div>
     {items.length === 0 ? (
-      <p className="text-[14px] text-black/45 px-1">{emptyLabel}</p>
+      <div className="flex-1 flex flex-col items-center justify-center text-center p-6 border-2 border-dashed border-black/10 rounded-2xl bg-white/30">
+        <p className="text-[14px] text-black/45 mb-4">{emptyLabel}</p>
+        {action}
+      </div>
     ) : (
       <div className="flex-1 min-h-0 overflow-y-auto pr-1">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -418,7 +424,7 @@ const ListPanel = memo(({ title, items, onOpen, emptyLabel }) => (
 
 /* ---------- roadmap panel ---------- */
 const RoadmapPanel = memo(({ roadmap, onToggleTopic, onTopicClick }) => {
-  const [expandedPhases, setExpandedPhases] = useState({});
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
 
   if (!roadmap) {
     return <InfoPanel title="Roadmap" body="Your personalized learning path for this roadmap will show up here." />;
@@ -448,109 +454,188 @@ const RoadmapPanel = memo(({ roadmap, onToggleTopic, onTopicClick }) => {
 
   const progressPercent = totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
 
-  const togglePhase = (idx) => {
-    setExpandedPhases(prev => ({
-      ...prev,
-      [idx]: !prev[idx]
-    }));
-  };
-
   return (
     <div className="flex h-full flex-col overflow-hidden px-1 sm:px-3">
       {/* Title block */}
-      <div className="mb-6 rounded-2xl bg-white p-5 border border-black/5 shadow-sm shrink-0">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <span className="rounded-full bg-[#A8F35A]/25 px-2.5 py-1 text-xs font-semibold uppercase text-[#5b9610] tracking-wider">
-              {roadmap.topic || 'Learning Path'}
-            </span>
-            <h2 className="mt-2 text-xl sm:text-2xl font-semibold text-[#1E1E1E] leading-snug">{roadmap.title}</h2>
-            <p className="mt-2 text-sm text-black/60 leading-relaxed max-w-2xl">{roadmap.description}</p>
-          </div>
-          <div className="flex flex-col items-end justify-center shrink-0 min-w-[120px]">
-            <span className="text-2xl font-bold text-[#1E1E1E]">{progressPercent}%</span>
-            <span className="text-[12px] text-black/45 uppercase font-medium tracking-wide">Progress</span>
-            <div className="mt-2 h-2 w-full rounded-full bg-black/[0.07] overflow-hidden min-w-[100px]">
-              <div
-                className="h-full rounded-full bg-[#A8F35A] transition-all duration-500 ease-out"
-                style={{ width: `${progressPercent}%` }}
-              />
+      <div className="mb-6 rounded-2xl bg-white p-4 sm:p-5 border border-black/5 shadow-sm shrink-0 transition-all duration-300 relative overflow-hidden">
+        
+        {/* Toggle Collapse/Expand Button */}
+        <button
+          type="button"
+          onClick={() => setIsHeaderCollapsed((prev) => !prev)}
+          className="absolute right-4 top-4 rounded-xl p-1 bg-black/[0.03] hover:bg-[#A8F35A]/20 hover:text-[#5b9610] transition-colors cursor-pointer text-black/40"
+          title={isHeaderCollapsed ? "Expand Info" : "Minimize Info"}
+        >
+          {isHeaderCollapsed ? (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="4 14 10 14 10 20"/>
+              <polyline points="20 10 14 10 14 4"/>
+              <line x1="14" y1="10" x2="21" y2="3"/>
+              <line x1="3" y1="21" x2="10" y2="14"/>
+            </svg>
+          ) : (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="10 20 10 14 4 14"/>
+              <polyline points="14 4 14 10 20 10"/>
+              <line x1="14" y1="10" x2="21" y2="3"/>
+              <line x1="3" y1="21" x2="10" y2="14"/>
+            </svg>
+          )}
+        </button>
+
+        {isHeaderCollapsed ? (
+          /* Collapsed Version (Very compact) */
+          <div className="flex flex-row items-center justify-between pr-8 gap-4">
+            <div className="flex items-center gap-3 truncate">
+              <span className="rounded-full bg-[#A8F35A]/20 px-2 py-0.5 text-[10px] font-bold uppercase text-[#5b9610] tracking-wider shrink-0">
+                {roadmap.topic || 'Path'}
+              </span>
+              <h2 className="text-[14px] sm:text-[15px] font-bold text-[#1E1E1E] truncate leading-none">{roadmap.title}</h2>
+            </div>
+            
+            <div className="flex items-center gap-3 shrink-0">
+              <span className="text-xs font-bold text-[#1E1E1E]">{progressPercent}%</span>
+              <div className="h-1.5 w-16 sm:w-24 rounded-full bg-black/[0.07] overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-[#A8F35A] transition-all duration-500 ease-out"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          /* Full Version */
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pr-6">
+            <div>
+              <span className="rounded-full bg-[#A8F35A]/25 px-2.5 py-1 text-xs font-semibold uppercase text-[#5b9610] tracking-wider">
+                {roadmap.topic || 'Learning Path'}
+              </span>
+              <h2 className="mt-2 text-xl sm:text-2xl font-semibold text-[#1E1E1E] leading-snug">{roadmap.title}</h2>
+              <p className="mt-2 text-sm text-black/60 leading-relaxed max-w-2xl">{roadmap.description}</p>
+            </div>
+            <div className="flex flex-col items-end justify-center shrink-0 min-w-[120px] self-start sm:self-center">
+              <div className="flex items-baseline gap-1">
+                <span className="text-2xl font-bold text-[#1E1E1E]">{progressPercent}%</span>
+                <span className="text-[11px] text-black/45 uppercase font-semibold">Progress</span>
+              </div>
+              <div className="mt-2 h-2 w-full rounded-full bg-black/[0.07] overflow-hidden min-w-[100px]">
+                <div
+                  className="h-full rounded-full bg-[#A8F35A] transition-all duration-500 ease-out"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Phases scrollable container */}
-      <div className="flex-1 overflow-y-auto pr-1 space-y-4 no-scrollbar">
-        {roadmap.phases.map((phase, phaseIdx) => {
-          const isExpanded = expandedPhases[phaseIdx] !== false; // expanded by default
-          return (
-            <div key={phaseIdx} className="rounded-2xl border border-black/5 bg-white shadow-sm overflow-hidden">
-              {/* Phase Header */}
-              <button
-                type="button"
-                onClick={() => togglePhase(phaseIdx)}
-                className="flex w-full items-center justify-between p-4 text-left hover:bg-black/[0.01] transition-colors border-l-4 border-[#A8F35A]"
-              >
-                <div>
-                  <h3 className="font-semibold text-lg text-[#1E1E1E]">{phase.name}</h3>
-                  <p className="text-[13px] text-black/50 mt-0.5">{phase.description}</p>
-                </div>
-                <span className="text-[12px] text-black/45 font-semibold px-2 py-1 bg-black/[0.04] rounded-md shrink-0">
-                  {isExpanded ? 'COLLAPSE' : 'EXPAND'}
-                </span>
-              </button>
+      {/* Phases scrollable container (Roadmap.sh Style Tree) */}
+      <div className="flex-1 overflow-y-auto pr-2 no-scrollbar pb-10">
+        <div className="relative py-8 pl-8 md:pl-0 md:flex md:flex-col md:items-center">
+          
+          {/* Vertical Backbone Connector Line */}
+          <div className="absolute left-4 md:left-1/2 top-0 bottom-0 w-1 bg-gradient-to-b from-[#A8F35A] via-black/10 to-[#A8F35A] -translate-x-1/2 z-0 hidden md:block" />
+          <div className="absolute left-4 top-0 bottom-0 w-1 bg-gradient-to-b from-[#A8F35A] via-black/10 to-[#A8F35A] z-0 block md:hidden" />
 
-              {/* Phase Modules */}
-              {isExpanded && (
-                <div className="p-4 bg-black/[0.005] border-t border-black/5 space-y-6">
-                  {phase.modules.map((mod, modIdx) => (
-                    <div key={modIdx} className="relative pl-4 before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[2px] before:bg-black/10">
-                      <h4 className="font-medium text-[15px] text-[#1E1E1E]">{mod.name}</h4>
-                      <p className="text-xs text-black/50 mt-0.5">{mod.description}</p>
+          {roadmap.phases.map((phase, phaseIdx) => (
+            <div key={phaseIdx} className="w-full relative z-10 flex flex-col items-center">
+              
+              {/* Phase Milestone Node (Centered along timeline) */}
+              <div className="relative z-20 mb-8 mt-6 w-full flex items-center md:justify-center">
+                <div className="flex items-center gap-3 bg-[#EAF2CF] text-[#5b9610] font-bold px-6 py-3 rounded-full border-2 border-[#A8F35A] shadow-md text-sm md:text-base">
+                  <Map size={18} className="shrink-0" />
+                  <span>{phase.name}</span>
+                </div>
+              </div>
+
+              {/* Module Cards as alternating branches */}
+              <div className="w-full relative z-10">
+                {phase.modules.map((mod, modIdx) => {
+                  // Alternate left and right blocks on desktop
+                  const isLeft = modIdx % 2 === 0;
+                  return (
+                    <div key={modIdx} className="relative flex items-start w-full mb-10 last:mb-0 md:justify-center">
                       
-                      {/* Topics Checklist */}
-                      <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2">
-                        {mod.topics.map((topic, topicIdx) => (
-                          <div
-                            key={topicIdx}
-                            className={`flex items-center gap-3 p-2.5 rounded-xl border border-black/[0.03] transition-all bg-white hover:border-black/[0.07]
-                              ${topic.completed ? 'opacity-65 bg-black/[0.01]' : ''}`}
-                          >
-                            <button
-                              type="button"
-                              onClick={() => onToggleTopic(roadmap.id, phaseIdx, modIdx, topicIdx)}
-                              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-all cursor-pointer
-                                ${topic.completed
-                                  ? 'bg-[#A8F35A] border-[#A8F35A] text-[#1E1E1E]'
-                                  : 'border-black/25 hover:border-black/40 bg-white'}`}
-                              aria-label={`Toggle completion of ${topic.name}`}
-                            >
-                              {topic.completed && (
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                  <polyline points="20 6 9 17 4 12"/>
-                                </svg>
-                              )}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => onTopicClick && onTopicClick(topic.name, roadmap.topic)}
-                              className={`text-left text-[13.5px] font-medium leading-tight truncate hover:text-[#9aad2e] hover:underline cursor-pointer
-                                ${topic.completed ? 'line-through text-black/45' : 'text-[#1E1E1E]'}`}
-                              title={`Click to learn ${topic.name} from First Principles`}
-                            >
-                              {topic.name}
-                            </button>
+                      {/* Branch Horizontal Line connecting to main trunk (Desktop) */}
+                      <div className={`absolute top-8 w-[calc(50%-1.5rem)] h-0.5 border-t-2 border-dashed border-black/15 z-0 hidden md:block
+                        ${isLeft ? 'right-1/2' : 'left-1/2'}`}
+                      />
+                      
+                      {/* Central small node connector dot on the backbone (Desktop) */}
+                      <div className="absolute left-4 md:left-1/2 top-8 h-4.5 w-4.5 -translate-x-1/2 rounded-full border-4 border-[#A8F35A] bg-white z-20 shadow-sm" />
+
+                      {/* Branch connector dot on the backbone (Mobile) */}
+                      <div className="absolute left-4 top-8 h-3.5 w-3.5 -translate-x-1/2 rounded-full border-2 border-[#A8F35A] bg-white z-20 shadow-sm md:hidden" />
+
+                      {/* Module Box Container */}
+                      <div className={`w-full max-w-md pl-10 md:pl-0 z-10
+                        ${isLeft ? 'md:mr-auto md:pr-10' : 'md:ml-auto md:pl-10'}`}
+                      >
+                        <div className="bg-white rounded-2xl border border-black/10 p-5 shadow-[0_4px_12px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.06)] hover:border-black/15 transition-all duration-300 relative group">
+                          
+                          {/* Left indicator branch dot for mobile */}
+                          <div className="absolute left-0 top-8 w-3 h-3 rounded-full bg-black/10 -translate-x-1/2 md:hidden" />
+                          
+                          {/* Module Header Details */}
+                          <div className="flex items-start justify-between gap-3 mb-2">
+                            <div>
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-black/40">Module {phaseIdx + 1}.{modIdx + 1}</span>
+                              <h4 className="font-semibold text-[15px] sm:text-[16px] text-[#1E1E1E] group-hover:text-[#5b9610] transition-colors">{mod.name}</h4>
+                            </div>
+                            <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-black/[0.04] text-black/50 uppercase tracking-wide shrink-0">
+                              {mod.topics.filter(t => t.completed).length}/{mod.topics.length} Done
+                            </span>
                           </div>
-                        ))}
+
+                          <p className="text-xs text-black/50 leading-relaxed mb-4">{mod.description}</p>
+                          
+                          {/* Interactive Topic Capsules (Skill Nodes) */}
+                          <div className="flex flex-wrap gap-2">
+                            {mod.topics.map((topic, topicIdx) => (
+                              <div
+                                key={topicIdx}
+                                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full border transition-all text-xs font-semibold cursor-pointer select-none
+                                  ${topic.completed 
+                                    ? 'bg-[#EAF2CF]/40 border-[#A8F35A] text-[#426e0b] hover:bg-[#EAF2CF]/60' 
+                                    : 'bg-black/[0.02] border-black/5 text-[#1E1E1E] hover:bg-black/[0.05] hover:border-black/10 hover:scale-[1.02] active:scale-[0.98]'}`}
+                                onClick={() => onTopicClick && onTopicClick(topic.name, roadmap.topic)}
+                                title={`Click to learn ${topic.name} from First Principles`}
+                              >
+                                {/* Completion Circular Checkbox */}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation(); // prevent launching lesson chat
+                                    onToggleTopic(roadmap.id, phaseIdx, modIdx, topicIdx);
+                                  }}
+                                  className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-all cursor-pointer
+                                    ${topic.completed
+                                      ? 'bg-[#A8F35A] border-[#A8F35A] text-[#1E1E1E]'
+                                      : 'border-black/20 hover:border-black/35 bg-white'}`}
+                                  aria-label={`Toggle completion of ${topic.name}`}
+                                >
+                                  {topic.completed && (
+                                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round">
+                                      <polyline points="20 6 9 17 4 12"/>
+                                    </svg>
+                                  )}
+                                </button>
+                                <span className={topic.completed ? 'line-through opacity-70' : ''}>
+                                  {topic.name}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
+                  );
+                })}
+              </div>
             </div>
-          );
-        })}
+          ))}
+
+        </div>
       </div>
     </div>
   );
@@ -709,17 +794,9 @@ const ChatPanel = ({ chat, onSend, sending = false }) => {
 let idCounter = 100;
 const nextId = () => idCounter++;
 
-const initialChats = [
-  { id: 1, title: 'Ai Research Learning', messages: [] },
-  { id: 2, title: 'Gen ai learning', messages: [] },
-  { id: 3, title: 'Maths learning path', messages: [] },
-];
+const initialChats = [];
 
-const initialRoadmaps = [
-  { id: 201, title: 'Frontend Developer Path' },
-  { id: 202, title: 'Data Science Roadmap' },
-  { id: 203, title: 'UI/UX Design Track' },
-];
+const initialRoadmaps = [];
 
 const Workspace = () => {
   const [collapsed, setCollapsed] = useState(false);
@@ -728,13 +805,15 @@ const Workspace = () => {
 
   // chats history (independent)
   const [chats, setChats] = useState(initialChats);
-  const [activeChatId, setActiveChatId] = useState(initialChats[0].id);
+  const [activeChatId, setActiveChatId] = useState(null);
 
   // roadmaps history (independent, not synced with chats)
   const [roadmaps, setRoadmaps] = useState(initialRoadmaps);
-  const [activeRoadmapId, setActiveRoadmapId] = useState(initialRoadmaps[0].id);
+  const [activeRoadmapId, setActiveRoadmapId] = useState(null);
   const [sending, setSending] = useState(false);
   const [modalData, setModalData] = useState(null);
+  const [projects, setProjects] = useState([]);
+  const [activeProjectId, setActiveProjectId] = useState(null);
 
 
   const activeChat = chats.find((c) => c.id === activeChatId);
@@ -843,6 +922,62 @@ const Workspace = () => {
     });
   }, []);
 
+  const handleRenameChat = useCallback(async (chatId, currentTitle) => {
+    const newTitle = window.prompt("Rename Chat", currentTitle);
+    if (!newTitle || newTitle.trim() === "") return;
+    
+    setChats((prev) => prev.map(c => c.id === chatId ? { ...c, title: newTitle } : c));
+    
+    if (activeProjectId) {
+      const targetChat = chats.find(c => c.id === chatId);
+      if (targetChat) {
+        try {
+          await axios.post(`http://localhost:5000/api/learning/projects/${activeProjectId}/chats`, {
+            chat: {
+              id: chatId,
+              title: newTitle,
+              messages: targetChat.messages
+            }
+          });
+        } catch (dbErr) {
+          console.error("Failed to sync rename to project DB:", dbErr);
+        }
+      }
+    }
+  }, [chats, activeProjectId]);
+
+  const handleRenameRoadmap = useCallback(async (roadmapId, currentTitle) => {
+    const newTitle = window.prompt("Rename Roadmap", currentTitle);
+    if (!newTitle || newTitle.trim() === "") return;
+
+    setRoadmaps((prev) => prev.map(r => r.id === roadmapId ? { ...r, title: newTitle } : r));
+
+    try {
+      await axios.patch(`http://localhost:5000/api/learning/roadmap/${roadmapId}`, {
+        title: newTitle
+      });
+    } catch (err) {
+      console.error("Failed to rename roadmap:", err);
+      alert("Error renaming roadmap in database.");
+    }
+  }, []);
+
+  const handleRenameProject = useCallback(async (projectId, currentTitle) => {
+    const newTitle = window.prompt("Rename Project", currentTitle);
+    if (!newTitle || newTitle.trim() === "") return;
+
+    setProjects((prev) => prev.map(p => p.id === projectId ? { ...p, title: newTitle } : p));
+
+    try {
+      await axios.patch(`http://localhost:5000/api/learning/projects/${projectId}`, {
+        title: newTitle
+      });
+    } catch (err) {
+      console.error("Failed to rename project:", err);
+      alert("Error renaming project in database.");
+    }
+  }, []);
+
   const updateTypingMessage = useCallback((chatId, typingId, text, typing) => {
     setChats((prev) =>
       prev.map((chat) => {
@@ -885,6 +1020,72 @@ const Workspace = () => {
     [updateTypingMessage]
   );
 
+  const loadRoadmaps = useCallback(async () => {
+    try {
+      const res = await axios.get('http://localhost:5000/api/learning/roadmaps');
+      if (res.data?.success && res.data?.roadmaps) {
+        const formattedRoadmaps = res.data.roadmaps.map(r => ({
+          id: r._id,
+          title: r.title,
+          topic: r.topic,
+          description: r.description,
+          phases: r.phases
+        }));
+        setRoadmaps(formattedRoadmaps);
+        if (formattedRoadmaps.length > 0) {
+          setActiveRoadmapId(formattedRoadmaps[0].id);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to load roadmaps list:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadRoadmaps();
+  }, [loadRoadmaps]);
+
+  useEffect(() => {
+    if (chats.length === 0) {
+      const welcomeChat = {
+        id: 'default-welcome',
+        title: 'ScolarAI Learning Chat',
+        messages: [
+          {
+            id: 'welcome-msg',
+            role: 'ai',
+            text: 'Hello! I am **ScolarAI**, your dynamic learning tutor.\n\nTo get started, tell me what topic or subject you want to learn (for example: `"I want to learn Dynamic Programming and Graphs"` or `"Teach me Web Development basics"`). I will ask you a few questions and generate a premium interactive learning roadmap for you!'
+          }
+        ]
+      };
+      setChats([welcomeChat]);
+      setActiveChatId('default-welcome');
+    }
+  }, [chats]);
+
+  const loadProjects = useCallback(async () => {
+    try {
+      const res = await axios.get('http://localhost:5000/api/learning/projects');
+      if (res.data?.success && res.data?.projects) {
+        setProjects(res.data.projects.map(p => ({
+          id: p._id,
+          title: p.title,
+          topic: p.topic,
+          description: p.description,
+          roadmapId: p.roadmapId,
+          sessionId: p.sessionId,
+          chats: p.chats || []
+        })));
+      }
+    } catch (err) {
+      console.error("Failed to load projects list:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadProjects();
+  }, [loadProjects]);
+
   const handleCreateProject = useCallback(async () => {
     if (!modalData) return;
     try {
@@ -892,8 +1093,20 @@ const Workspace = () => {
         sessionId: modalData.sessionId,
         topic: modalData.topic
       });
-      if (res.data?.success) {
-        alert(`Workspace created successfully!\nFiles written to: ${res.data.projectDir}`);
+      if (res.data?.success && res.data?.project) {
+        const p = res.data.project;
+        const newProj = {
+          id: p._id,
+          title: p.title,
+          topic: p.topic,
+          description: p.description,
+          roadmapId: p.roadmapId,
+          sessionId: p.sessionId,
+          chats: p.chats || []
+        };
+        setProjects((prev) => [newProj, ...prev.filter(x => x.id !== newProj.id)]);
+        setActiveProjectId(newProj.id);
+        alert(`Study project "${newProj.title}" successfully created inside database!`);
       }
     } catch (err) {
       console.error("Failed to create project workspace:", err);
@@ -903,7 +1116,64 @@ const Workspace = () => {
     }
   }, [modalData]);
 
+  const handleProjectSelect = useCallback(async (projectId) => {
+    try {
+      const res = await axios.get(`http://localhost:5000/api/learning/projects/${projectId}`);
+      if (res.data?.success && res.data?.project) {
+        const proj = res.data.project;
+        
+        setActiveProjectId(proj._id);
+
+        if (proj.roadmapId) {
+          const rm = proj.roadmapId;
+          const formattedRoadmap = {
+            id: rm._id,
+            title: rm.title,
+            topic: rm.topic,
+            description: rm.description,
+            phases: rm.phases
+          };
+          setRoadmaps((prev) => [formattedRoadmap, ...prev.filter(r => r.id !== formattedRoadmap.id)]);
+          setActiveRoadmapId(formattedRoadmap.id);
+        }
+
+        if (proj.chats && proj.chats.length > 0) {
+          const formattedChats = proj.chats.map(c => ({
+            id: c.id,
+            title: c.title,
+            messages: c.messages,
+            sessionId: proj.sessionId
+          }));
+          
+          setChats(formattedChats);
+          setActiveChatId(formattedChats[0].id);
+        } else {
+          const defaultChat = {
+            id: nextId(),
+            title: 'Welcome to Project',
+            messages: [
+              { id: nextId(), role: 'ai', text: `Welcome to your study project for **${proj.title}**! Click on any topic in your roadmap tab to start your first-principles lesson.` }
+            ]
+          };
+          setChats([defaultChat]);
+          setActiveChatId(defaultChat.id);
+        }
+
+        setActiveTab('roadmap');
+      }
+    } catch (err) {
+      console.error("Failed to load project details:", err);
+    }
+  }, []);
+
   const handleStartTopicLesson = useCallback(async (topicName, roadmapSubject) => {
+    const existingChat = chats.find(c => c.title === `Lesson: ${topicName}`);
+    if (existingChat) {
+      setActiveChatId(existingChat.id);
+      setActiveTab('chats');
+      return;
+    }
+
     const chatId = nextId();
     const userMsgId = nextId();
     const typingId = nextId();
@@ -932,15 +1202,29 @@ const Workspace = () => {
 
       await typeAiResponse(chatId, typingId, explanation);
 
-      // Log the query to projects queries.md in background
-      try {
-        await axios.post('http://localhost:5000/api/learning/log-query', {
-          subject: roadmapSubject,
-          query: `Explain: ${topicName}`,
-          response: explanation
-        });
-      } catch (fsErr) {
-        console.error("FS logging error:", fsErr);
+      if (activeProjectId) {
+        try {
+          const updatedChat = {
+            id: chatId,
+            title: `Lesson: ${topicName}`,
+            messages: [
+              { id: userMsgId, role: 'user', text: `Explain the topic: "${topicName}" using First-Principles thinking.` },
+              { id: typingId, role: 'ai', text: explanation }
+            ]
+          };
+          await axios.post(`http://localhost:5000/api/learning/projects/${activeProjectId}/chats`, {
+            chat: updatedChat
+          });
+          setProjects(prev => prev.map(p => {
+            if (p.id !== activeProjectId) return p;
+            return {
+              ...p,
+              chats: [updatedChat, ...p.chats.filter(c => c.id !== chatId)]
+            };
+          }));
+        } catch (dbErr) {
+          console.error("Failed to save chat to database project:", dbErr);
+        }
       }
 
     } catch (error) {
@@ -954,7 +1238,7 @@ const Workspace = () => {
     } finally {
       setSending(false);
     }
-  }, [typeAiResponse, updateTypingMessage]);
+  }, [chats, activeProjectId, typeAiResponse, updateTypingMessage]);
 
   const handleSend = useCallback(
     async (text) => {
@@ -1001,10 +1285,10 @@ const Workspace = () => {
         const resStatus = response.data?.status;
         const resRoadmap = response.data?.roadmap;
 
-        setChats((prev) =>
-          prev.map((chat) => {
+        setChats((prev) => {
+          const nextChats = prev.map((chat) => {
             if (chat.id !== chatId) return chat;
-            return {
+            const updatedChat = {
               ...chat,
               sessionId: resSessionId || chat.sessionId,
               learningStatus: resStatus || chat.learningStatus,
@@ -1012,8 +1296,21 @@ const Workspace = () => {
                 message.id === typingId ? { ...message, options } : message
               ),
             };
-          })
-        );
+
+            if (activeProjectId) {
+              axios.post(`http://localhost:5000/api/learning/projects/${activeProjectId}/chats`, {
+                chat: {
+                  id: updatedChat.id,
+                  title: updatedChat.title,
+                  messages: updatedChat.messages
+                }
+              }).catch(dbErr => console.error("Failed to sync message to project DB:", dbErr));
+            }
+
+            return updatedChat;
+          });
+          return nextChats;
+        });
 
         if (resRoadmap) {
           const newRoadmapItem = {
@@ -1027,8 +1324,10 @@ const Workspace = () => {
           setActiveRoadmapId(newRoadmapItem.id);
           setActiveTab('roadmap');
 
-          // Open the workspace modal popup
-          setModalData({ sessionId: resSessionId, topic: resRoadmap.topic });
+          // Open the workspace modal popup if project has not been created yet
+          if (!response.data?.projectCreated) {
+            setModalData({ sessionId: resSessionId, topic: resRoadmap.topic });
+          }
         }
       } catch (error) {
         const errorMessage =
@@ -1042,7 +1341,7 @@ const Workspace = () => {
         setSending(false);
       }
     },
-    [activeChatId, chats, typeAiResponse, updateTypingMessage]
+    [activeChatId, chats, activeProjectId, typeAiResponse, updateTypingMessage]
   );
 
   const sidebarWidthClass = collapsed ? 'lg:w-[88px]' : 'lg:w-[280px]';
@@ -1179,7 +1478,7 @@ const Workspace = () => {
               <div className="flex flex-col gap-2">
                 <NavButton text="All Chats" icon={MessageCircle} collapsed={collapsed} active={activeTab === 'allChats'} onClick={() => { setActiveTab('allChats'); setMobileOpen(false); }} />
                 <NavButton text="Roadmaps" icon={Map} collapsed={collapsed} active={activeTab === 'allRoadmaps'} onClick={() => { setActiveTab('allRoadmaps'); setMobileOpen(false); }} />
-                <NavButton text="Projects" icon={FolderGit2} collapsed={collapsed} active={false} onClick={() => {}} />
+                <NavButton text="Projects" icon={FolderGit2} collapsed={collapsed} active={activeTab === 'projects'} onClick={() => { setActiveTab('projects'); setMobileOpen(false); }} />
               </div>
             </div>
 
@@ -1201,6 +1500,15 @@ const Workspace = () => {
                           ${activeChatId === c.id ? 'text-black font-medium' : ''}`}
                       >
                         {c.title}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleRenameChat(c.id, c.title)}
+                        className="opacity-0 transition-opacity group-hover:opacity-100 text-black/35 hover:text-black"
+                        title="Rename Chat"
+                      >
+                        <Pencil size={12} />
                       </button>
 
                       <button
@@ -1227,16 +1535,71 @@ const Workspace = () => {
 
                 <div className="flex flex-col gap-1 border-l border-black/15 pl-6 text-[14px] text-[#1E1E1E]/78">
                   {roadmaps.map((r) => (
-                    <button
-                      key={r.id}
-                      type="button"
-                      onClick={() => handleRoadmapHistoryClick(r.id)}
-                      className={`w-full truncate text-left rounded-lg px-2 py-1.5 transition-colors hover:text-[#000]
-                        ${activeRoadmapId === r.id ? 'text-black font-medium' : ''}`}
-                    >
-                      {r.title}
-                    </button>
+                    <div key={r.id} className="group flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-white/50">
+                      <button
+                        type="button"
+                        onClick={() => handleRoadmapHistoryClick(r.id)}
+                        className={`flex-1 truncate text-left transition-colors hover:text-[#000]
+                          ${activeRoadmapId === r.id ? 'text-black font-semibold' : ''}`}
+                      >
+                        {r.title}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRenameRoadmap(r.id, r.title)}
+                        className="opacity-0 transition-opacity group-hover:opacity-100 text-black/35 hover:text-black"
+                        title="Rename Roadmap"
+                      >
+                        <Pencil size={12} />
+                      </button>
+                    </div>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {!collapsed && activeTab === 'projects' && (
+              <div className="mt-6 animate-fade-in">
+                <div className="mb-3 flex items-center justify-between gap-3 text-black/52 px-1">
+                  <div className="flex items-center gap-3">
+                    <FolderGit2 size={17} />
+                    <p className="text-[15px]">My Projects</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleNewChat}
+                    className="hover:text-black text-black/60 transition-colors p-0.5 rounded-md hover:bg-black/5 flex items-center justify-center"
+                    title="Start New Project"
+                  >
+                    <Plus size={16} />
+                  </button>
+                </div>
+
+                <div className="flex flex-col gap-1 border-l border-black/15 pl-6 text-[14px] text-[#1E1E1E]/78">
+                  {projects.length === 0 ? (
+                    <span className="text-xs text-black/40 italic px-2 py-1">No projects yet.</span>
+                  ) : (
+                    projects.map((p) => (
+                      <div key={p.id} className="group flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-white/50">
+                        <button
+                          type="button"
+                          onClick={() => handleProjectSelect(p.id)}
+                          className={`flex-1 truncate text-left transition-colors hover:text-[#000]
+                            ${activeProjectId === p.id ? 'text-black font-semibold' : 'text-black/70'}`}
+                        >
+                          📁 {p.title}
+                         </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRenameProject(p.id, p.title)}
+                          className="opacity-0 transition-opacity group-hover:opacity-100 text-black/35 hover:text-black"
+                          title="Rename Project"
+                        >
+                          <Pencil size={12} />
+                        </button>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             )}
@@ -1255,22 +1618,22 @@ const Workspace = () => {
         {/* right panel with sliding tabs */}
         <div className="flex flex-1 min-w-0 flex-col rounded-3xl bg-[#EAF2CF] overflow-hidden">
           <div
-            className="flex h-full w-[600%] transition-transform duration-300 ease-in-out"
+            className="flex h-full w-[700%] transition-transform duration-300 ease-in-out"
             style={{ transform: `translateX(-${activeIndex * (100 / VIEWS.length)}%)` }}
           >
-            <div className="w-1/6 h-full px-4 sm:px-6 py-6 sm:py-10">
+            <div className="w-1/7 h-full px-4 sm:px-6 py-6 sm:py-10">
               <InfoPanel title="Sources" body="Add documents, links, or notes you want ScolarAi to learn from." />
             </div>
-            <div className="w-1/6 h-full px-2 sm:px-6 py-4 sm:py-10">
+            <div className="w-1/7 h-full px-2 sm:px-6 py-4 sm:py-10">
               <ChatPanel chat={activeChat} onSend={handleSend} sending={sending} />
             </div>
-            <div className="w-1/6 h-full px-2 sm:px-6 py-4 sm:py-8 overflow-hidden bg-white rounded-3xl">
+            <div className="w-1/7 h-full px-2 sm:px-6 py-4 sm:py-8 overflow-hidden bg-white rounded-3xl">
               <RoadmapPanel roadmap={activeRoadmap} onToggleTopic={handleToggleTopic} onTopicClick={handleStartTopicLesson} />
             </div>
-            <div className="w-1/6 h-full px-4 sm:px-6 py-6 sm:py-10">
+            <div className="w-1/7 h-full px-4 sm:px-6 py-6 sm:py-10">
               <InfoPanel title="Important questions" body="Key questions worth revisiting will be collected here as you chat." />
             </div>
-            <div className="w-1/6 h-full px-4 sm:px-6 py-6 sm:py-10">
+            <div className="w-1/7 h-full px-4 sm:px-6 py-6 sm:py-10">
               <ListPanel
                 title="All Chats"
                 items={chats}
@@ -1278,12 +1641,28 @@ const Workspace = () => {
                 emptyLabel="No chats yet — start a new one."
               />
             </div>
-            <div className="w-1/6 h-full px-4 sm:px-6 py-6 sm:py-10">
+            <div className="w-1/7 h-full px-4 sm:px-6 py-6 sm:py-10">
               <ListPanel
                 title="All Roadmaps"
                 items={roadmaps}
                 onOpen={openRoadmapFromList}
                 emptyLabel="No roadmaps yet."
+              />
+            </div>
+            <div className="w-1/7 h-full px-4 sm:px-6 py-6 sm:py-10">
+              <ListPanel
+                title="All Projects"
+                items={projects}
+                onOpen={handleProjectSelect}
+                emptyLabel="No projects yet. Start a new learning journey to create one!"
+                action={
+                  <button
+                    onClick={handleNewChat}
+                    className="bg-black hover:bg-black/80 text-white rounded-xl px-4 py-2 text-sm font-semibold transition-all shadow-sm flex items-center gap-1 shrink-0"
+                  >
+                    <Plus size={16} /> New Project
+                  </button>
+                }
               />
             </div>
           </div>
