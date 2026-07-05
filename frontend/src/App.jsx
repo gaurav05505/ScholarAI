@@ -9,8 +9,8 @@ const App = () => {
     <div>
       {/* <Login /> */}
       {/* <Register />  */}
-      {/* <ScolarAI /> */}
-      <Workspace /> 
+      <ScolarAI />
+      {/* <Workspace />  */}
 
     </div>
   )
