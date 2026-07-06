@@ -692,6 +692,21 @@ const MessageBubble = memo(({ message, onOptionClick }) => {
                 ))}
               </div>
             )}
+
+            {/* Render retrieved document sources context */}
+            {!message.typing && message.sources && message.sources.length > 0 && (
+              <div className="mt-3 border-t border-black/5 pt-2">
+                <p className="text-[10px] font-bold text-black/40 uppercase tracking-widest mb-1.5">Retrieved Sources:</p>
+                <div className="flex flex-col gap-1.5">
+                  {message.sources.map((src, sIdx) => (
+                    <div key={sIdx} className="text-[11px] text-black/60 bg-black/[0.02] border border-black/5 rounded-xl p-2.5 leading-snug">
+                      <p className="font-semibold text-black/80">📄 {src.title}</p>
+                      <p className="mt-1 text-black/55 italic line-clamp-2">"{src.text}"</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
@@ -705,7 +720,7 @@ const MessageBubble = memo(({ message, onOptionClick }) => {
   );
 });
 
-const ChatPanel = ({ chat, onSend, sending = false }) => {
+const ChatPanel = ({ chat, onSend, sending = false, semanticSearchEnabled, onToggleSemanticSearch }) => {
   const [value, setValue] = useState('');
   const scrollRef = useRef(null);
   const inputRef = useRef(null);
@@ -761,29 +776,51 @@ const ChatPanel = ({ chat, onSend, sending = false }) => {
         </div>
       )}
 
-      <div className="mt-auto flex items-center gap-3 px-1 sm:px-4 pb-1">
-        <div className="flex h-14 flex-1 items-center gap-3 rounded-2xl border border-black/10 bg-white px-4 transition-shadow focus-within:border-black/20 focus-within:shadow-[0_0_0_3px_rgba(168,243,90,0.35)]">
-          <AudioLines size={18} className="shrink-0 text-[#1E1E1E]/70" />
-          <input
-            ref={inputRef}
-            type="text"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            onKeyDown={handleKey}
-            placeholder={sending ? 'Waiting for a response...' : 'Start typing...'}
-            className="w-full bg-transparent text-[14px] text-[#1E1E1E] outline-none placeholder:text-black/35"
-          />
+      <div className="mt-auto flex flex-col gap-2 px-1 sm:px-4 pb-1">
+        {/* iOS-Style Toggle Switch for RAG Semantic Search */}
+        <div className="flex items-center justify-between text-xs text-black/50 px-1 py-1.5 select-none bg-black/[0.02] rounded-xl border border-black/5">
+          <div className="flex items-center gap-2">
+            <span className={`inline-block h-2 w-2 rounded-full ${semanticSearchEnabled ? 'bg-green-500 animate-pulse' : 'bg-black/25'}`} />
+            <span>Semantic Search (RAG): {semanticSearchEnabled ? 'ON' : 'OFF'}</span>
+          </div>
+          <button
+            type="button"
+            onClick={onToggleSemanticSearch}
+            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none
+              ${semanticSearchEnabled ? 'bg-[#A8F35A]' : 'bg-black/10'}`}
+            title="Toggle Semantic Search (Retrieval-Augmented Generation)"
+          >
+            <span
+              className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out
+                ${semanticSearchEnabled ? 'translate-x-4' : 'translate-x-0'}`}
+            />
+          </button>
         </div>
 
-        <button
-          type="button"
-          onClick={submit}
-          disabled={sending || !value.trim()}
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#A8F35A] text-[#1E1E1E] transition-all active:scale-[0.95] disabled:cursor-not-allowed disabled:opacity-40"
-          aria-label="Send"
-        >
-          <ArrowUpRight size={20} />
-        </button>
+        <div className="flex items-center gap-3">
+          <div className="flex h-14 flex-1 items-center gap-3 rounded-2xl border border-black/10 bg-white px-4 transition-shadow focus-within:border-black/20 focus-within:shadow-[0_0_0_3px_rgba(168,243,90,0.35)]">
+            <AudioLines size={18} className="shrink-0 text-[#1E1E1E]/70" />
+            <input
+              ref={inputRef}
+              type="text"
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              onKeyDown={handleKey}
+              placeholder={sending ? 'Waiting for a response...' : 'Start typing...'}
+              className="w-full bg-transparent text-[14px] text-[#1E1E1E] outline-none placeholder:text-black/35"
+            />
+          </div>
+
+          <button
+            type="button"
+            onClick={submit}
+            disabled={sending || !value.trim()}
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#A8F35A] text-[#1E1E1E] transition-all active:scale-[0.95] disabled:cursor-not-allowed disabled:opacity-40"
+            aria-label="Send"
+          >
+            <ArrowUpRight size={20} />
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -814,6 +851,106 @@ const Workspace = () => {
   const [modalData, setModalData] = useState(null);
   const [projects, setProjects] = useState([]);
   const [activeProjectId, setActiveProjectId] = useState(null);
+
+  // RAG Sources Integration states
+  const [documents, setDocuments] = useState([]);
+  const [semanticSearchEnabled, setSemanticSearchEnabled] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const [urlInput, setUrlInput] = useState('');
+  const [urlTitleInput, setUrlTitleInput] = useState('');
+
+  const fetchDocuments = useCallback(async () => {
+    try {
+      const res = await axios.get('http://localhost:5000/docs/');
+      if (res.data?.success && res.data?.data) {
+        setDocuments(res.data.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch documents from library:', err);
+    }
+  }, []);
+
+  // Poll for document status updates if any document is processing, queued, or pending
+  useEffect(() => {
+    fetchDocuments();
+  }, [fetchDocuments]);
+
+  useEffect(() => {
+    const hasActiveJob = documents.some((doc) =>
+      ['queued', 'pending', 'processing'].includes(doc.status)
+    );
+    if (!hasActiveJob) return;
+
+    const interval = setInterval(() => {
+      fetchDocuments();
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [documents, fetchDocuments]);
+
+  const handlePdfUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('sourceType', 'pdf');
+
+    setUploading(true);
+    setUploadError('');
+
+    try {
+      await axios.post('http://localhost:5000/docs/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      fetchDocuments();
+    } catch (err) {
+      setUploadError(err.response?.data?.message || 'Failed to upload PDF.');
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleUrlAdd = async (e) => {
+    e.preventDefault();
+    if (!urlInput.trim()) return;
+
+    setUploading(true);
+    setUploadError('');
+
+    try {
+      await axios.post('http://localhost:5000/docs/upload', {
+        sourceType: 'url',
+        url: urlInput.trim(),
+        title: urlTitleInput.trim() || undefined,
+      });
+      setUrlInput('');
+      setUrlTitleInput('');
+      fetchDocuments();
+    } catch (err) {
+      setUploadError(err.response?.data?.message || 'Failed to add website URL.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDocDelete = async (id) => {
+    if (
+      !window.confirm(
+        'Are you sure you want to delete this knowledge source? This will remove all associated vector embeddings and history.'
+      )
+    )
+      return;
+    try {
+      await axios.delete(`http://localhost:5000/docs/${id}`);
+      setDocuments((prev) => prev.filter((d) => d._id !== id));
+    } catch (err) {
+      console.error(err);
+      alert('Failed to delete document source.');
+    }
+  };
 
 
   const activeChat = chats.find((c) => c.id === activeChatId);
@@ -1261,7 +1398,7 @@ const Workspace = () => {
       );
 
       try {
-        const payload = { message: text };
+        const payload = { message: text, semanticSearchEnabled };
         if (currentChat?.sessionId) {
           payload.sessionId = currentChat.sessionId;
         }
@@ -1279,6 +1416,8 @@ const Workspace = () => {
           response.data?.text ||
           'No response received.';
 
+        const sources = response.data?.sources || [];
+
         await typeAiResponse(chatId, typingId, aiText);
 
         const resSessionId = response.data?.sessionId;
@@ -1293,7 +1432,7 @@ const Workspace = () => {
               sessionId: resSessionId || chat.sessionId,
               learningStatus: resStatus || chat.learningStatus,
               messages: chat.messages.map((message) =>
-                message.id === typingId ? { ...message, options } : message
+                message.id === typingId ? { ...message, options, sources } : message
               ),
             };
 
@@ -1341,7 +1480,7 @@ const Workspace = () => {
         setSending(false);
       }
     },
-    [activeChatId, chats, activeProjectId, typeAiResponse, updateTypingMessage]
+    [activeChatId, chats, activeProjectId, typeAiResponse, updateTypingMessage, semanticSearchEnabled]
   );
 
   const sidebarWidthClass = collapsed ? 'lg:w-[88px]' : 'lg:w-[280px]';
@@ -1621,11 +1760,121 @@ const Workspace = () => {
             className="flex h-full w-[700%] transition-transform duration-300 ease-in-out"
             style={{ transform: `translateX(-${activeIndex * (100 / VIEWS.length)}%)` }}
           >
-            <div className="w-1/7 h-full px-4 sm:px-6 py-6 sm:py-10">
-              <InfoPanel title="Sources" body="Add documents, links, or notes you want ScolarAi to learn from." />
+            <div className="w-1/7 h-full px-4 sm:px-6 py-6 sm:py-8 overflow-y-auto no-scrollbar bg-white rounded-3xl">
+              {/* RAG Sources Management */}
+              <div className="flex h-full flex-col gap-6">
+                <div>
+                  <h2 className="text-[22px] font-semibold text-[#1E1E1E]">Knowledge Sources</h2>
+                  <p className="text-sm text-black/50 mt-1">Upload PDF documents or add website URLs to customize ScolarAi's knowledge base.</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 min-h-0">
+                  {/* Left: Add Source Forms */}
+                  <div className="flex flex-col gap-5">
+                    {/* PDF Uploader Card */}
+                    <div className="border border-black/10 rounded-2xl p-5 bg-black/[0.01] hover:bg-black/[0.02] transition-colors relative flex flex-col items-center justify-center text-center group cursor-pointer min-h-[160px]">
+                      <input
+                        type="file"
+                        accept="application/pdf"
+                        onChange={handlePdfUpload}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        disabled={uploading}
+                      />
+                      <FileText size={32} className="text-[#1E1E1E]/60 mb-2 group-hover:scale-110 transition-transform" />
+                      <p className="font-semibold text-sm text-[#1E1E1E]">{uploading ? 'Processing file...' : 'Upload PDF Document'}</p>
+                      <p className="text-xs text-black/45 mt-1">Drag and drop or click to browse (Max 20MB)</p>
+                    </div>
+
+                    {/* URL Input Card */}
+                    <form onSubmit={handleUrlAdd} className="border border-black/10 rounded-2xl p-5 bg-white flex flex-col gap-3.5">
+                      <h3 className="font-semibold text-[14px] text-[#1E1E1E]">Add Webpage Source</h3>
+                      <input
+                        type="text"
+                        placeholder="Optional Title (e.g. React Docs)"
+                        value={urlTitleInput}
+                        onChange={(e) => setUrlTitleInput(e.target.value)}
+                        className="w-full bg-black/[0.02] border border-black/10 rounded-xl px-3.5 py-2 text-xs text-[#1E1E1E] outline-none focus:border-black/20"
+                      />
+                      <div className="flex gap-2">
+                        <input
+                          type="url"
+                          required
+                          placeholder="https://example.com/docs"
+                          value={urlInput}
+                          onChange={(e) => setUrlInput(e.target.value)}
+                          className="flex-1 bg-black/[0.02] border border-black/10 rounded-xl px-3.5 py-2 text-xs text-[#1E1E1E] outline-none focus:border-black/20"
+                        />
+                        <button
+                          type="submit"
+                          disabled={uploading || !urlInput.trim()}
+                          className="bg-[#A8F35A] hover:bg-[#97db51] text-[#1E1E1E] font-semibold text-xs px-4 py-2.5 rounded-xl transition-colors cursor-pointer disabled:opacity-40"
+                        >
+                          Add URL
+                        </button>
+                      </div>
+                    </form>
+
+                    {uploadError && (
+                      <div className="bg-red-500/10 border border-red-500/20 text-red-600 rounded-xl px-4 py-3 text-xs text-center">
+                        {uploadError}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right: Document List */}
+                  <div className="flex flex-col min-h-0 bg-black/[0.01] border border-black/5 rounded-2xl p-4 overflow-y-auto no-scrollbar">
+                    <h3 className="font-semibold text-sm text-[#1E1E1E] mb-3">Document Library ({documents.length})</h3>
+                    {documents.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center flex-1 py-10 text-center text-black/35">
+                        <FileText size={24} className="mb-2 opacity-50" />
+                        <p className="text-xs italic">No sources added yet</p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-2.5">
+                        {documents.map((doc) => (
+                          <div key={doc._id} className="flex items-center justify-between gap-3 bg-white border border-black/10 rounded-xl p-3 shadow-sm hover:border-black/15 transition-all">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className={`h-2 w-2 rounded-full shrink-0
+                                  ${doc.status === 'completed' ? 'bg-green-500' : ''}
+                                  ${doc.status === 'failed' ? 'bg-red-500' : ''}
+                                  ${['queued', 'pending', 'processing'].includes(doc.status) ? 'bg-blue-500 animate-pulse' : ''}
+                                `} />
+                                <p className="font-semibold text-xs text-[#1E1E1E] truncate" title={doc.title}>{doc.title}</p>
+                              </div>
+                              <div className="flex items-center gap-2 mt-1 text-[10px] text-black/45 font-medium">
+                                <span className="uppercase font-semibold tracking-wider px-1 bg-black/[0.04] rounded">{doc.sourceType}</span>
+                                {doc.fileSize && <span>{(doc.fileSize / 1024 / 1024).toFixed(2)} MB</span>}
+                                {doc.status === 'completed' && <span>{doc.chunkCount} chunks</span>}
+                              </div>
+                              {doc.status === 'failed' && (
+                                <p className="text-[10px] text-red-500/80 mt-1 truncate" title={doc.errorMessage}>Error: {doc.errorMessage}</p>
+                              )}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleDocDelete(doc._id)}
+                              className="text-black/30 hover:text-red-500 hover:bg-red-500/10 p-1.5 rounded-lg transition-colors cursor-pointer shrink-0"
+                              title="Delete source"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
             <div className="w-1/7 h-full px-2 sm:px-6 py-4 sm:py-10">
-              <ChatPanel chat={activeChat} onSend={handleSend} sending={sending} />
+              <ChatPanel
+                chat={activeChat}
+                onSend={handleSend}
+                sending={sending}
+                semanticSearchEnabled={semanticSearchEnabled}
+                onToggleSemanticSearch={() => setSemanticSearchEnabled((prev) => !prev)}
+              />
             </div>
             <div className="w-1/7 h-full px-2 sm:px-6 py-4 sm:py-8 overflow-hidden bg-white rounded-3xl">
               <RoadmapPanel roadmap={activeRoadmap} onToggleTopic={handleToggleTopic} onTopicClick={handleStartTopicLesson} />

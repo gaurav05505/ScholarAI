@@ -5,10 +5,12 @@ import LearnSchema from "../models/Learn.Schema.js";
 import Roadmap from "../models/Roadmap.mode.js";
 import Aichat from "../utils/aiClint.util.js";
 import mongoose from "mongoose";
+import { getEmbeddings, searchPinecone } from "../services/rag.service.js";
 
 export async function chat(req, res) {
   try {
-    const { message, userId, sessionId } = req.body;
+    const { message, sessionId, semanticSearchEnabled = true } = req.body;
+    const userId = req.user?._id;
 
     if (!message) {
       return res.status(400).json({
@@ -114,16 +116,56 @@ function greet(user) {
     const intentResult = await intentNode(activeUserId, message);
 
     if (intentResult.success && intentResult.intent === "learn") {
-      // If intent is learn, return the next onboarding question structured JSON
       return res.status(200).json(intentResult);
     }
 
-    // Fall back to standard chat response
-    const answer = await chatWithLLM(message);
+    // Fall back to standard chat response. Integrate RAG if enabled
+    let finalPrompt = message;
+    let retrievedSources = [];
+
+    if (semanticSearchEnabled && userId) {
+      try {
+        console.log(`Performing RAG semantic search for user: ${userId}`);
+        const queryVectors = await getEmbeddings([message], true);
+        if (queryVectors && queryVectors.length > 0) {
+          const matches = await searchPinecone(queryVectors[0], userId, 5);
+          if (matches && matches.length > 0) {
+            const contextText = matches
+              .map((m) => `[Source Document: ${m.metadata.title}]\n${m.metadata.text}`)
+              .join('\n\n');
+
+            retrievedSources = matches.map((m) => ({
+              text: m.metadata.text,
+              title: m.metadata.title,
+              score: m.score,
+            }));
+
+            finalPrompt = `You are ScolarAI, a helpful AI assistant. Answer the user's query contextually using the retrieved document context snippets provided below. If the answer cannot be determined from the context, answer using your general knowledge but mention that this information is outside the uploaded documents.
+
+---
+RETIREVED CONTEXT EXCERPTS:
+${contextText}
+---
+
+USER QUERY:
+${message}
+
+ANSWER:`;
+          }
+        }
+      } catch (ragErr) {
+        console.error("RAG processing failed, falling back to basic chat:", ragErr.message);
+      }
+    } else {
+      console.log("Skipping RAG retrieval pipeline (semantic search disabled or user unauthenticated).");
+    }
+
+    const answer = await chatWithLLM(finalPrompt);
 
     return res.status(200).json({
       success: true,
       response: answer,
+      sources: retrievedSources,
     });
   } catch (error) {
     console.error("Chat Controller Error:", error);
@@ -133,4 +175,4 @@ function greet(user) {
       message: error.message,
     });
   }
-}
+}

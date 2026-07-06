@@ -1,4 +1,9 @@
 import React, { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Link, useNavigate } from 'react-router-dom'
+import { loginSchema } from '../../schemas/auth.schema.js'
+import { useAuth } from '../../context/AuthContext.jsx'
 
 const CircuitLines = () => (
   <svg
@@ -47,9 +52,28 @@ const GoogleIcon = () => (
 )
 
 const Login = () => {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const { login } = useAuth()
+  const navigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false)
+  const [serverError, setServerError] = useState('')
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: zodResolver(loginSchema),
+  })
+
+  const onSubmit = async (data) => {
+    setServerError('')
+    const result = await login(data.email, data.password)
+    if (result.success) {
+      navigate('/workspace')
+    } else {
+      setServerError(result.message)
+    }
+  }
 
   return (
     <div className="relative min-h-screen bg-[#050505] flex items-center justify-center overflow-hidden font-sans">
@@ -68,7 +92,10 @@ const Login = () => {
       </div>
 
       <div className="relative z-10 w-full max-w-md mx-4">
-        <div className="bg-[#0b0b0b]/95 border border-[#272727] rounded-2xl px-8 py-10 shadow-2xl shadow-black/60 backdrop-blur">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="bg-[#0b0b0b]/95 border border-[#272727] rounded-2xl px-8 py-10 shadow-2xl shadow-black/60 backdrop-blur"
+        >
           <div className="flex items-center justify-center gap-3 mb-6">
             <div className="flex gap-[3px]">
               {[...Array(7)].map((_, i) => (
@@ -88,11 +115,18 @@ const Login = () => {
           </h1>
           <p className="text-[#a3a3a3] text-sm text-center mb-7">
             Don&apos;t have an account yet?{' '}
-            <a href="#" className="text-[#e5e5e5] font-medium hover:text-white transition-colors">
+            <Link to="/register" className="text-[#e5e5e5] font-medium hover:text-white transition-colors">
               Sign up
-            </a>
+            </Link>
           </p>
 
+          {serverError && (
+            <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-xs px-4 py-3 rounded-lg mb-5 text-center">
+              {serverError}
+            </div>
+          )}
+
+          {/* Email field */}
           <div className="relative mb-3">
             <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#737373]">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -102,13 +136,18 @@ const Login = () => {
             </span>
             <input
               type="email"
-              placeholder="email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email address"
+              {...register('email')}
               className="w-full bg-[#111111] border border-[#2a2a2a] rounded-lg pl-10 pr-4 py-3 text-sm text-white placeholder-[#737373] focus:outline-none focus:border-[#8a8a8a] focus:ring-1 focus:ring-[#8a8a8a] transition-colors"
             />
+            {errors.email && (
+              <p className="text-red-500/80 text-xs mt-1 pl-1">
+                {errors.email.message}
+              </p>
+            )}
           </div>
 
+          {/* Password field */}
           <div className="relative mb-5">
             <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#737373]">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -119,8 +158,7 @@ const Login = () => {
             <input
               type={showPassword ? 'text' : 'password'}
               placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              {...register('password')}
               className="w-full bg-[#111111] border border-[#2a2a2a] rounded-lg pl-10 pr-10 py-3 text-sm text-white placeholder-[#737373] focus:outline-none focus:border-[#8a8a8a] focus:ring-1 focus:ring-[#8a8a8a] transition-colors"
             />
             <button
@@ -141,10 +179,19 @@ const Login = () => {
                 </svg>
               )}
             </button>
+            {errors.password && (
+              <p className="text-red-500/80 text-xs mt-1 pl-1">
+                {errors.password.message}
+              </p>
+            )}
           </div>
 
-          <button className="w-full bg-[#e5e5e5] hover:bg-white active:bg-[#cfcfcf] text-[#080808] font-medium py-3 rounded-lg text-sm transition-colors duration-150 shadow-lg shadow-black/40 mb-5">
-            Login
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full bg-[#e5e5e5] hover:bg-white active:bg-[#cfcfcf] text-[#080808] font-medium py-3 rounded-lg text-sm transition-colors duration-150 shadow-lg shadow-black/40 mb-5 disabled:opacity-50 cursor-pointer"
+          >
+            {isSubmitting ? 'Logging in...' : 'Login'}
           </button>
 
           <div className="flex items-center gap-3 mb-5">
@@ -154,16 +201,18 @@ const Login = () => {
           </div>
 
           <button
+            type="button"
             aria-label="Sign in with Google"
-            className="w-full flex items-center justify-center gap-2 py-3 bg-[#111111] border border-[#2a2a2a] rounded-lg text-[#d4d4d4] hover:border-[#454545] hover:bg-[#171717] transition-colors duration-150"
+            className="w-full flex items-center justify-center gap-2 py-3 bg-[#111111] border border-[#2a2a2a] rounded-lg text-[#d4d4d4] hover:border-[#454545] hover:bg-[#171717] transition-colors duration-150 cursor-pointer"
           >
             <GoogleIcon />
             <span className="text-sm font-medium">Continue with Google</span>
           </button>
-        </div>
+        </form>
       </div>
     </div>
   )
 }
 
 export default Login
+

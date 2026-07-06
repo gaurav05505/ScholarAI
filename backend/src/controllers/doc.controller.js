@@ -1,6 +1,64 @@
 import DocModel from '../models/doc.model.js';
 import ChatModel from '../models/chat.model.js';
+import { chatWithLLM } from '../services/llm.service.js';
+import {
+  savePdfToGridFs,
+  deletePdfFromGridFs,
+  enqueueDocumentProcessing,
+  getEmbeddings,
+  getPineconeIndex,
+  deleteDocumentFromPinecone,
+} from '../services/rag.service.js';
 
+async function answerDocumentQuestion({ doc, question, userId }) {
+  const queryVector = (await getEmbeddings([question], true))[0];
+  const index = getPineconeIndex();
+
+  let contextText = '';
+  let sources = [];
+
+  if (index) {
+    const matches = await index.query({
+      vector: queryVector,
+      topK: 5,
+      includeMetadata: true,
+      filter: {
+        docId: doc._id.toString(),
+      },
+    });
+
+    if (matches && matches.matches) {
+      contextText = matches.matches.map((m) => m.metadata.text).join('\n\n');
+      sources = matches.matches.map((m) => ({
+        text: m.metadata.text,
+        title: m.metadata.title || doc.title,
+        score: m.score,
+      }));
+    }
+  }
+
+  const prompt = `You are ScolarAI, an AI learning tutor.
+Answer the user's question contextually using only the provided document excerpts.
+If the answer cannot be found in the context, use your general knowledge but clearly state that the answer is not in the document.
+
+Document Title: ${doc.title}
+
+Document Excerpts:
+${contextText || 'No relevant excerpts found.'}
+
+User Question: ${question}
+
+Answer:`;
+
+  const answer = await chatWithLLM(prompt);
+
+  return {
+    answer,
+    provider: 'nvidia',
+    model: 'meta/llama-3.1-70b-instruct',
+    sources,
+  };
+}
 
 async function uploadDoc(req, res) {
   try {
@@ -188,6 +246,12 @@ async function deleteDoc(req, res) {
       } catch (error) {
         console.error('File deletion error:', error.message);
       }
+    }
+
+    try {
+      await deleteDocumentFromPinecone(doc._id);
+    } catch (error) {
+      console.error('Pinecone vector deletion error:', error.message);
     }
 
     await ChatModel.deleteMany({

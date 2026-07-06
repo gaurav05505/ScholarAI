@@ -1,19 +1,17 @@
 import React from 'react'
-import Login from './pages/authPages/Login.jsx'
-import Register from './pages/authPages/Register.jsx'
-import ScolarAI from './pages/ScolarAI.jsx'
-import Workspace from './pages/Workspace.jsx'
+import { BrowserRouter as Router } from 'react-router-dom'
+import { AuthProvider } from './context/AuthContext.jsx'
+import AppRoutes from './routes/AppRoutes.jsx'
 
 const App = () => {
   return (
-    <div>
-      {/* <Login /> */}
-      {/* <Register />  */}
-      <ScolarAI />
-      {/* <Workspace />  */}
-
-    </div>
+    <AuthProvider>
+      <Router>
+        <AppRoutes />
+      </Router>
+    </AuthProvider>
   )
 }
 
 export default App
+

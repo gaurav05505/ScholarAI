@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-
+import { Link, useNavigate } from 'react-router-dom'
 import { registerSchema } from '../../schemas/auth.schema.js'
-import { registerUser } from '../../services/auth.service.js'
+import { useAuth } from '../../context/AuthContext.jsx'
 
 const CircuitLines = () => (
   <svg
@@ -52,33 +52,28 @@ const GoogleIcon = () => (
 )
 
 const Register = () => {
-  
+  const { register: registerAuth } = useAuth()
+  const navigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false)
+  const [serverError, setServerError] = useState('')
 
   const {
     register,
     handleSubmit,
     reset,
-    formState: { errors, isSubmitting },        
+    formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(registerSchema),
   })
 
   const onSubmit = async (formData) => {
-    try {
-      const payload = {
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-      }
-
-      const response = await registerUser(payload)
-
-      console.log(response)
-
+    setServerError('')
+    const result = await registerAuth(formData.name, formData.email, formData.password)
+    if (result.success) {
       reset()
-    } catch (error) {
-      console.error(error.response?.data || error.message)
+      navigate('/workspace')
+    } else {
+      setServerError(result.message)
     }
   }
 
@@ -100,8 +95,9 @@ const Register = () => {
 
       <div className="relative z-10 w-full max-w-md mx-4">
         <form
-        onSubmit={handleSubmit(onSubmit)}
-         className="bg-[#0b0b0b]/95 border border-[#272727] rounded-2xl px-8 py-10 shadow-2xl shadow-black/60 backdrop-blur">
+          onSubmit={handleSubmit(onSubmit)}
+          className="bg-[#0b0b0b]/95 border border-[#272727] rounded-2xl px-8 py-10 shadow-2xl shadow-black/60 backdrop-blur"
+        >
           {/* Logo row */}
           <div className="flex items-center justify-center gap-3 mb-6">
             <div className="flex gap-[3px]">
@@ -122,10 +118,16 @@ const Register = () => {
           </h1>
           <p className="text-[#a3a3a3] text-sm text-center mb-7">
             Already have an account?{' '}
-            <a href="#" className="text-[#e5e5e5] font-medium hover:text-white transition-colors">
+            <Link to="/login" className="text-[#e5e5e5] font-medium hover:text-white transition-colors">
               Sign in
-            </a>
+            </Link>
           </p>
+
+          {serverError && (
+            <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-xs px-4 py-3 rounded-lg mb-5 text-center">
+              {serverError}
+            </div>
+          )}
 
           {/* Name field */}
           <div className="relative mb-3">
@@ -136,17 +138,16 @@ const Register = () => {
               </svg>
             </span>
             <input
-            type="text"
-            placeholder="Full name"
-            {...register('name')}
-            className="w-full bg-[#111111] border border-[#2a2a2a] rounded-lg pl-10 pr-4 py-3 text-sm text-white placeholder-[#737373] focus:outline-none focus:border-[#8a8a8a] focus:ring-1 focus:ring-[#8a8a8a] transition-colors"
-          />
-
-          {errors.name && (
-            <p className="text-red-500 text-xs mt-1">
-              {errors.name.message}
-            </p>
-          )}
+              type="text"
+              placeholder="Full name"
+              {...register('name')}
+              className="w-full bg-[#111111] border border-[#2a2a2a] rounded-lg pl-10 pr-4 py-3 text-sm text-white placeholder-[#737373] focus:outline-none focus:border-[#8a8a8a] focus:ring-1 focus:ring-[#8a8a8a] transition-colors"
+            />
+            {errors.name && (
+              <p className="text-red-500/80 text-xs mt-1 pl-1">
+                {errors.name.message}
+              </p>
+            )}
           </div>
 
           {/* Email field */}
@@ -163,15 +164,53 @@ const Register = () => {
               {...register('email')}
               className="w-full bg-[#111111] border border-[#2a2a2a] rounded-lg pl-10 pr-4 py-3 text-sm text-white placeholder-[#737373] focus:outline-none focus:border-[#8a8a8a] focus:ring-1 focus:ring-[#8a8a8a] transition-colors"
             />
-
             {errors.email && (
-              <p className="text-red-500 text-xs mt-1">
+              <p className="text-red-500/80 text-xs mt-1 pl-1">
                 {errors.email.message}
               </p>
             )}
           </div>
 
           {/* Password field */}
+          <div className="relative mb-3">
+            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#737373]">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            </span>
+            <input
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Password"
+              {...register('password')}
+              className="w-full bg-[#111111] border border-[#2a2a2a] rounded-lg pl-10 pr-10 py-3 text-sm text-white placeholder-[#737373] focus:outline-none focus:border-[#8a8a8a] focus:ring-1 focus:ring-[#8a8a8a] transition-colors"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#737373] hover:text-[#e5e5e5] transition-colors"
+            >
+              {showPassword ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+                  <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+                  <line x1="1" y1="1" x2="23" y2="23" />
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              )}
+            </button>
+            {errors.password && (
+              <p className="text-red-500/80 text-xs mt-1 pl-1">
+                {errors.password.message}
+              </p>
+            )}
+          </div>
+
+          {/* Confirm Password field */}
           <div className="relative mb-5">
             <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#737373]">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -180,28 +219,24 @@ const Register = () => {
               </svg>
             </span>
             <input
-            type={showPassword ? 'text' : 'password'}
-            placeholder="Password"
-            {...register('password')}
-            className="w-full bg-[#111111] border border-[#2a2a2a] rounded-lg pl-10 pr-10 py-3 text-sm text-white placeholder-[#737373] focus:outline-none focus:border-[#8a8a8a] focus:ring-1 focus:ring-[#8a8a8a] transition-colors"
-          />
-
-          {errors.password && (
-            <p className="text-red-500 text-xs mt-1">
-              {errors.password.message}
-            </p>
-          )}
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full bg-[#e5e5e5] hover:bg-white active:bg-[#cfcfcf] text-[#080808] font-medium py-3 rounded-lg text-sm transition-colors duration-150 shadow-lg shadow-black/40 mb-5 disabled:opacity-50"
-            >
-              {isSubmitting ? 'Creating Account...' : 'Create Account'}
-            </button>
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Confirm password"
+              {...register('confirmPassword')}
+              className="w-full bg-[#111111] border border-[#2a2a2a] rounded-lg pl-10 pr-4 py-3 text-sm text-white placeholder-[#737373] focus:outline-none focus:border-[#8a8a8a] focus:ring-1 focus:ring-[#8a8a8a] transition-colors"
+            />
+            {errors.confirmPassword && (
+              <p className="text-red-500/80 text-xs mt-1 pl-1">
+                {errors.confirmPassword.message}
+              </p>
+            )}
           </div>
 
-          <button className="w-full bg-[#e5e5e5] hover:bg-white active:bg-[#cfcfcf] text-[#080808] font-medium py-3 rounded-lg text-sm transition-colors duration-150 shadow-lg shadow-black/40 mb-5">
-            Create Account
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full bg-[#e5e5e5] hover:bg-white active:bg-[#cfcfcf] text-[#080808] font-medium py-3 rounded-lg text-sm transition-colors duration-150 shadow-lg shadow-black/40 mb-5 disabled:opacity-50 cursor-pointer"
+          >
+            {isSubmitting ? 'Creating Account...' : 'Create Account'}
           </button>
 
           <div className="flex items-center gap-3 mb-5">
@@ -211,8 +246,9 @@ const Register = () => {
           </div>
 
           <button
+            type="button"
             aria-label="Sign up with Google"
-            className="w-full flex items-center justify-center gap-2 py-3 bg-[#111111] border border-[#2a2a2a] rounded-lg text-[#d4d4d4] hover:border-[#454545] hover:bg-[#171717] transition-colors duration-150"
+            className="w-full flex items-center justify-center gap-2 py-3 bg-[#111111] border border-[#2a2a2a] rounded-lg text-[#d4d4d4] hover:border-[#454545] hover:bg-[#171717] transition-colors duration-150 cursor-pointer"
           >
             <GoogleIcon />
             <span className="text-sm font-medium">Continue with Google</span>
