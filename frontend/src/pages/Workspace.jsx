@@ -698,12 +698,30 @@ const MessageBubble = memo(({ message, onOptionClick }) => {
               <div className="mt-3 border-t border-black/5 pt-2">
                 <p className="text-[10px] font-bold text-black/40 uppercase tracking-widest mb-1.5">Retrieved Sources:</p>
                 <div className="flex flex-col gap-1.5">
-                  {message.sources.map((src, sIdx) => (
-                    <div key={sIdx} className="text-[11px] text-black/60 bg-black/[0.02] border border-black/5 rounded-xl p-2.5 leading-snug">
-                      <p className="font-semibold text-black/80">📄 {src.title}</p>
-                      <p className="mt-1 text-black/55 italic line-clamp-2">"{src.text}"</p>
-                    </div>
-                  ))}
+                  {message.sources.map((src, sIdx) => {
+                    const token = localStorage.getItem('token');
+                    const viewUrl = src.docId 
+                      ? `http://localhost:5000/docs/${src.docId}/view?token=${token}` 
+                      : null;
+                    return (
+                      <div key={sIdx} className="text-[11px] text-black/60 bg-black/[0.02] border border-black/5 rounded-xl p-2.5 leading-snug">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="font-semibold text-black/80 truncate">📄 {src.title}</p>
+                          {viewUrl && (
+                            <a
+                              href={viewUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[10px] font-bold text-white bg-black hover:bg-black/80 px-2 py-0.5 rounded-lg transition-colors cursor-pointer shrink-0"
+                            >
+                              Open Source
+                            </a>
+                          )}
+                        </div>
+                        <p className="mt-1 text-black/55 italic line-clamp-2">"{src.text}"</p>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

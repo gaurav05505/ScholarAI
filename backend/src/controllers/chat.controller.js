@@ -137,13 +137,20 @@ function greet(user) {
             retrievedSources = matches.map((m) => ({
               text: m.metadata.text,
               title: m.metadata.title,
+              docId: m.metadata.docId,
               score: m.score,
             }));
 
-            finalPrompt = `You are ScolarAI, a helpful AI assistant. Answer the user's query contextually using the retrieved document context snippets provided below. If the answer cannot be determined from the context, answer using your general knowledge but mention that this information is outside the uploaded documents.
+            finalPrompt = `You are ScolarAI, a helpful AI assistant. A user has uploaded a document to their knowledge base and is asking a question about its contents.
+Below are the retrieved excerpts from the user's document. Use them to answer the user's query directly, factually, and contextually.
+
+Key Guidelines:
+1. Focus on summarizing all major topics, data, and sections present in the retrieved excerpts (such as engineering roadmaps, database schemas, and architectures).
+2. Frame your answer clearly as a description of the uploaded document's contents (e.g., "According to the uploaded document...", "The document outlines..."). This makes it clear that you are reading the user's file.
+3. Be clear, structured, and use markdown headers and lists.
 
 ---
-RETIREVED CONTEXT EXCERPTS:
+RETIREVED DOCUMENT EXCERPTS:
 ${contextText}
 ---
 

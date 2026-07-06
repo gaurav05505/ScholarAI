@@ -3,7 +3,7 @@ import { GridFSBucket } from 'mongodb'
 import axios from 'axios'
 import { createRequire } from 'module'
 const require = createRequire(import.meta.url)
-const pdfParse = require('pdf-parse')
+const { PDFParse } = require('pdf-parse')
 
 import { EventEmitter } from 'events'
 import { Pinecone } from '@pinecone-database/pinecone'
@@ -18,6 +18,7 @@ export const getPineconeIndex = () => {
   if (pineconeIndex) return pineconeIndex
   const apiKey = process.env.PINECONE_API_KEY
   const indexName = process.env.PINECONE_INDEX_NAME
+  const indexHost = process.env.PINECONE_INDEX_HOST
   if (!apiKey || !indexName) {
     console.warn(
       'WARNING: PINECONE_API_KEY or PINECONE_INDEX_NAME is missing in environment. Pinecone operations will be skipped.'
@@ -26,7 +27,8 @@ export const getPineconeIndex = () => {
   }
   try {
     const pc = new Pinecone({ apiKey })
-    pineconeIndex = pc.index(indexName)
+    // If PINECONE_INDEX_HOST is provided, pass it directly to avoid network checks
+    pineconeIndex = pc.index(indexName, indexHost || undefined)
     return pineconeIndex
   } catch (err) {
     console.error('Failed to initialize Pinecone Client:', err.message)
@@ -81,8 +83,9 @@ export const deletePdfFromGridFs = (fileId) => {
 
 // Text Extraction Helpers
 export const extractTextFromPdf = async (buffer) => {
-  const data = await pdfParse(buffer)
-  return data.text || ''
+  const parser = new PDFParse({ data: buffer })
+  const result = await parser.getText()
+  return result.text || ''
 }
 
 export const extractTextFromUrl = async (url) => {
@@ -129,7 +132,7 @@ export const getEmbeddings = async (inputs, isQuery = false) => {
   try {
     const response = await nvidia.post('/embeddings', {
       input: inputs,
-      model: 'nvidia/embeddings-nv-embed-qa-4',
+      model: 'nvidia/nv-embedqa-e5-v5',
       input_type: isQuery ? 'query' : 'passage',
       encoding_format: 'float',
     })
@@ -163,7 +166,9 @@ export const upsertDocumentToPinecone = async (docId, userId, title, chunks, emb
   // Pinecone recommends upserting in small batches (e.g. 100 vectors max)
   for (let i = 0; i < vectors.length; i += 100) {
     const batch = vectors.slice(i, i + 100)
-    await index.upsert(batch)
+    await index.upsert({
+      records: batch
+    })
   }
 }
 
@@ -171,7 +176,21 @@ export const deleteDocumentFromPinecone = async (docId) => {
   const index = getPineconeIndex()
   if (!index) return
   try {
-    await index.deleteMany({ filter: { docId: docId.toString() } })
+    const doc = await DocModel.findById(docId)
+    if (!doc) return
+
+    const count = Math.max(doc.chunkCount || 0, doc.vectorCount || 0)
+    if (count === 0) return
+
+    const vectorIds = []
+    for (let i = 0; i < count; i++) {
+      vectorIds.push(`${docId}_${i}`)
+    }
+
+    if (vectorIds.length > 0) {
+      console.log(`Deleting ${vectorIds.length} vectors from Pinecone for doc: ${docId}`)
+      await index.deleteMany({ ids: vectorIds })
+    }
   } catch (error) {
     console.error(`Pinecone vector deletion failed for doc ${docId}:`, error.message)
   }

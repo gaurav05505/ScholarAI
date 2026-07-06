@@ -9,6 +9,7 @@ router.post('/upload', protect, upload.single('file'), docController.uploadDoc);
 router.post('/:id/ask', protect, docController.askDocQuestion);
 router.get('/', protect, docController.listDocs);
 router.get('/:id', protect, docController.getDocById);
+router.get('/:id/view', protect, docController.viewDocFile);
 router.patch('/:id', protect, docController.updateDoc);
 router.delete('/:id', protect, docController.deleteDoc);
 

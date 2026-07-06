@@ -8,6 +8,7 @@ import {
   getEmbeddings,
   getPineconeIndex,
   deleteDocumentFromPinecone,
+  getPdfBufferFromGridFs,
 } from '../services/rag.service.js';
 
 async function answerDocumentQuestion({ doc, question, userId }) {
@@ -32,14 +33,19 @@ async function answerDocumentQuestion({ doc, question, userId }) {
       sources = matches.matches.map((m) => ({
         text: m.metadata.text,
         title: m.metadata.title || doc.title,
+        docId: m.metadata.docId || doc._id.toString(),
         score: m.score,
       }));
     }
   }
 
-  const prompt = `You are ScolarAI, an AI learning tutor.
+  const prompt = `You are ScolarAI, a helpful AI assistant.
 Answer the user's question contextually using only the provided document excerpts.
-If the answer cannot be found in the context, use your general knowledge but clearly state that the answer is not in the document.
+
+Key Guidelines:
+1. Focus on summarizing the actual topics, facts, tables, and data present in the excerpts (e.g. database schemas, project roadmaps, architecture components).
+2. Frame your answer as describing the contents of the uploaded document (e.g., "The document contains...", "According to the excerpts..."). Avoid speaking as if you are explaining the live application's own code or database structure.
+3. Be clear, concise, and structured.
 
 Document Title: ${doc.title}
 
@@ -368,6 +374,40 @@ async function updateDoc(req, res) {
   }
 }
 
+async function viewDocFile(req, res) {
+  try {
+    const { id } = req.params;
+    const doc = await DocModel.findById(id);
+
+    if (!doc) {
+      return res.status(404).send('Document not found');
+    }
+
+    if (doc.sourceType === 'url') {
+      if (doc.sourceUrl) {
+        return res.redirect(doc.sourceUrl);
+      }
+      return res.status(400).send('URL document has no source URL');
+    }
+
+    if (doc.sourceType === 'pdf') {
+      if (!doc.storageFileId) {
+        return res.status(404).send('PDF file storage ID not found');
+      }
+
+      const buffer = await getPdfBufferFromGridFs(doc.storageFileId);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(doc.originalName || doc.title + '.pdf')}"`);
+      return res.send(buffer);
+    }
+
+    return res.status(400).send('Unsupported document source type');
+  } catch (error) {
+    console.error('Error viewing document file:', error);
+    return res.status(500).send('Failed to retrieve document file');
+  }
+}
+
 export default {
   uploadDoc,
   listDocs,
@@ -375,4 +415,5 @@ export default {
   updateDoc,
   deleteDoc,
   askDocQuestion,
+  viewDocFile,
 };
