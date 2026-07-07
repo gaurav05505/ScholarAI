@@ -20,12 +20,10 @@ const projectSchema = new mongoose.Schema({
   roadmapId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Roadmap',
-    required: true,
   },
   sessionId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'LearningSession',
-    required: true,
   },
   chats: [
     {

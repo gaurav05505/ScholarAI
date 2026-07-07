@@ -139,11 +139,30 @@ export const toggleTopicCompletion = async(req, res) => {
 
 export const createProject = async (req, res) => {
     try {
-        const { sessionId, topic } = req.body;
-        if (!sessionId || !topic) {
-            return res.status(400).json({
-                success: false,
-                message: "sessionId and topic are required."
+        const { sessionId, topic, title } = req.body;
+        const activeUserId = await getActiveUser(req);
+
+        let project;
+
+        if (!sessionId) {
+            if (!topic) {
+                return res.status(400).json({
+                    success: false,
+                    message: "topic is required when creating a project directly."
+                });
+            }
+            project = await Project.create({
+                user: activeUserId,
+                topic: topic,
+                title: title || topic,
+                description: req.body.description || "",
+                chats: []
+            });
+            return res.status(200).json({
+                success: true,
+                message: "Project successfully created in database!",
+                project,
+                projectCreated: true
             });
         }
 
@@ -163,15 +182,13 @@ export const createProject = async (req, res) => {
             });
         }
 
-        const activeUserId = await getActiveUser(req);
-
-        let project = await Project.findOne({ sessionId: session._id });
+        project = await Project.findOne({ sessionId: session._id });
         if (!project) {
             project = await Project.create({
                 user: activeUserId,
                 topic: roadmap.topic,
-                title: roadmap.title,
-                description: roadmap.description,
+                title: title || roadmap.title,
+                description: req.body.description || roadmap.description || "",
                 roadmapId: roadmap._id,
                 sessionId: session._id,
                 chats: []
@@ -258,7 +275,7 @@ export const saveProjectChat = async (req, res) => {
             });
         }
 
-        const existingIdx = project.chats.findIndex(c => c.id === chat.id || c.title === chat.title);
+        const existingIdx = project.chats.findIndex(c => String(c.id) === String(chat.id));
         if (existingIdx > -1) {
             project.chats[existingIdx].messages = chat.messages;
             project.chats[existingIdx].title = chat.title;
@@ -389,6 +406,54 @@ export const renameProject = async (req, res) => {
             success: true,
             message: "Project renamed successfully!",
             project
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+}
+
+export const deleteProject = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const project = await Project.findByIdAndDelete(id);
+        if (!project) {
+            return res.status(404).json({
+                success: false,
+                message: "Project not found."
+            });
+        }
+        return res.status(200).json({
+            success: true,
+            message: "Project deleted successfully!"
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+}
+
+export const deleteProjectChat = async (req, res) => {
+    try {
+        const { id, chatId } = req.params;
+        const project = await Project.findById(id);
+        if (!project) {
+            return res.status(404).json({
+                success: false,
+                message: "Project not found."
+            });
+        }
+        project.chats = project.chats.filter(c => String(c.id) !== String(chatId));
+        await project.save();
+        return res.status(200).json({
+            success: true,
+            message: "Project chat deleted successfully!"
         });
     } catch (error) {
         console.error(error);

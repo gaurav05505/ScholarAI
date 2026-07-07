@@ -772,74 +772,133 @@ const ChatPanel = ({ chat, onSend, sending = false, semanticSearchEnabled, onTog
 
   const hasMessages = chat && chat.messages.length > 0;
 
+  // Memoize retrieved references from the latest AI message
+  const activeSources = useMemo(() => {
+    if (!chat || !chat.messages) return [];
+    // Iterate backwards to find the last AI response that has sources
+    for (let i = chat.messages.length - 1; i >= 0; i--) {
+      const msg = chat.messages[i];
+      if (msg.role === 'ai' && msg.sources && msg.sources.length > 0) {
+        return msg.sources;
+      }
+    }
+    return [];
+  }, [chat]);
+
   return (
-    <div className="flex h-full flex-col">
-      {hasMessages ? (
-        <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto px-2 sm:px-4">
-          <div className="flex flex-col gap-4 py-4">
-            {chat.messages.map((m) => (
-              <MessageBubble key={m.id} message={m} onOptionClick={onSend} />
-            ))}
+    <div className="flex h-full w-full gap-4 overflow-hidden">
+      {/* Left Main Chat Area */}
+      <div className="flex flex-1 flex-col h-full min-w-0">
+        {hasMessages ? (
+          <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto px-2 sm:px-4">
+            <div className="flex flex-col gap-4 py-4">
+              {chat.messages.map((m) => (
+                <MessageBubble key={m.id} message={m} onOptionClick={onSend} />
+              ))}
+            </div>
           </div>
-        </div>
-      ) : (
-        <div className="flex flex-1 flex-col items-center justify-center text-center px-4">
-          <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full border-[5px] border-[#1E1E1E]">
-            <div className="h-10 w-10 rounded-[48%_48%_42%_42%/58%_58%_40%_40%] border-[5px] border-[#1E1E1E] border-b-transparent border-l-transparent border-r-transparent" />
+        ) : (
+          <div className="flex flex-1 flex-col items-center justify-center text-center px-4">
+            <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full border-[5px] border-[#1E1E1E]">
+              <div className="h-10 w-10 rounded-[48%_48%_42%_42%/58%_58%_40%_40%] border-[5px] border-[#1E1E1E] border-b-transparent border-l-transparent border-r-transparent" />
+            </div>
+            <h1 className="text-[24px] sm:text-[30px] font-medium text-[#1E1E1E]">Welcome Devos</h1>
+            <p className="mt-3 text-[14px] sm:text-[15px] text-black/45">
+              what do you want to learn or research today?
+            </p>
           </div>
-          <h1 className="text-[24px] sm:text-[30px] font-medium text-[#1E1E1E]">Welcome Devos</h1>
-          <p className="mt-3 text-[14px] sm:text-[15px] text-black/45">
-            what do you want to learn or research today?
-          </p>
-        </div>
-      )}
+        )}
 
-      <div className="mt-auto flex flex-col gap-2 px-1 sm:px-4 pb-1">
-        {/* iOS-Style Toggle Switch for RAG Semantic Search */}
-        <div className="flex items-center justify-between text-xs text-black/50 px-1 py-1.5 select-none bg-black/[0.02] rounded-xl border border-black/5">
-          <div className="flex items-center gap-2">
-            <span className={`inline-block h-2 w-2 rounded-full ${semanticSearchEnabled ? 'bg-green-500 animate-pulse' : 'bg-black/25'}`} />
-            <span>Semantic Search (RAG): {semanticSearchEnabled ? 'ON' : 'OFF'}</span>
-          </div>
-          <button
-            type="button"
-            onClick={onToggleSemanticSearch}
-            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none
-              ${semanticSearchEnabled ? 'bg-[#A8F35A]' : 'bg-black/10'}`}
-            title="Toggle Semantic Search (Retrieval-Augmented Generation)"
-          >
-            <span
-              className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out
-                ${semanticSearchEnabled ? 'translate-x-4' : 'translate-x-0'}`}
-            />
-          </button>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <div className="flex h-14 flex-1 items-center gap-3 rounded-2xl border border-black/10 bg-white px-4 transition-shadow focus-within:border-black/20 focus-within:shadow-[0_0_0_3px_rgba(168,243,90,0.35)]">
-            <AudioLines size={18} className="shrink-0 text-[#1E1E1E]/70" />
-            <input
-              ref={inputRef}
-              type="text"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              onKeyDown={handleKey}
-              placeholder={sending ? 'Waiting for a response...' : 'Start typing...'}
-              className="w-full bg-transparent text-[14px] text-[#1E1E1E] outline-none placeholder:text-black/35"
-            />
+        <div className="mt-auto flex flex-col gap-2 px-1 sm:px-4 pb-1">
+          {/* iOS-Style Toggle Switch for RAG Semantic Search */}
+          <div className="flex items-center justify-between text-xs text-black/50 px-1 py-1.5 select-none bg-black/[0.02] rounded-xl border border-black/5">
+            <div className="flex items-center gap-2">
+              <span className={`inline-block h-2 w-2 rounded-full ${semanticSearchEnabled ? 'bg-green-500 animate-pulse' : 'bg-black/25'}`} />
+              <span>Semantic Search (RAG): {semanticSearchEnabled ? 'ON' : 'OFF'}</span>
+            </div>
+            <button
+              type="button"
+              onClick={onToggleSemanticSearch}
+              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none
+                ${semanticSearchEnabled ? 'bg-[#A8F35A]' : 'bg-black/10'}`}
+              title="Toggle Semantic Search (Retrieval-Augmented Generation)"
+            >
+              <span
+                className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out
+                  ${semanticSearchEnabled ? 'translate-x-4' : 'translate-x-0'}`}
+              />
+            </button>
           </div>
 
-          <button
-            type="button"
-            onClick={submit}
-            disabled={sending || !value.trim()}
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#A8F35A] text-[#1E1E1E] transition-all active:scale-[0.95] disabled:cursor-not-allowed disabled:opacity-40"
-            aria-label="Send"
-          >
-            <ArrowUpRight size={20} />
-          </button>
+          <div className="flex items-center gap-3">
+            <div className="flex h-14 flex-1 items-center gap-3 rounded-2xl border border-black/10 bg-white px-4 transition-shadow focus-within:border-black/20 focus-within:shadow-[0_0_0_3px_rgba(168,243,90,0.35)]">
+              <AudioLines size={18} className="shrink-0 text-[#1E1E1E]/70" />
+              <input
+                ref={inputRef}
+                type="text"
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                onKeyDown={handleKey}
+                placeholder={sending ? 'Waiting for a response...' : 'Start typing...'}
+                className="w-full bg-transparent text-[14px] text-[#1E1E1E] outline-none placeholder:text-black/35"
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={submit}
+              disabled={sending || !value.trim()}
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#A8F35A] text-[#1E1E1E] transition-all active:scale-[0.95] disabled:cursor-not-allowed disabled:opacity-40"
+              aria-label="Send"
+            >
+              <ArrowUpRight size={20} />
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Right Side RAG Reference Panel */}
+      {activeSources.length > 0 && (
+        <div className="hidden lg:flex flex-col w-[300px] shrink-0 h-full bg-white rounded-3xl border border-black/5 p-4 shadow-sm overflow-hidden">
+          <div className="flex items-center gap-2 border-b border-black/5 pb-3 mb-3 shrink-0">
+            <Sparkles className="text-black shrink-0 animate-pulse" size={16} />
+            <h3 className="font-semibold text-xs text-[#1E1E1E] tracking-wide uppercase">RAG Sources Context</h3>
+          </div>
+          <div className="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-3">
+            {activeSources.map((src, idx) => {
+              const token = localStorage.getItem('token');
+              const viewUrl = src.docId 
+                ? `http://localhost:5000/docs/${src.docId}/view?token=${token}` 
+                : null;
+              return (
+                <div key={idx} className="text-[11px] text-black/75 bg-black/[0.015] border border-black/5 rounded-2xl p-3 hover:bg-black/[0.03] transition-colors leading-relaxed">
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <p className="font-semibold text-[#1E1E1E] truncate">📄 {src.title}</p>
+                    {viewUrl && (
+                      <a
+                        href={viewUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[9px] font-bold text-white bg-black hover:bg-black/85 px-1.5 py-0.5 rounded-lg transition-colors cursor-pointer shrink-0"
+                      >
+                        View
+                      </a>
+                    )}
+                  </div>
+                  <p className="italic text-black/60 bg-white/70 p-2.5 rounded-xl border border-black/5 font-serif text-[10.5px]">
+                    "{src.text}"
+                  </p>
+                  {src.score !== undefined && (
+                    <div className="mt-2 text-[8px] font-bold text-black/35 tracking-wider uppercase">
+                      Confidence Match: {Math.round(src.score * 100)}%
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -869,6 +928,7 @@ const Workspace = () => {
   const [modalData, setModalData] = useState(null);
   const [projects, setProjects] = useState([]);
   const [activeProjectId, setActiveProjectId] = useState(null);
+  const [projectSubTab, setProjectSubTab] = useState('chats');
 
   // RAG Sources Integration states
   const [documents, setDocuments] = useState([]);
@@ -1081,10 +1141,10 @@ const Workspace = () => {
     const newTitle = window.prompt("Rename Chat", currentTitle);
     if (!newTitle || newTitle.trim() === "") return;
     
-    setChats((prev) => prev.map(c => c.id === chatId ? { ...c, title: newTitle } : c));
+    setChats((prev) => prev.map(c => String(c.id) === String(chatId) ? { ...c, title: newTitle } : c));
     
     if (activeProjectId) {
-      const targetChat = chats.find(c => c.id === chatId);
+      const targetChat = chats.find(c => String(c.id) === String(chatId));
       if (targetChat) {
         try {
           await axios.post(`http://localhost:5000/api/learning/projects/${activeProjectId}/chats`, {
@@ -1094,6 +1154,13 @@ const Workspace = () => {
               messages: targetChat.messages
             }
           });
+          setProjects(prev => prev.map(p => {
+            if (p.id !== activeProjectId) return p;
+            return {
+              ...p,
+              chats: p.chats.map(c => String(c.id) === String(chatId) ? { ...c, title: newTitle } : c)
+            };
+          }));
         } catch (dbErr) {
           console.error("Failed to sync rename to project DB:", dbErr);
         }
@@ -1314,36 +1381,161 @@ const Workspace = () => {
           setActiveChatId(defaultChat.id);
         }
 
-        setActiveTab('roadmap');
+        setActiveTab('projects');
       }
     } catch (err) {
       console.error("Failed to load project details:", err);
     }
   }, []);
 
-  const handleStartTopicLesson = useCallback(async (topicName, roadmapSubject) => {
-    const existingChat = chats.find(c => c.title === `Lesson: ${topicName}`);
-    if (existingChat) {
-      setActiveChatId(existingChat.id);
-      setActiveTab('chats');
-      return;
-    }
+  const handleCreateProjectDirectly = useCallback(async () => {
+    const topic = window.prompt("Enter study topic for the new project (e.g. React Development):");
+    if (!topic || topic.trim() === "") return;
+    const title = window.prompt("Enter project title (optional, defaults to topic):", topic);
+    const description = window.prompt("Enter project description (optional):");
 
-    const chatId = nextId();
-    const userMsgId = nextId();
-    const typingId = nextId();
+    try {
+      const res = await axios.post('http://localhost:5000/api/learning/create-project', {
+        topic: topic.trim(),
+        title: title ? title.trim() : topic.trim(),
+        description: description ? description.trim() : undefined
+      });
+      if (res.data?.success && res.data?.project) {
+        const p = res.data.project;
+        const newProj = {
+          id: p._id,
+          title: p.title,
+          topic: p.topic,
+          description: p.description,
+          roadmapId: p.roadmapId,
+          sessionId: p.sessionId,
+          chats: p.chats || []
+        };
+        setProjects((prev) => [newProj, ...prev.filter(x => x.id !== newProj.id)]);
+        setActiveProjectId(newProj.id);
+        setActiveTab('projects');
+        alert(`Study project "${newProj.title}" successfully created inside database!`);
+      }
+    } catch (err) {
+      console.error("Failed to create project workspace:", err);
+      alert("Error creating workspace. Please try again.");
+    }
+  }, []);
+
+  const handleDeleteProject = useCallback(async (projectId) => {
+    if (!window.confirm("Are you sure you want to delete this study project? This will permanently remove the project and all of its chats.")) return;
+    try {
+      const res = await axios.delete(`http://localhost:5000/api/learning/projects/${projectId}`);
+      if (res.data?.success) {
+        setProjects((prev) => prev.filter((p) => p.id !== projectId));
+        if (activeProjectId === projectId) {
+          setActiveProjectId(null);
+        }
+        alert("Project deleted successfully.");
+      }
+    } catch (err) {
+      console.error("Failed to delete project:", err);
+      alert("Failed to delete project from database.");
+    }
+  }, [activeProjectId]);
+
+  const handleDeleteProjectChat = useCallback(async (projectId, chatId) => {
+    if (!window.confirm("Are you sure you want to delete this chat from the project?")) return;
+    try {
+      const res = await axios.delete(`http://localhost:5000/api/learning/projects/${projectId}/chats/${chatId}`);
+      if (res.data?.success) {
+        setChats(prev => prev.filter(c => String(c.id) !== String(chatId)));
+        setProjects(prev => prev.map(p => {
+          if (p.id !== projectId) return p;
+          return {
+            ...p,
+            chats: p.chats.filter(c => String(c.id) !== String(chatId))
+          };
+        }));
+        setActiveChatId(prev => String(prev) === String(chatId) ? null : prev);
+      }
+    } catch (err) {
+      console.error("Failed to delete project chat:", err);
+      alert("Failed to delete chat.");
+    }
+  }, []);
+
+  const handleStartNewProjectChat = useCallback(async () => {
+    if (!activeProjectId) return;
+    const project = projects.find(p => p.id === activeProjectId);
+    if (!project) return;
     
+    const chatId = nextId();
     const newChat = {
       id: chatId,
-      title: `Lesson: ${topicName}`,
-      messages: [
-        { id: userMsgId, role: 'user', text: `Explain the topic: "${topicName}" using First-Principles thinking.` },
-        { id: typingId, role: 'ai', text: 'Thinking...', typing: true }
-      ],
+      title: `Project Chat ${project.chats.length + 1}`,
+      messages: [],
+      sessionId: project.sessionId
     };
 
-    setChats((prev) => [newChat, ...prev]);
-    setActiveChatId(chatId);
+    try {
+      await axios.post(`http://localhost:5000/api/learning/projects/${activeProjectId}/chats`, {
+        chat: newChat
+      });
+      
+      setChats(prev => [newChat, ...prev]);
+      setActiveChatId(chatId);
+      
+      setProjects(prev => prev.map(p => {
+        if (p.id !== activeProjectId) return p;
+        return {
+          ...p,
+          chats: [newChat, ...p.chats]
+        };
+      }));
+      
+      setActiveTab('chats');
+    } catch (err) {
+      console.error("Failed to create new project chat:", err);
+      alert("Error starting a new chat in this project.");
+    }
+  }, [activeProjectId, projects]);
+
+  const handleStartTopicLesson = useCallback(async (topicName, roadmapSubject) => {
+    let chatId = activeChatId;
+    let currentChat = chats.find(c => c.id === chatId);
+
+    if (!chatId || chatId === 'default-welcome' || !currentChat) {
+      const unifiedChat = chats.find(c => c.title.startsWith("Study:") || c.title === "Study Chat");
+      if (unifiedChat) {
+        chatId = unifiedChat.id;
+        currentChat = unifiedChat;
+        setActiveChatId(chatId);
+      } else {
+        chatId = nextId();
+        const activeProj = activeProjectId ? projects.find(p => p.id === activeProjectId) : null;
+        currentChat = {
+          id: chatId,
+          title: `Study Chat`,
+          messages: [],
+          sessionId: activeProj ? activeProj.sessionId : null
+        };
+        setChats((prev) => [currentChat, ...prev]);
+        setActiveChatId(chatId);
+      }
+    }
+
+    const userMsgId = nextId();
+    const typingId = nextId();
+    const userMsg = { id: userMsgId, role: 'user', text: `Explain the topic: "${topicName}" using First-Principles thinking.` };
+    const aiPlaceholder = { id: typingId, role: 'ai', text: 'Thinking...', typing: true };
+
+    setChats((prev) =>
+      prev.map((c) => {
+        if (c.id !== chatId) return c;
+        return {
+          ...c,
+          title: c.title === 'Study Chat' || c.title === 'New Chat' ? `Study: ${topicName}` : c.title,
+          messages: [...c.messages, userMsg, aiPlaceholder],
+        };
+      })
+    );
+
     setActiveTab('chats');
     setSending(true);
 
@@ -1359,24 +1551,42 @@ const Workspace = () => {
 
       if (activeProjectId) {
         try {
-          const updatedChat = {
-            id: chatId,
-            title: `Lesson: ${topicName}`,
-            messages: [
-              { id: userMsgId, role: 'user', text: `Explain the topic: "${topicName}" using First-Principles thinking.` },
-              { id: typingId, role: 'ai', text: explanation }
-            ]
-          };
-          await axios.post(`http://localhost:5000/api/learning/projects/${activeProjectId}/chats`, {
-            chat: updatedChat
-          });
-          setProjects(prev => prev.map(p => {
-            if (p.id !== activeProjectId) return p;
-            return {
-              ...p,
-              chats: [updatedChat, ...p.chats.filter(c => c.id !== chatId)]
+          setChats((prev) => {
+            const target = prev.find(c => c.id === chatId);
+            if (!target) return prev;
+
+            const updatedMessages = target.messages.map((m) =>
+              m.id === typingId ? { ...m, text: explanation, typing: false } : m
+            );
+
+            const updatedChat = {
+              ...target,
+              messages: updatedMessages
             };
-          }));
+
+            axios.post(`http://localhost:5000/api/learning/projects/${activeProjectId}/chats`, {
+              chat: {
+                id: updatedChat.id,
+                title: updatedChat.title,
+                messages: updatedChat.messages
+              }
+            })
+            .then(() => {
+              setProjects(prevProj => prevProj.map(p => {
+                if (p.id !== activeProjectId) return p;
+                const chatExists = p.chats.some(x => String(x.id) === String(updatedChat.id));
+                return {
+                  ...p,
+                  chats: chatExists
+                    ? p.chats.map(x => String(x.id) === String(updatedChat.id) ? { ...x, title: updatedChat.title, messages: updatedChat.messages } : x)
+                    : [...p.chats, { id: updatedChat.id, title: updatedChat.title, messages: updatedChat.messages }]
+                };
+              }));
+            })
+            .catch(dbErr => console.error("Failed to sync message to project DB:", dbErr));
+
+            return prev.map(c => c.id === chatId ? updatedChat : c);
+          });
         } catch (dbErr) {
           console.error("Failed to save chat to database project:", dbErr);
         }
@@ -1393,7 +1603,7 @@ const Workspace = () => {
     } finally {
       setSending(false);
     }
-  }, [chats, activeProjectId, typeAiResponse, updateTypingMessage]);
+  }, [chats, activeChatId, activeProjectId, projects, typeAiResponse, updateTypingMessage]);
 
   const handleSend = useCallback(
     async (text) => {
@@ -1461,7 +1671,20 @@ const Workspace = () => {
                   title: updatedChat.title,
                   messages: updatedChat.messages
                 }
-              }).catch(dbErr => console.error("Failed to sync message to project DB:", dbErr));
+              })
+              .then(() => {
+                setProjects(prev => prev.map(p => {
+                  if (p.id !== activeProjectId) return p;
+                  const chatExists = p.chats.some(c => String(c.id) === String(updatedChat.id));
+                  return {
+                    ...p,
+                    chats: chatExists
+                      ? p.chats.map(c => String(c.id) === String(updatedChat.id) ? { ...c, title: updatedChat.title, messages: updatedChat.messages } : c)
+                      : [...p.chats, { id: updatedChat.id, title: updatedChat.title, messages: updatedChat.messages }]
+                  };
+                }));
+              })
+              .catch(dbErr => console.error("Failed to sync message to project DB:", dbErr));
             }
 
             return updatedChat;
@@ -1724,8 +1947,8 @@ const Workspace = () => {
                   </div>
                   <button
                     type="button"
-                    onClick={handleNewChat}
-                    className="hover:text-black text-black/60 transition-colors p-0.5 rounded-md hover:bg-black/5 flex items-center justify-center"
+                    onClick={handleCreateProjectDirectly}
+                    className="hover:text-black text-black/60 transition-colors p-0.5 rounded-md hover:bg-black/5 flex items-center justify-center cursor-pointer"
                     title="Start New Project"
                   >
                     <Plus size={16} />
@@ -1741,7 +1964,7 @@ const Workspace = () => {
                         <button
                           type="button"
                           onClick={() => handleProjectSelect(p.id)}
-                          className={`flex-1 truncate text-left transition-colors hover:text-[#000]
+                          className={`flex-1 truncate text-left transition-colors hover:text-[#000] cursor-pointer
                             ${activeProjectId === p.id ? 'text-black font-semibold' : 'text-black/70'}`}
                         >
                           📁 {p.title}
@@ -1749,10 +1972,18 @@ const Workspace = () => {
                         <button
                           type="button"
                           onClick={() => handleRenameProject(p.id, p.title)}
-                          className="opacity-0 transition-opacity group-hover:opacity-100 text-black/35 hover:text-black"
+                          className="opacity-0 transition-opacity group-hover:opacity-100 text-black/35 hover:text-black cursor-pointer"
                           title="Rename Project"
                         >
                           <Pencil size={12} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteProject(p.id)}
+                          className="opacity-0 transition-opacity group-hover:opacity-100 text-black/35 hover:text-red-600 ml-1 cursor-pointer"
+                          title="Delete Project"
+                        >
+                          <Trash2 size={13} />
                         </button>
                       </div>
                     ))
@@ -1916,21 +2147,263 @@ const Workspace = () => {
                 emptyLabel="No roadmaps yet."
               />
             </div>
-            <div className="w-1/7 h-full px-4 sm:px-6 py-6 sm:py-10">
-              <ListPanel
-                title="All Projects"
-                items={projects}
-                onOpen={handleProjectSelect}
-                emptyLabel="No projects yet. Start a new learning journey to create one!"
-                action={
-                  <button
-                    onClick={handleNewChat}
-                    className="bg-black hover:bg-black/80 text-white rounded-xl px-4 py-2 text-sm font-semibold transition-all shadow-sm flex items-center gap-1 shrink-0"
-                  >
-                    <Plus size={16} /> New Project
-                  </button>
-                }
-              />
+            <div className="w-1/7 h-full px-4 sm:px-6 py-6 sm:py-10 overflow-y-auto no-scrollbar bg-white rounded-3xl">
+              {activeProjectId ? (
+                (() => {
+                  const activeProj = projects.find(p => p.id === activeProjectId);
+                  if (!activeProj) return <p>Loading project details...</p>;
+                  return (
+                    <div className="flex h-full flex-col gap-6">
+                      {/* Back button and title */}
+                      <div>
+                        <button
+                          onClick={() => {
+                            setActiveProjectId(null);
+                            setActiveTab('projects');
+                          }}
+                          className="flex items-center gap-1.5 text-xs text-black/50 hover:text-black mb-3 font-semibold transition-colors cursor-pointer"
+                        >
+                          &larr; Back to All Projects
+                        </button>
+                        <div className="flex items-center justify-between gap-4">
+                          <h2 className="text-[26px] font-bold text-[#1E1E1E] tracking-tight">{activeProj.title}</h2>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleRenameProject(activeProj.id, activeProj.title)}
+                              className="p-2 rounded-xl bg-black/[0.03] border border-black/5 text-black/60 hover:text-black hover:bg-black/[0.06] shadow-sm transition-all cursor-pointer"
+                              title="Rename Project"
+                            >
+                              <Pencil size={15} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteProject(activeProj.id)}
+                              className="p-2 rounded-xl bg-black/[0.03] border border-black/5 text-red-500/80 hover:text-red-600 hover:bg-red-500/5 shadow-sm transition-all cursor-pointer"
+                              title="Delete Project"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
+                        </div>
+                        <p className="text-xs text-black/55 mt-1 leading-relaxed">
+                          Topic: <strong className="font-semibold text-black/85">{activeProj.topic}</strong>
+                          {activeProj.description && ` • ${activeProj.description}`}
+                        </p>
+                      </div>
+
+                      {/* Main card - Start New Chat */}
+                      <div className="bg-black/[0.015] border border-black/5 rounded-3xl p-6 text-center flex flex-col items-center justify-center shadow-sm">
+                        <div className="h-11 w-11 rounded-2xl bg-[#A8F35A]/15 border border-[#A8F35A]/30 flex items-center justify-center text-[#5b9610] mb-3">
+                          <MessagesSquare size={22} />
+                        </div>
+                        <h3 className="text-base font-bold text-[#1E1E1E] mb-0.5">New chat in {activeProj.title}</h3>
+                        <p className="text-[11px] text-black/45 max-w-sm mb-4 leading-normal">
+                          Ask questions about your documents, review your custom roadmap, or learn concepts using first-principles.
+                        </p>
+                        <button
+                          onClick={handleStartNewProjectChat}
+                          className="bg-black hover:bg-black/80 text-white font-semibold text-xs px-5 py-2.5 rounded-2xl transition-all shadow-md active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Plus size={14} /> Start Chat
+                        </button>
+                      </div>
+
+                      {/* Sub-tab pills */}
+                      <div className="flex items-center gap-2 border-b border-black/5 pb-3">
+                        <button
+                          onClick={() => setProjectSubTab('chats')}
+                          className={`px-4 py-2 rounded-full text-xs font-semibold transition-all cursor-pointer
+                            ${projectSubTab === 'chats' ? 'bg-black text-white shadow-sm' : 'bg-black/[0.04] text-black/60 hover:bg-black/[0.08]'}`}
+                        >
+                          Chats ({activeProj.chats?.length || 0})
+                        </button>
+                        <button
+                          onClick={() => setProjectSubTab('sources')}
+                          className={`px-4 py-2 rounded-full text-xs font-semibold transition-all cursor-pointer
+                            ${projectSubTab === 'sources' ? 'bg-black text-white shadow-sm' : 'bg-black/[0.04] text-black/60 hover:bg-black/[0.08]'}`}
+                        >
+                          Sources ({documents.length})
+                        </button>
+                        <button
+                          onClick={() => setProjectSubTab('roadmap')}
+                          className={`px-4 py-2 rounded-full text-xs font-semibold transition-all cursor-pointer
+                            ${projectSubTab === 'roadmap' ? 'bg-black text-white shadow-sm' : 'bg-black/[0.04] text-black/60 hover:bg-black/[0.08]'}`}
+                        >
+                          Roadmap
+                        </button>
+                      </div>
+
+                      {/* Sub-tab content */}
+                      <div className="flex-1 min-h-0">
+                        {projectSubTab === 'chats' && (
+                          (!activeProj.chats || activeProj.chats.length === 0) ? (
+                            <div className="flex flex-col items-center justify-center text-center py-10 px-6 border-2 border-dashed border-black/5 rounded-3xl bg-black/[0.005]">
+                              <MessagesSquare size={26} className="text-black/25 mb-1.5" />
+                              <h4 className="text-xs font-bold text-[#1E1E1E] mb-0.5">No chats yet</h4>
+                              <p className="text-[11px] text-black/40">Chats in {activeProj.title} will live here.</p>
+                            </div>
+                          ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-8">
+                              {activeProj.chats.map((c) => (
+                                <div
+                                  key={c.id}
+                                  className="group relative bg-white border border-black/10 rounded-2xl p-4 hover:border-black/20 hover:shadow-sm transition-all flex flex-col justify-between"
+                                >
+                                  <button
+                                    onClick={() => {
+                                      setActiveChatId(c.id);
+                                      setActiveTab('chats');
+                                    }}
+                                    className="text-left flex-1 min-w-0 cursor-pointer"
+                                  >
+                                    <h4 className="font-bold text-[14px] text-[#1E1E1E] group-hover:text-[#5b9610] transition-colors truncate pr-14" title={c.title}>
+                                      💬 {c.title}
+                                    </h4>
+                                    <p className="text-[11px] text-black/40 mt-1">
+                                      {c.messages?.length || 0} messages
+                                    </p>
+                                  </button>
+                                  <div className="absolute right-3 top-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button
+                                      onClick={() => handleRenameChat(c.id, c.title)}
+                                      className="p-1 rounded-lg bg-black/[0.03] hover:bg-black/[0.08] text-black/60 hover:text-black transition-colors cursor-pointer"
+                                      title="Rename Chat"
+                                    >
+                                      <Pencil size={11} />
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteProjectChat(activeProj.id, c.id)}
+                                      className="p-1 rounded-lg bg-black/[0.03] hover:bg-red-500/10 text-black/60 hover:text-red-600 transition-colors cursor-pointer"
+                                      title="Delete Chat"
+                                    >
+                                      <Trash2 size={11} />
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )
+                        )}
+
+                        {projectSubTab === 'sources' && (
+                          /* Sources list with upload options */
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pb-8">
+                            <div className="md:col-span-1 flex flex-col gap-4">
+                              {/* PDF Uploader Card */}
+                              <div className="border border-black/10 rounded-2xl p-4 bg-black/[0.01] hover:bg-black/[0.02] transition-colors relative flex flex-col items-center justify-center text-center group cursor-pointer min-h-[120px]">
+                                <input
+                                  type="file"
+                                  accept="application/pdf"
+                                  onChange={handlePdfUpload}
+                                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                  disabled={uploading}
+                                />
+                                <FileText size={24} className="text-[#1E1E1E]/60 mb-1.5 group-hover:scale-110 transition-transform" />
+                                <p className="font-semibold text-xs text-[#1E1E1E]">{uploading ? 'Processing...' : 'Upload PDF'}</p>
+                                <p className="text-[9px] text-black/45 mt-0.5">Click to browse (Max 20MB)</p>
+                              </div>
+
+                              {/* URL Input Card */}
+                              <form onSubmit={handleUrlAdd} className="border border-black/10 rounded-2xl p-4 bg-white flex flex-col gap-2.5">
+                                <h3 className="font-semibold text-xs text-[#1E1E1E]">Add Webpage</h3>
+                                <input
+                                  type="text"
+                                  placeholder="Optional Title"
+                                  value={urlTitleInput}
+                                  onChange={(e) => setUrlTitleInput(e.target.value)}
+                                  className="w-full bg-black/[0.02] border border-black/10 rounded-xl px-3 py-1.5 text-xs text-[#1E1E1E] outline-none focus:border-black/20"
+                                />
+                                <div className="flex gap-2">
+                                  <input
+                                    type="url"
+                                    required
+                                    placeholder="https://example.com"
+                                    value={urlInput}
+                                    onChange={(e) => setUrlInput(e.target.value)}
+                                    className="flex-1 bg-black/[0.02] border border-black/10 rounded-xl px-3 py-1.5 text-xs text-[#1E1E1E] outline-none focus:border-black/20"
+                                  />
+                                  <button
+                                    type="submit"
+                                    disabled={uploading || !urlInput.trim()}
+                                    className="bg-[#A8F35A] hover:bg-[#97db51] text-[#1E1E1E] font-semibold text-[11px] px-3 py-1.5 rounded-xl transition-colors cursor-pointer disabled:opacity-40"
+                                  >
+                                    Add
+                                  </button>
+                                </div>
+                              </form>
+                            </div>
+
+                            <div className="md:col-span-2 flex flex-col min-h-0 bg-black/[0.01] border border-black/5 rounded-2xl p-4">
+                              <h3 className="font-semibold text-xs text-[#1E1E1E] uppercase tracking-wider mb-3">Project Library ({documents.length})</h3>
+                              {documents.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center flex-1 py-6 text-center text-black/35">
+                                  <FileText size={18} className="mb-1 opacity-50" />
+                                  <p className="text-[11px] italic">No sources added yet</p>
+                                </div>
+                              ) : (
+                                <div className="flex flex-col gap-2">
+                                  {documents.map((doc) => (
+                                    <div key={doc._id} className="flex items-center justify-between gap-3 bg-white border border-black/10 rounded-xl p-2.5 shadow-sm hover:border-black/15 transition-all">
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-1.5 min-w-0">
+                                          <span className={`h-1.5 w-1.5 rounded-full shrink-0
+                                            ${doc.status === 'completed' ? 'bg-green-500' : ''}
+                                            ${doc.status === 'failed' ? 'bg-red-500' : ''}
+                                            ${['queued', 'pending', 'processing'].includes(doc.status) ? 'bg-blue-500 animate-pulse' : ''}
+                                          `} />
+                                          <p className="font-semibold text-xs text-[#1E1E1E] truncate" title={doc.title}>{doc.title}</p>
+                                        </div>
+                                        <div className="flex items-center gap-2 mt-0.5 text-[9px] text-black/45 font-medium">
+                                          <span className="uppercase font-semibold tracking-wider px-1 bg-black/[0.04] rounded">{doc.sourceType}</span>
+                                          {doc.fileSize && <span>{(doc.fileSize / 1024 / 1024).toFixed(2)} MB</span>}
+                                        </div>
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleDocDelete(doc._id)}
+                                        className="text-black/30 hover:text-red-500 hover:bg-red-500/10 p-1.5 rounded-lg transition-colors cursor-pointer shrink-0"
+                                        title="Delete source"
+                                      >
+                                        <Trash2 size={13} />
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {projectSubTab === 'roadmap' && (
+                          <div className="bg-[#EAF2CF]/10 border border-black/5 rounded-3xl p-4 md:p-6 shadow-sm overflow-y-auto max-h-[600px] no-scrollbar">
+                            {activeRoadmap ? (
+                              <RoadmapPanel roadmap={activeRoadmap} onToggleTopic={handleToggleTopic} onTopicClick={handleStartTopicLesson} />
+                            ) : (
+                              <div className="text-center py-10 text-black/35 italic">
+                                No roadmap generated for this project yet.
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()
+              ) : (
+                <ListPanel
+                  title="All Projects"
+                  items={projects}
+                  onOpen={handleProjectSelect}
+                  emptyLabel="No projects yet. Start a new learning journey to create one!"
+                  action={
+                    <button
+                      onClick={handleCreateProjectDirectly}
+                      className="bg-black hover:bg-black/80 text-white rounded-xl px-4 py-2 text-sm font-semibold transition-all shadow-sm flex items-center gap-1 shrink-0 cursor-pointer"
+                    >
+                      <Plus size={16} /> New Project
+                    </button>
+                  }
+                />
+              )}
             </div>
           </div>
         </div>

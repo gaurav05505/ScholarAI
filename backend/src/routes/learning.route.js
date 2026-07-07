@@ -10,7 +10,9 @@ import {
     explainTopic,
     listRoadmaps,
     renameRoadmap,
-    renameProject
+    renameProject,
+    deleteProject,
+    deleteProjectChat
 } from '../controllers/learning.controller.js'
 
 const router = express.Router(); 
@@ -26,5 +28,7 @@ router.post("/explain-topic", explainTopic);
 router.get("/roadmaps", listRoadmaps);
 router.patch("/roadmap/:id", renameRoadmap);
 router.patch("/projects/:id", renameProject);
+router.delete("/projects/:id", deleteProject);
+router.delete("/projects/:id/chats/:chatId", deleteProjectChat);
 
 export default router;  
