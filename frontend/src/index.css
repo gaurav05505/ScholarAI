@@ -1,19 +1,19 @@
 @import "tailwindcss";
 @import url("https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800&display=swap");
 
+
 @theme {
   --font-body: "Rubik", sans-serif;
+  --font-heading: "Rubik Mono One", monospace;
 }
 
 @layer utilities {
   .font-body {
     font-family: var(--font-body);
   }
-}
 
-@layer base {
-  body {
-    font-family: var(--font-body);
+  .font-heading {
+    font-family: var(--font-heading);
   }
 }
 

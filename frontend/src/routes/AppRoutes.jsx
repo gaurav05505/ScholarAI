@@ -5,10 +5,9 @@ import Home from '../pages/Home.jsx'
 import Login from '../pages/authPages/Login.jsx'
 import Register from '../pages/authPages/Register.jsx'
 import Workspace from '../pages/Workspace.jsx'
-import ScolarAI from '../pages/ScolarAI.jsx'
 
 const AppRoutes = () => {
-  return (
+  return ( 
     <Routes>
       {/* Public Routes */}
       <Route path="/" element={<Home />} />
@@ -21,14 +20,6 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Workspace />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/scholar"
-        element={
-          <ProtectedRoute>
-            <ScolarAI />
           </ProtectedRoute>
         }
       />
