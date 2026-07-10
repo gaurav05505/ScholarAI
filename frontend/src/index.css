@@ -17,6 +17,11 @@
   }
 }
 
+html {
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+}
+
 html, body, #root {
   height: 100%;
 }

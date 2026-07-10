@@ -8,7 +8,7 @@ Allowed intents:
 - research
 - publish
 - unknown
-
+ 
 Rules:
 - Return ONLY valid JSON.
 - Do not explain your answer.

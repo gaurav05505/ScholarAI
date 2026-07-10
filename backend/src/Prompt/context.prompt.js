@@ -10,13 +10,13 @@ Onboarding fields description:
 - weeklyHours: The time commitment in hours per week (e.g., 2-5 hours, 5-10 hours, 10+ hours).
 - learningStyle: The preferred learning approach (e.g., hands-on project-based, video tutorials, reading docs, interactive quizzes).
 
-Instructions:
+Instructions: 
 1. Generate a natural, friendly, conversational question asking the user about the "Current Field".
 2. Provide a list of 3 to 5 clear, relevant suggested options for the user to select from.
 3. Set "allowCustom" to true to allow the user to enter their own custom response if none of the options fit.
 4. Return ONLY valid JSON in the specified format. Do not explain your answer. Do not use markdown. Do not wrap JSON in \`\`\`.
 
-Response Format:
+Response Format: 
 {
   "field": "track",
   "question": "Which learning path are you most interested in for Node.js?",

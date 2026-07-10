@@ -1,12 +1,12 @@
 import React from 'react'
-import Navbar from '../../components/Navbar'
 import Searchbar from '../../components/Searchbar'
 import { BrainCircuit, ChartBarStacked, FileText } from 'lucide-react'
 
 const Section1 = () => {
   return (
-    <div className='p-3 sm:p-5 h-screen w-full bg-[url(/landing-background.png)] bg-cover overflow-hidden'>
-      <Navbar />
+    <div className='snap-start p-3 sm:p-5 h-screen w-full bg-[url(/landing-background.png)] bg-cover overflow-hidden'>
+      {/* Spacer to reserve height for the fixed/sticky navbar */}
+      <div className='h-12 lg:h-15 w-full' />
 
       <div className='flex flex-col items-center gap-4 sm:gap-6 lg:gap-10'>
         <div className='flex flex-col items-center justify-center gap-3 sm:gap-5 lg:gap-8 mt-6 sm:mt-10 lg:mt-14'>

@@ -35,7 +35,7 @@ export async function intentNode(userId, message) {
       return {
         success: false,
         message: `AI service error: ${aiError.message}`
-      };
+      }; 
     }
 
     // 2. Parse JSON safely
@@ -155,4 +155,4 @@ Already Collected Context: {}`;
       message: error.message || "An unexpected error occurred."
     };
   }
-}
+}
