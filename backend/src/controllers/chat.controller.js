@@ -6,7 +6,7 @@ import Roadmap from "../models/Roadmap.mode.js";
 import Aichat from "../utils/aiClint.util.js";
 import mongoose from "mongoose";
 import { getEmbeddings, searchPinecone } from "../services/rag.service.js";
-
+  
 export async function chat(req, res) {
   try {
     const { message, sessionId, semanticSearchEnabled = true } = req.body;

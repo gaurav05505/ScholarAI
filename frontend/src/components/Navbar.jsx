@@ -22,7 +22,7 @@ const Navbar = () => {
   return (
     <div className={`fixed top-0 left-[30px] right-[30px] z-50 transition-all duration-300 ${
       isScrolled 
-        ? ' border-b border-white/10 py-3 px-5 shadow-lg' 
+        ? ' py-3 px-5 shadow-lg' 
         : 'bg-transparent py-5 px-5 '
     }`}>
       <div className='w-full flex items-center justify-between h-12 lg:h-15'>
