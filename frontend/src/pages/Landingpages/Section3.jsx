@@ -1,5 +1,5 @@
 import React from 'react'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, Grid2X2 } from 'lucide-react'
 
 const featureRows = [
   {
@@ -45,7 +45,7 @@ const Section3 = () => {
             {featureRows.map((feature) => (
               <article
                 key={feature.title}
-                className="group grid grid-cols-1 items-center gap-6 pl-5 py-14 transition-colors duration-300 hover:bg-white/[0.03] sm:py-16 lg:min-h-[240px] lg:grid-cols-[minmax(0,0.33fr)_minmax(0,1fr)_minmax(0,0.16fr)] lg:gap-10 lg:py-0"
+                className="group grid grid-cols-1 items-center gap-6 py-14 transition-colors duration-300 hover:bg-white/[0.03] sm:py-16 lg:min-h-[240px] lg:grid-cols-[minmax(0,0.33fr)_minmax(0,1fr)_minmax(0,0.16fr)] lg:gap-10 lg:py-0"
               >
                 <div className="lg:pr-10">
                   <h3 className="text-[24px] font-bold text-white transition-transform duration-300 ease-out group-hover:translate-x-1 sm:text-[25px]">
@@ -71,6 +71,23 @@ const Section3 = () => {
             ))}
           </div>
         </div>
+      </div>
+
+      <div className="mx-auto mt-0 grid w-full max-w-[1024px] grid-cols-1 lg:grid-cols-[1fr_minmax(320px,420px)_1fr] lg:items-stretch">
+        <div className="hidden lg:block" />
+        <div className="border-l border-r border-white/10 px-6 py-8 sm:px-8 sm:py-10 lg:px-10 lg:py-10">
+          <div className="mb-4 flex items-center gap-2 text-[12px] font-medium text-white/65">
+            <Grid2X2 size={14} strokeWidth={2} />
+            <span>Our product</span>
+          </div>
+          <p className="text-[28px] font-semibold leading-tight text-white sm:text-[30px]">
+            makes learning and research
+          </p>
+          <p className="mt-3 text-[32px] font-light leading-tight text-[#ffb59e] sm:text-[36px]">
+            easier, faster more in-depth
+          </p>
+        </div>
+        <div className="hidden lg:block" />
       </div>
     </section>
   )
