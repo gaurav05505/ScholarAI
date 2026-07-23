@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {
   Sparkles,
   ArrowLeft,
@@ -23,20 +23,79 @@ const leftTools = [
 
 const stackIcons = [Sparkles, Sparkles, CircleDashed, Bot, Eye, Plus]
 
-const rootNode = { x: 51, y: 15, Icon: Sparkles }
+const rootNode = {
+  key: 'intake',
+  x: 51,
+  y: 15,
+  Icon: Sparkles,
+  title: 'AI Intake',
+  caption: 'Signal',
+}
+
 const rowNodes = [
-  { x: 38, y: 46, Icon: User },
-  { x: 46, y: 46, Icon: Workflow },
-  { x: 54, y: 46, Icon: Blend },
-  { x: 62, y: 46, Icon: FileText },
+  { key: 'profile', x: 24, y: 45, Icon: User, title: 'Profile', caption: 'Goals' },
+  { key: 'planner', x: 42, y: 45, Icon: Workflow, title: 'Planner', caption: 'Roadmap' },
+  { key: 'research', x: 60, y: 45, Icon: Blend, title: 'Research', caption: 'Sources' },
+  { key: 'output', x: 78, y: 45, Icon: FileText, title: 'Output', caption: 'Docs' },
 ]
-const helpNode = { x: 62, y: 63 }
-const chatNode = { x: 62, y: 80 }
-const loopY = 80
+
+const helpNode = {
+  key: 'review',
+  x: 70,
+  y: 65,
+  Icon: HelpCircle,
+  title: 'Review',
+  caption: 'Check',
+}
+
+const chatNode = {
+  key: 'coach',
+  x: 70,
+  y: 83,
+  Icon: MessageCircle,
+  title: 'Coach',
+  caption: 'Chat',
+}
+
+const loopY = 84
+const CYCLE = 4.2
+
+const nodes = [rootNode, ...rowNodes, helpNode, chatNode]
+
 
 const Section4 = () => {
+  const [hovered, setHovered] = useState(null)
+
   return (
     <section className="relative snap-start bg-[#030303] min-h-screen px-3 py-5 sm:px-5">
+      <style>{`
+        @keyframes pipelinePulse {
+          0%, 92%, 100% {
+            border-color: rgba(255,255,255,0.1);
+            box-shadow: 0 0 0 0 rgba(255,181,158,0);
+          }
+          8% {
+            border-color: rgba(255,181,158,0.8);
+            box-shadow: 0 0 18px 2px rgba(255,181,158,0.28), inset 0 0 12px rgba(255,181,158,0.12);
+          }
+          20% {
+            border-color: rgba(255,255,255,0.12);
+            box-shadow: 0 0 0 0 rgba(255,181,158,0);
+          }
+        }
+        @keyframes edgeFlow {
+          to { stroke-dashoffset: -18; }
+        }
+        @keyframes nodeFloat {
+          0%, 100% { translate: 0 0; }
+          50% { translate: 0 -2px; }
+        }
+        @keyframes statusBlink {
+          0%, 100% { opacity: 0.3; }
+          50% { opacity: 1; }
+        }
+      `}</style>
+
       <div className="pointer-events-none absolute left-[29%] top-0 hidden h-full w-px bg-white/10 lg:block" />
       <div className="pointer-events-none absolute left-[72%] top-0 hidden h-full w-px bg-white/10 lg:block" />
 
@@ -141,52 +200,68 @@ const Section4 = () => {
 
           <div className="relative mt-5 h-[520px] overflow-hidden rounded-[7px] border border-white/10 bg-[#030303] sm:absolute sm:left-0 sm:right-0 sm:top-[92px] sm:bottom-[70px] sm:h-auto sm:mt-0">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.075)_1px,transparent_1px)] bg-[size:18px_18px] opacity-25" />
+            <div className="pointer-events-none absolute left-[8%] right-[8%] top-[45%] h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+            <div className="pointer-events-none absolute bottom-[18%] left-[18%] right-[21%] h-px bg-gradient-to-r from-transparent via-white/8 to-transparent" />
 
             <svg
               className="absolute inset-0 h-full w-full overflow-visible"
               viewBox="0 0 100 100"
               preserveAspectRatio="none"
             >
+              <defs>
+                <filter id="pipelineGlow" x="-200%" y="-200%" width="500%" height="500%">
+                  <feGaussianBlur stdDeviation="0.9" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+
               <g
                 fill="none"
-                stroke="rgba(255,255,255,0.55)"
-                strokeWidth="0.35"
-                strokeDasharray="1.25 1.7"
+                stroke="rgba(255,255,255,0.42)"
+                strokeWidth="0.42"
+                strokeDasharray="1.35 1.75"
                 vectorEffect="non-scaling-stroke"
+                style={{ animation: 'edgeFlow 1.8s linear infinite' }}
               >
-                <path d={`M ${rootNode.x} ${rootNode.y + 4} L ${rootNode.x} ${rowNodes[0].y - 8}`} />
-                <path d={`M ${rowNodes[0].x} ${rowNodes[0].y - 8} L ${rowNodes[3].x} ${rowNodes[0].y - 8}`} />
-                {rowNodes.map((n, i) => (
-                  <path key={i} d={`M ${n.x} ${rowNodes[0].y - 8} L ${n.x} ${n.y - 4}`} />
+                <path d={`M ${rootNode.x} ${rootNode.y + 7} L ${rootNode.x} ${rowNodes[0].y - 13}`} />
+                <path d={`M ${rowNodes[0].x} ${rowNodes[0].y - 13} L ${rowNodes[3].x} ${rowNodes[0].y - 13}`} />
+                {rowNodes.map((node) => (
+                  <path key={node.key} d={`M ${node.x} ${rowNodes[0].y - 13} L ${node.x} ${node.y - 8}`} />
                 ))}
-                <path d={`M ${helpNode.x} ${rowNodes[3].y + 4} L ${helpNode.x} ${helpNode.y - 4}`} />
-                <path d={`M ${chatNode.x} ${helpNode.y + 4} L ${chatNode.x} ${chatNode.y - 4}`} />
+                <path d={`M ${rowNodes[0].x + 7} ${rowNodes[0].y} L ${rowNodes[1].x - 7} ${rowNodes[1].y}`} />
+                <path d={`M ${rowNodes[1].x + 7} ${rowNodes[1].y} L ${rowNodes[2].x - 7} ${rowNodes[2].y}`} />
+                <path d={`M ${rowNodes[2].x + 7} ${rowNodes[2].y} L ${rowNodes[3].x - 7} ${rowNodes[3].y}`} />
+                <path d={`M ${helpNode.x} ${rowNodes[3].y + 8} L ${helpNode.x} ${helpNode.y - 8}`} />
+                <path d={`M ${chatNode.x} ${helpNode.y + 8} L ${chatNode.x} ${chatNode.y - 8}`} />
                 <path
-                  d={`M ${rowNodes[0].x} ${rowNodes[0].y + 4}
+                  d={`M ${rowNodes[0].x} ${rowNodes[0].y + 8}
                       L ${rowNodes[0].x} ${loopY}
-                      L ${chatNode.x - 4} ${loopY}`}
+                      L ${chatNode.x - 8} ${loopY}`}
                 />
               </g>
-              <circle cx={rowNodes[0].x} cy={loopY} r="0.55" fill="rgba(255,255,255,0.78)" />
-              <circle cx={chatNode.x - 4} cy={loopY} r="0.55" fill="rgba(255,255,255,0.78)" />
+
+              <g fill="rgba(255,255,255,0.78)">
+                <circle cx={rowNodes[0].x} cy={loopY} r="0.55" />
+                <circle cx={chatNode.x - 8} cy={loopY} r="0.55" />
+                {rowNodes.map((node) => (
+                  <circle key={node.key} cx={node.x} cy={rowNodes[0].y - 13} r="0.42" />
+                ))}
+              </g>
             </svg>
 
-            <FlowNode x={rootNode.x} y={rootNode.y}>
-              <rootNode.Icon size={19} strokeWidth={1.55} />
-            </FlowNode>
-
-            {rowNodes.map((n, i) => (
-              <FlowNode key={i} x={n.x} y={n.y}>
-                <n.Icon size={18} strokeWidth={1.55} />
-              </FlowNode>
+            {nodes.map((node, index) => (
+              <FlowNode
+                key={node.key}
+                {...node}
+                delay={index * 0.35}
+                hovered={hovered === node.key}
+                onHover={() => setHovered(node.key)}
+                onLeave={() => setHovered(null)}
+              />
             ))}
-
-            <FlowNode x={helpNode.x} y={helpNode.y}>
-              <HelpCircle size={18} strokeWidth={1.55} />
-            </FlowNode>
-            <FlowNode x={chatNode.x} y={chatNode.y}>
-              <MessageCircle size={18} strokeWidth={1.55} />
-            </FlowNode>
           </div>
         </main>
 
@@ -206,18 +281,49 @@ const Section4 = () => {
   )
 }
 
-const FlowNode = ({ x, y, size = 46, children }) => (
+const FlowNode = ({
+  x,
+  y,
+  Icon,
+  title,
+  caption,
+  delay = 0,
+  hovered,
+  onHover,
+  onLeave,
+}) => (
   <div
-    className="absolute flex items-center justify-center rounded-none border border-white/10 bg-white/[0.045] text-white/80 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]"
+    onMouseEnter={onHover}
+    onMouseLeave={onLeave}
+    className="absolute flex h-[74px] w-[148px] cursor-pointer items-center gap-4 rounded-none border bg-[#0b0b0b]/95 px-4 text-white/80 transition-all duration-200 ease-out"
     style={{
       left: `${x}%`,
       top: `${y}%`,
-      width: size,
-      height: size,
-      transform: 'translate(-50%, -50%)',
+      transform: hovered ? 'translate(-50%, -50%) scale(1.06)' : 'translate(-50%, -50%) scale(1)',
+      borderColor: hovered ? 'rgba(255,181,158,0.72)' : 'rgba(255,255,255,0.12)',
+      color: hovered ? '#ffdccf' : undefined,
+      boxShadow: hovered
+        ? '0 0 22px 2px rgba(255,181,158,0.28), inset 0 0 14px rgba(255,181,158,0.08)'
+        : '0 10px 24px rgba(0,0,0,0.32)',
+      animation: hovered ? undefined : `pipelinePulse ${CYCLE}s ease-in-out infinite, nodeFloat 4.5s ease-in-out infinite`,
+      animationDelay: `${delay}s, ${delay * 0.4}s`,
     }}
   >
-    {children}
+    <span className="relative flex h-10 w-10 shrink-0 items-center justify-center border border-white/10 bg-white/[0.045]">
+      <span
+        className="absolute right-[-3px] top-[-3px] h-[5px] w-[5px] bg-[#ffb59e]"
+        style={{ animation: `statusBlink 1.7s ease-in-out infinite`, animationDelay: `${delay}s` }}
+      />
+      <Icon size={20} strokeWidth={1.55} />
+    </span>
+    <span className="min-w-0 leading-none">
+      <span className="block whitespace-nowrap text-[13px] font-semibold uppercase text-white/90">
+        {title}
+      </span>
+      <span className="mt-2 block whitespace-nowrap text-[9px] font-medium uppercase tracking-[0.08em] text-white/42">
+        {caption}
+      </span>
+    </span>
   </div>
 )
 
