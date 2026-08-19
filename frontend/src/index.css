@@ -26,3 +26,52 @@ body {
   background: #050505;
   color: #ffffff;
 }
+
+.get-started {
+  position: relative;
+  overflow: hidden;
+
+  padding: 16px 32px;
+  border-radius: 16px;
+
+  background: white;
+  color: black;
+
+  border: none;
+  outline: none;
+
+  font-family: inherit;
+  font-weight: 500;
+
+  isolation: isolate;
+  transition: color 0.3s ease;
+}
+
+/* Sliding background */
+.get-started::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+
+  background: #3E64CB;
+
+  transform: translateX(-101%);
+  transition: transform 0.4s ease;
+
+  z-index: -1;
+}
+
+.get-started:hover::before {
+  transform: translateX(0);
+}
+
+.get-started:hover {
+  color: white;
+}
+
+/* Remove browser focus border */
+.get-started:focus,
+.get-started:focus-visible {
+  outline: none;
+  border: none;
+}

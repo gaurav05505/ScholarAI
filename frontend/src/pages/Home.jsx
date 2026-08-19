@@ -7,12 +7,12 @@ import Section4 from './Landingpages/Section4'
 
 const Home = () => {
   return (
-    <div className='relative'>
+    <div className='relative mx-5 my-4'>
       <Navbar />
-      <Section1 />
-      <Section2 />
+      {/* <Section1 /> */}
+      {/* <Section2 />
       <Section3 />
-      <Section4 />
+      <Section4 /> */}
     </div>
   )
 }

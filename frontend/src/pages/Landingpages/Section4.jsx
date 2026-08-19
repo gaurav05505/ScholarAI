@@ -328,5 +328,3 @@ const FlowNode = ({
 )
 
 export default Section4
-
-
