@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 
 const cards = [
   {
     id: 1,
     title: 'Roadmap',
     description:
-      'Avora creates a personalized roadmap based on your goals, current knowledge, and learning pace, giving you a clear path from where you are to where you want to be.',
+      'Avora creates a personalized roadmap based on your goals, current knowledge, and learning pace—giving you a clear path from where you are to where you want to be.',
   },
   {
     id: 2,
@@ -23,170 +23,139 @@ const cards = [
     id: 4,
     title: 'Solve',
     description:
-      'Tackle tricky coding exercises, math problems, or practice questions with interactive, step-by-step assistance that explains the underlying logic.',
+      'Tackle tricky exercises, complex problems, or practice questions with interactive step-by-step guidance that explains the core principles.',
   },
 ]
 
 const Section2 = () => {
   const [activeIndex, setActiveIndex] = useState(0)
-  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200)
 
-  useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth)
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
-
-  let startOffset = '10%'
-  if (windowWidth >= 1024) {
-    startOffset = '52%'
-  } else if (windowWidth >= 768) {
-    startOffset = '30%'
-  }
-
-  const getActiveCardOffset = () => {
-    let offset = 0
-    for (let i = 0; i < activeIndex; i += 1) {
-      let margin = -80
-      if (i + 1 === activeIndex) {
-        margin = 20
-      }
-      offset += 280 + margin
-    }
-    return offset
-  }
-
-  const getCardStyle = (idx) => {
-    const isActive = idx === activeIndex
-
-    let marginLeft = '-80px'
-    if (idx === 0) {
-      marginLeft = '0px'
-    } else if (isActive) {
-      marginLeft = '20px'
-    } else if (idx === activeIndex + 1) {
-      marginLeft = '20px'
-    }
-
-    return {
-      width: '280px',
-      marginLeft,
-      zIndex: isActive ? 30 : 20 - Math.abs(idx - activeIndex),
-      transition: 'transform 550ms cubic-bezier(0.22, 1, 0.36, 1), opacity 350ms ease, margin-left 550ms cubic-bezier(0.22, 1, 0.36, 1), filter 350ms ease',
-    }
-  }
+  const cardWidth = 260
+  const cardGap = 48
+  const stepOffset = cardWidth + cardGap
 
   return (
-    <div className="snap-start bg-[#050505] p-5 font-body">
-      <div className="relative flex min-h-screen w-full flex-col justify-between overflow-hidden rounded-2xl border border-white/52 bg-black/40 px-6 py-6 shadow-2xl backdrop-blur-3xl sm:px-10 sm:py-8 lg:h-screen lg:px-16 lg:py-10">
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.015)_1px,_transparent_1px),_linear-gradient(90deg,_rgba(255,255,255,0.015)_1px,_transparent_1px)] bg-[size:30px_30px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
+    <div className="relative mt-30 w-full min-h-[720px] rounded-2xl border border-white/10 bg-[#050505] p-8 md:p-12 lg:p-14 overflow-hidden flex flex-col justify-between select-none">
+      {/* Top Header */}
+      <div className="max-w-xl z-10">
+        <h2 className="text-4xl md:text-5xl lg:text-[52px] font-black font-heading tracking-tight text-white leading-tight">
+          Welcome to Avora.
+        </h2>
+        <p className="mt-4 text-zinc-400 text-base md:text-lg font-light leading-relaxed">
+          Your second friend for learning, researching, solving problems, and celebrating every milestone.
+        </p>
+      </div>
 
-        <div className="h-10 w-full sm:h-12" />
-
-        <div className="relative z-10 max-w-4xl gap-4 sm:gap-6">
-          <h1 className="text-4xl font-bold leading-tight tracking-tight text-white sm:text-5xl lg:text-[64px]">
-            Welcome to Avora.
-          </h1>
-          <p className="max-w-2xl text-lg font-light leading-relaxed text-white/52 sm:text-xl lg:text-2xl">
-            Your second friend for learning, researching, solving problems, and celebrating every milestone.
-          </p>
-        </div>
-
-        <div className="relative z-10 mt-4 w-full overflow-hidden sm:mt-6">
+      {/* Middle Carousel Area - Positioned on the Right Half */}
+      <div className="relative w-full my-8">
+        <div className="lg:absolute lg:left-[38%] lg:top-[-110px] w-full">
+          {/* Sliding Track */}
           <div
-            className="flex"
+            className="flex items-start transition-transform duration-500 ease-out"
             style={{
-              transform: `translateX(calc(${startOffset} - ${getActiveCardOffset()}px))`,
-              transition: 'transform 550ms cubic-bezier(0.22, 1, 0.36, 1)',
+              gap: `${cardGap}px`,
+              transform: `translateX(-${activeIndex * stepOffset}px)`,
             }}
           >
             {cards.map((card, idx) => {
               const isActive = idx === activeIndex
 
               return (
-                <button
+                <div
                   key={card.id}
-                  type="button"
                   onClick={() => setActiveIndex(idx)}
-                  className="flex shrink-0 select-none cursor-pointer flex-col gap-5 text-left focus:outline-none"
-                  style={getCardStyle(idx)}
+                  className="flex flex-col cursor-pointer shrink-0"
+                  style={{ width: `${cardWidth}px` }}
                 >
+                  {/* Card Box */}
                   <div
-                    className={`relative flex h-[150px] w-full items-center justify-center rounded-sm border transition-all duration-500 ease-out ${
+                    className={`relative flex items-center justify-center h-[160px] rounded-xl transition-all duration-300 ${
                       isActive
-                        ? 'border-white/20 bg-[#09090b] shadow-[0_0_30px_rgba(0,232,82,0.05)] scale-100 opacity-100'
-                        : 'border-white/5 bg-[#09090b]/40 opacity-25 scale-[0.96]'
+                        ? 'bg-[#0d0d10] border border-white/20 shadow-2xl opacity-100'
+                        : 'bg-[#121216]/60 border border-white/5 opacity-25 hover:opacity-50 blur-[0.4px]'
                     }`}
                   >
+                    {/* 4 Blue Corner Accents */}
                     {isActive && (
                       <>
-                        <span className="absolute -left-1.5 -top-1.5 h-3 w-3 rounded-xs bg-[#00E852] shadow-[0_0_10px_#00E852]" />
-                        <span className="absolute -right-1.5 -top-1.5 h-3 w-3 rounded-xs bg-[#00E852] shadow-[0_0_10px_#00E852]" />
-                        <span className="absolute -left-1.5 -bottom-1.5 h-3 w-3 rounded-xs bg-[#00E852] shadow-[0_0_10px_#00E852]" />
-                        <span className="absolute -right-1.5 -bottom-1.5 h-3 w-3 rounded-xs bg-[#00E852] shadow-[0_0_10px_#00E852]" />
+                        <span className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-[#3b66ff] rounded-[2px] shadow-[0_0_10px_#3b66ff]" />
+                        <span className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-[#3b66ff] rounded-[2px] shadow-[0_0_10px_#3b66ff]" />
+                        <span className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-[#3b66ff] rounded-[2px] shadow-[0_0_10px_#3b66ff]" />
+                        <span className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-[#3b66ff] rounded-[2px] shadow-[0_0_10px_#3b66ff]" />
                       </>
                     )}
 
-                    <h3 className={`text-lg font-semibold tracking-wide text-white transition-transform duration-500 ease-out sm:text-xl ${isActive ? 'translate-y-0' : 'translate-y-0'}`}>
+                    <h3
+                      className={`text-lg sm:text-xl font-semibold tracking-wide ${
+                        isActive ? 'text-white' : 'text-zinc-400'
+                      }`}
+                    >
                       {card.title}
                     </h3>
                   </div>
 
+                  {/* Active Description */}
                   <div
-                    className={`w-full pr-2 transition-all duration-500 ease-out ${
+                    className={`mt-5 transition-all duration-300 ${
                       isActive
-                        ? 'visible h-auto translate-y-0 opacity-100'
-                        : 'invisible h-0 -translate-y-3 overflow-hidden opacity-0'
+                        ? 'opacity-100 max-h-40'
+                        : 'opacity-0 max-h-0 pointer-events-none'
                     }`}
                   >
-                    <p className="text-xs leading-relaxed text-white/52 sm:text-[13px]">
+                    <p className="text-[13px] text-zinc-400 leading-relaxed">
                       {card.description}
                     </p>
                   </div>
-                </button>
+                </div>
               )
             })}
           </div>
         </div>
+      </div>
 
-        <div className="relative z-10 flex h-16 w-full items-center border-t border-white/5">
-          <div
-            className="absolute h-[3px] overflow-hidden rounded-full bg-white/10"
-            style={{
-              width: windowWidth >= 640 ? '280px' : '180px',
-              left: startOffset,
-              top: '12px',
-            }}
-          >
+      {/* Bottom Progress Bar & Pagination Numbers */}
+      <div className="w-full flex flex-col gap-4 pt-10 mt-14 border-t border-white/10 z-10">
+        {/* Progress Bar under active card position */}
+        <div className="w-full flex">
+          <div className="lg:ml-[38%] w-[200px] sm:w-[260px] h-[2px] bg-white/10 rounded-full overflow-hidden">
             <div
-              className="absolute left-0 top-0 h-full rounded-full bg-white/40"
+              className="h-full bg-zinc-300 transition-all duration-300 rounded-full"
               style={{
                 width: `${((activeIndex + 1) / cards.length) * 100}%`,
               }}
             />
           </div>
+        </div>
 
-          {cards.map((card, idx) => {
-            const isActive = idx === activeIndex
-            return (
-              <button
-                key={card.id}
-                type="button"
-                onClick={() => setActiveIndex(idx)}
-                className={`absolute flex h-8 w-8 cursor-pointer items-center justify-center rounded font-semibold text-xs transition-all duration-300 ease-out ${
-                  isActive
-                    ? 'bg-[#00E852] text-black shadow-[0_0_12px_rgba(0,232,82,0.3)] scale-105'
-                    : 'bg-[#18181b] text-white/40 hover:bg-zinc-800 hover:text-white hover:scale-105'
-                }`}
-                style={{
-                  left: idx <= activeIndex ? `calc(${startOffset} + ${idx * 40}px)` : `calc(100% - ${(4 - idx) * 40 - 8}px)`,
-                  top: '32px',
-                }}
-              >
-                {card.id}
-              </button>
-            )
-          })}
+        {/* Pagination Numbers Row */}
+        <div className="flex items-center justify-between w-full pt-1">
+          {/* Active number under active card */}
+          <div className="lg:ml-[38%]">
+            <div className="w-7 h-7 rounded bg-[#2f54eb] text-white flex items-center justify-center text-xs font-semibold shadow-md">
+              {cards[activeIndex].id}
+            </div>
+          </div>
+
+          {/* Right grouped numbers */}
+          <div className="flex items-center gap-2">
+            {cards.map((card, idx) => {
+              const isCurrent = idx === activeIndex
+              return (
+                <button
+                  key={card.id}
+                  type="button"
+                  onClick={() => setActiveIndex(idx)}
+                  className={`w-7 h-7 rounded flex items-center justify-center text-xs font-medium transition-colors cursor-pointer ${
+                    isCurrent
+                      ? 'bg-[#2f54eb] text-white'
+                      : 'bg-[#27272a] text-zinc-400 hover:bg-[#3f3f46] hover:text-white'
+                  }`}
+                >
+                  {card.id}
+                </button>
+              )
+            })}
+          </div>
         </div>
       </div>
     </div>

@@ -27,6 +27,8 @@ const AppRoutes = () => {
       {/* Fallback redirection */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+
+    
   )
 }
 

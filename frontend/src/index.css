@@ -18,20 +18,36 @@
 }
 
 html, body, #root {
-  height: 100%;
+  min-height: 100%;
 }
 
 body {
   margin: 0;
   background: #050505;
   color: #ffffff;
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* Utility to hide scrollbars on specific containers */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .get-started {
   position: relative;
   overflow: hidden;
 
-  padding: 16px 32px;
+  padding: 14px 32px;
   border-radius: 16px;
 
   background: white;
@@ -41,7 +57,7 @@ body {
   outline: none;
 
   font-family: inherit;
-  font-weight: 500;
+  font-weight: 400;
 
   isolation: isolate;
   transition: color 0.3s ease;
