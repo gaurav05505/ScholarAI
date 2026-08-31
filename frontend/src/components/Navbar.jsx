@@ -122,37 +122,44 @@ const Navbar = () => {
         {/* Panel */}
         <div
           id="mobile-menu"
-          className={`absolute top-0 right-0 h-full w-[78%] max-w-xs bg-neutral-950 shadow-xl flex flex-col pt-24 px-8 gap-2 transition-transform duration-300 ease-out ${
+          className={`absolute top-0 right-0 h-full w-[80%] max-w-xs bg-neutral-950/95 backdrop-blur-xl border-l border-white/10 shadow-2xl flex flex-col justify-between pt-24 pb-8 px-8 transition-transform duration-300 ease-out ${
             menuOpen ? 'translate-x-0' : 'translate-x-full'
           }`}
         >
-          {NAV_LINKS.map((link, i) => (
-            <a
-              key={link.label}
-              href={link.href}
-              onClick={closeMenu}
-              className="py-3 text-lg text-white/90 hover:text-white border-b border-white/10 transition-all duration-300"
+          {/* Menu Links with hover states and animation */}
+          <div className="flex flex-col">
+            {NAV_LINKS.map((link, i) => (
+              <a
+                key={link.label}
+                href={link.href}
+                onClick={closeMenu}
+                className="group flex items-center justify-between py-4 text-lg text-zinc-300 hover:text-white hover:translate-x-1.5 border-b border-white/10 transition-all duration-200"
+                style={{
+                  transitionDelay: menuOpen ? `${i * 60 + 100}ms` : '0ms',
+                  opacity: menuOpen ? 1 : 0,
+                  transform: menuOpen ? 'translateY(0)' : 'translateY(-8px)',
+                }}
+              >
+                <span className="group-hover:text-white transition-colors">{link.label}</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#4D74FF] opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-[0_0_8px_#4D74FF]" />
+              </a>
+            ))}
+          </div>
+
+          {/* Bottom Get Started Button */}
+          <div className="mt-auto pt-8">
+            <button
+              className="get-started w-full block text-center cursor-pointer transition-all duration-300"
               style={{
-                transitionDelay: menuOpen ? `${i * 60 + 100}ms` : '0ms',
+                transitionDelay: menuOpen ? `${NAV_LINKS.length * 60 + 100}ms` : '0ms',
                 opacity: menuOpen ? 1 : 0,
                 transform: menuOpen ? 'translateY(0)' : 'translateY(-8px)',
               }}
+              onClick={closeMenu}
             >
-              {link.label}
-            </a>
-          ))}
-
-          <button
-            className="get-started mt-6 w-full transition-all duration-300"
-            style={{
-              transitionDelay: menuOpen ? `${NAV_LINKS.length * 60 + 100}ms` : '0ms',
-              opacity: menuOpen ? 1 : 0,
-              transform: menuOpen ? 'translateY(0)' : 'translateY(-8px)',
-            }}
-            onClick={closeMenu}
-          >
-            Get Started
-          </button>
+              Get Started
+            </button>
+          </div>
         </div>
       </div>
     </nav>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 
 const cards = [
   {
@@ -33,6 +33,15 @@ const Section2 = () => {
   const cardWidth = 260
   const cardGap = 48
   const stepOffset = cardWidth + cardGap
+
+  // Auto-slide every 4 seconds
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % cards.length)
+    }, 4000)
+
+    return () => clearInterval(timer)
+  }, [activeIndex])
 
   return (
     <div className="relative mt-30 w-full min-h-[720px] rounded-2xl border border-white/10 bg-[#050505] p-8 md:p-12 lg:p-14 overflow-hidden flex flex-col justify-between select-none">
