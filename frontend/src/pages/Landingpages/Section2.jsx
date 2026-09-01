@@ -44,7 +44,7 @@ const Section2 = () => {
   }, [activeIndex])
 
   return (
-    <div className="relative mt-30 w-full min-h-[720px] rounded-2xl border border-white/10 bg-[#050505] p-8 md:p-12 lg:p-14 overflow-hidden flex flex-col justify-between select-none">
+    <div className="relative mx-4 sm:mx-6 lg:mx-8 my-4 mt-30 min-h-[720px] rounded-2xl border border-white/10 bg-[#050505] p-8 md:p-12 lg:p-14 overflow-hidden flex flex-col justify-between select-none">
       {/* Top Header */}
       <div className="max-w-xl z-10">
         <h2 className="text-4xl md:text-5xl lg:text-[52px] font-black font-heading tracking-tight text-white leading-tight">

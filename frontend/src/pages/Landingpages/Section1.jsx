@@ -3,7 +3,7 @@ import React from 'react'
 
 const Section1 = () => {
   return (
-    <div className='mt-6 sm:mt-8 bg-[url("landingBg.svg")] bg-cover bg-center'>
+    <div className='mx-4 sm:mx-6 lg:mx-8 my-4 mt-6 sm:mt-8 bg-[url("landingBg.svg")] bg-cover bg-center'>
 
       {/* top  */}
       <div className='flex flex-col gap-5 sm:gap-10'>

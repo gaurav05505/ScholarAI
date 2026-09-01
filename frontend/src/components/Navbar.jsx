@@ -9,16 +9,31 @@ const NAV_LINKS = [
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false)
+  const [isLightSection, setIsLightSection] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const tickingRef = useRef(false)
 
-  // Throttled, passive scroll listener (avoids layout thrash / excess re-renders)
+  // Scroll listener: detects scrolled state and light/dark section background
   useEffect(() => {
     const handleScroll = () => {
       if (tickingRef.current) return
       tickingRef.current = true
       requestAnimationFrame(() => {
         setScrolled(window.scrollY > 40)
+
+        // Check if navbar is currently over a light/white section
+        const lightSections = document.querySelectorAll('[data-theme="light"]')
+        let overLight = false
+        const navHeight = 80
+
+        lightSections.forEach((sec) => {
+          const rect = sec.getBoundingClientRect()
+          if (rect.top <= navHeight && rect.bottom >= navHeight) {
+            overLight = true
+          }
+        })
+
+        setIsLightSection(overLight)
         tickingRef.current = false
       })
     }
@@ -52,13 +67,17 @@ const Navbar = () => {
     <nav
       className={`sticky top-0 z-50 w-full transition-all duration-300 ease-out ${
         scrolled
-          ? 'py-6 px-2 shadow-md'
+          ? 'py-6 px-2 '
           : 'bg-transparent rounded-2xl py-4 px-2'
       }`}
     >
-      <div className="flex w-full justify-between items-center">
+      <div className="flex w-full justify-between items-center px-4 sm:px-6 lg:px-8">
         {/* Logo */}
-        <p className="text-[20px] sm:text-[24px] font-heading font-black tracking-wider uppercase transition-all duration-300">
+        <p
+          className={`text-[20px] sm:text-[24px] font-heading font-black tracking-wider uppercase transition-colors duration-300 ${
+            isLightSection ? 'text-black' : 'text-white'
+          }`}
+        >
           Avora
         </p>
 
@@ -70,7 +89,13 @@ const Navbar = () => {
         >
           <div className="flex gap-6 lg:gap-8 items-center">
             {NAV_LINKS.map((link) => (
-              <a key={link.label} href={link.href} className="nav-link">
+              <a
+                key={link.label}
+                href={link.href}
+                className={`nav-link transition-colors duration-300 ${
+                  isLightSection ? '!text-black/70 hover:!text-black' : ''
+                }`}
+              >
                 {link.label}
               </a>
             ))}
@@ -95,7 +120,7 @@ const Navbar = () => {
               alt="Menu"
               className={`w-8 h-auto transition-all duration-300 ${
                 menuOpen ? 'opacity-0 rotate-90 scale-50' : 'opacity-100 rotate-0 scale-100'
-              }`}
+              } ${isLightSection && !menuOpen ? 'brightness-0' : 'brightness-100'}`}
             />
             <X
               className={`absolute inset-0 m-auto w-6 h-6 text-white transition-all duration-300 ${
