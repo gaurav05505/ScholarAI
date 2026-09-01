@@ -1,18 +1,57 @@
 import { MoveRight, Plus, ChevronDown, ArrowUp } from 'lucide-react'
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 
 const Section1 = () => {
+  const [isLoaded, setIsLoaded] = useState(false)
+  const [scrollY, setScrollY] = useState(0)
+
+  useEffect(() => {
+    // Trigger initial staggered entrance animation once on mount
+    const timer = setTimeout(() => setIsLoaded(true), 50)
+
+    // Ultra-lightweight scroll listener for subtle depth parallax
+    let ticking = false
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setScrollY(window.scrollY)
+          ticking = false
+        })
+        ticking = true
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener('scroll', handleScroll)
+    }
+  }, [])
+
+  // Subtle parallax translation (strictly bounded to -8px .. +8px)
+  const subtleParallax = Math.max(-8, Math.min(8, (scrollY - 100) * 0.03))
+
   return (
     <div className='mx-4 sm:mx-6 lg:mx-8 my-4 mt-6 sm:mt-8 bg-[url("landingBg.svg")] bg-cover bg-center'>
 
       {/* top  */}
       <div className='flex flex-col gap-5 sm:gap-10'>
 
-        <h1 className='text-[32px] sm:text-[44px] md:text-[56px] lg:text-[64px] font-light leading-[1.33] lg:leading-[1.33] w-full lg:w-3xl'>
+        {/* 1. Main Heading (Entrance: 0ms delay, 700ms duration) */}
+        <h1
+          className={`text-[32px] sm:text-[44px] md:text-[56px] lg:text-[64px] font-light leading-[1.33] lg:leading-[1.33] w-full lg:w-3xl transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+            isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+          }`}
+        >
           From First Principles to Deep Research—Powered by AI.
         </h1>
 
-        <button className='group flex items-center gap-8 sm:gap-12 lg:gap-20 border-b border-white py-2 px-2 w-fit cursor-pointer'>
+        {/* 2. CTA Button (Entrance: 150ms delay, 600ms duration) */}
+        <button
+          className={`group flex items-center gap-8 sm:gap-12 lg:gap-20 border-b border-white py-2 px-2 w-fit cursor-pointer transition-all duration-600 delay-150 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+            isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`}
+        >
           <p className='text-sm lg:text-[16px]'>Why avora</p>
           <div className='relative overflow-hidden w-6 h-6 flex items-center justify-center'>
             <MoveRight className='w-6 h-6 transition-transform duration-300 ease-in-out group-hover:translate-x-full' />
@@ -22,8 +61,17 @@ const Section1 = () => {
 
       </div>
 
-      {/* bottom  */}
-      <div className='relative w-full max-w-250 mx-auto mt-60 sm:mt-24 lg:mt-32'>
+      {/* bottom — Hero Visual / Prompt Box (Entrance: 300ms delay, 900ms duration, subtle parallax) */}
+      <div
+        style={{
+          transform: isLoaded
+            ? `translateY(${subtleParallax}px) scale(1)`
+            : 'translateY(24px) scale(0.97)',
+        }}
+        className={`relative w-full max-w-250 mx-auto mt-60 sm:mt-24 lg:mt-32 transition-all duration-900 delay-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          isLoaded ? 'opacity-100' : 'opacity-0'
+        }`}
+      >
         {/* Rotating Linear/Gradient Border Container with exact Figma Drop Shadow */}
         <div
           style={{ boxShadow: '0px 4px 153.4px -2px rgba(77, 116, 255, 0.2)' }}

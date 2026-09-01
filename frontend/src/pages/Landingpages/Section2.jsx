@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 
 const cards = [
   {
@@ -29,10 +29,31 @@ const cards = [
 
 const Section2 = () => {
   const [activeIndex, setActiveIndex] = useState(0)
+  const [isVisible, setIsVisible] = useState(false)
+  const sectionRef = useRef(null)
 
   const cardWidth = 260
   const cardGap = 48
   const stepOffset = cardWidth + cardGap
+
+  // Reveal on scroll once when 18% visible in viewport
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true)
+          observer.unobserve(entry.target)
+        }
+      },
+      { threshold: 0.18 }
+    )
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current)
+    }
+
+    return () => observer.disconnect()
+  }, [])
 
   // Auto-slide every 4 seconds
   useEffect(() => {
@@ -44,9 +65,18 @@ const Section2 = () => {
   }, [activeIndex])
 
   return (
-    <div className="relative mx-4 sm:mx-6 lg:mx-8 my-4 mt-30 min-h-[720px] rounded-2xl border border-white/10 bg-[#050505] p-8 md:p-12 lg:p-14 overflow-hidden flex flex-col justify-between select-none">
-      {/* Top Header */}
-      <div className="max-w-xl z-10">
+    <div
+      ref={sectionRef}
+      className={`relative mx-4 sm:mx-6 lg:mx-8 my-4 mt-30 min-h-[720px] rounded-2xl border border-white/10 bg-[#050505] p-8 md:p-12 lg:p-14 overflow-hidden flex flex-col justify-between select-none transition-all duration-750 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-7'
+      }`}
+    >
+      {/* Top Header — Stagger delay 0ms */}
+      <div
+        className={`max-w-xl z-10 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        }`}
+      >
         <h2 className="text-4xl md:text-5xl lg:text-[52px] font-black font-heading tracking-tight text-white leading-tight">
           Welcome to Avora.
         </h2>
@@ -55,8 +85,12 @@ const Section2 = () => {
         </p>
       </div>
 
-      {/* Middle Carousel Area - Positioned on the Right Half */}
-      <div className="relative w-full my-8">
+      {/* Middle Carousel Area — Stagger delay 150ms */}
+      <div
+        className={`relative w-full my-8 transition-all duration-700 delay-150 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+        }`}
+      >
         <div className="lg:absolute lg:left-[38%] lg:top-[-110px] w-full">
           {/* Sliding Track */}
           <div
@@ -122,8 +156,12 @@ const Section2 = () => {
         </div>
       </div>
 
-      {/* Bottom Progress Bar & Pagination Numbers */}
-      <div className="w-full flex flex-col gap-4 pt-10 mt-14 border-t border-white/10 z-10">
+      {/* Bottom Progress Bar & Pagination Numbers — Stagger delay 250ms */}
+      <div
+        className={`w-full flex flex-col gap-4 pt-10 mt-14 border-t border-white/10 z-10 transition-all duration-700 delay-250 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        }`}
+      >
         {/* Progress Bar under active card position */}
         <div className="w-full flex">
           <div className="lg:ml-[38%] w-[200px] sm:w-[260px] h-[2px] bg-white/10 rounded-full overflow-hidden">
