@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState } from 'react'
 import { ArrowRight } from 'lucide-react'
+import ScrollReveal from '../../components/ScrollReveal'
 
 // Custom Illustrated Visuals for Hover States
 const RoadmapVisual = () => (
@@ -195,39 +196,17 @@ const featureRows = [
 
 const Section3 = () => {
   const [hoveredIndex, setHoveredIndex] = useState(null)
-  const [isVisible, setIsVisible] = useState(false)
-  const sectionRef = useRef(null)
-
-  // Reveal section on scroll once when 15% visible
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true)
-          observer.unobserve(entry.target)
-        }
-      },
-      { threshold: 0.15 }
-    )
-
-    if (sectionRef.current) {
-      observer.observe(sectionRef.current)
-    }
-
-    return () => observer.disconnect()
-  }, [])
 
   return (
     <section
-      ref={sectionRef}
       data-theme="light"
       className="w-full bg-white text-black font-sans my-12 border-y border-[#D0D0D0] transition-colors duration-500"
     >
-      {/* Header Area — Stagger delay 0ms */}
-      <div
-        className={`flex flex-col md:flex-row mt-9 md:items-center px-8 sm:px-12 lg:px-16 py-10 sm:py-12 border-b border-[#D0D0D0] transition-all duration-650 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-          isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
-        }`}
+      {/* 1. Header Area Component Reveal */}
+      <ScrollReveal
+        className="flex flex-col md:flex-row mt-9 md:items-center px-8 sm:px-12 lg:px-16 py-10 sm:py-12 border-b border-[#D0D0D0]"
+        delay={0}
+        duration={700}
       >
         {/* Left Heading */}
         <h2 className="text-3xl sm:text-4xl md:text-5xl font-body font-medium pb-5 tracking-tight text-black/60 shrink-0">
@@ -243,23 +222,22 @@ const Section3 = () => {
           <br className="hidden sm:inline" />
           all in one intelligent workspace.
         </p>
-      </div>
+      </ScrollReveal>
 
-      {/* Feature Rows with Staggered Scroll Reveal */}
+      {/* 2. Feature Rows: Each reveals individually on scroll */}
       <div className="w-full flex flex-col divide-y divide-[#D0D0D0]">
         {featureRows.map((feature, idx) => {
           const isHovered = hoveredIndex === idx
 
           return (
-            <div
+            <ScrollReveal
               key={feature.id}
+              delay={idx * 80}
+              duration={700}
+              yOffset={20}
               onMouseEnter={() => setHoveredIndex(idx)}
               onMouseLeave={() => setHoveredIndex(null)}
-              className={`group relative flex flex-col lg:flex-row items-stretch cursor-pointer transition-all duration-600 ${
-                feature.delayClass
-              } ease-[cubic-bezier(0.16,1,0.3,1)] min-h-[180px] lg:min-h-[190px] ${
-                isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
-              }`}
+              className="group relative flex flex-col lg:flex-row items-stretch cursor-pointer min-h-[180px] lg:min-h-[190px]"
             >
               {/* Column 1: Feature Title & Image Area (approx 38-40%) */}
               <div className="relative w-full lg:w-[38%] p-6 sm:p-8 lg:p-10 flex items-center justify-start lg:justify-center overflow-hidden border-b lg:border-b-0 lg:border-r border-[#D0D0D0]">
@@ -299,7 +277,7 @@ const Section3 = () => {
                   className="text-black transition-transform duration-350 ease-out group-hover:translate-x-2.5"
                 />
               </div>
-            </div>
+            </ScrollReveal>
           )
         })}
       </div>

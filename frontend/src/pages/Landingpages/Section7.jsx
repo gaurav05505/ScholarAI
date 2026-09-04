@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState } from 'react'
 import { ArrowRight, Monitor, Plus, Minus } from 'lucide-react'
+import ScrollReveal from '../../components/ScrollReveal'
 
 const FAQ_CATEGORIES = [
   {
@@ -111,26 +112,6 @@ const FAQ_CATEGORIES = [
 const Section7 = () => {
   const [activeCategory, setActiveCategory] = useState('overview')
   const [openIndex, setOpenIndex] = useState(null)
-  const [isVisible, setIsVisible] = useState(false)
-  const sectionRef = useRef(null)
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true)
-          observer.disconnect()
-        }
-      },
-      { threshold: 0.1 }
-    )
-
-    if (sectionRef.current) {
-      observer.observe(sectionRef.current)
-    }
-
-    return () => observer.disconnect()
-  }, [])
 
   const currentCategory = FAQ_CATEGORIES.find((c) => c.id === activeCategory) || FAQ_CATEGORIES[0]
 
@@ -140,7 +121,6 @@ const Section7 = () => {
 
   return (
     <section
-      ref={sectionRef}
       data-theme="light"
       className="relative w-full min-h-screen bg-[#e5e5e5] text-black font-sans overflow-hidden flex flex-col justify-between pt-20 sm:pt-28 lg:pt-32 pb-32 sm:pb-40"
     >
@@ -149,30 +129,26 @@ const Section7 = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-start">
           
           {/* ================= LEFT COLUMN: Headline & CTA ================= */}
-          <div
-            className={`lg:col-span-5 flex flex-col space-y-12 sm:space-y-16 lg:space-y-20 self-start transition-all duration-700 ease-out ${
-              isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
-            }`}
-          >
-            {/* Top Heading Group */}
-            <div>
+          <div className="lg:col-span-5 flex flex-col space-y-12 sm:space-y-16 lg:space-y-20 self-start">
+            {/* Top Heading Group Component Reveal */}
+            <ScrollReveal delay={0} duration={750} yOffset={24}>
               <span className="text-xs font-mono uppercase tracking-widest text-zinc-500 block mb-4">
                 FAQ
               </span>
               <h2 className="text-4xl sm:text-5xl lg:text-[58px] font-bold text-zinc-950 tracking-tight leading-[1.05]">
                 Common<br />inquiries
               </h2>
-            </div>
+            </ScrollReveal>
 
-            {/* Description & Contact Button */}
-            <div className="max-w-sm">
+            {/* Description & Contact Button Component Reveal */}
+            <ScrollReveal delay={120} duration={750} yOffset={24} className="max-w-sm">
               <p className="text-xs sm:text-[13px] text-zinc-600 leading-relaxed mb-8 font-normal">
                 Find answers to common questions about the platform, its features, and how it can support your learning and research.
               </p>
 
               <button
                 type="button"
-                className="inline-flex items-center gap-2.5 px-6 py-3 rounded-full bg-[#18181b] text-white hover:bg-black text-xs sm:text-sm font-medium transition-all shadow-sm active:scale-95 cursor-pointer group"
+                className="inline-flex items-center gap-2.5 px-6 py-3 rounded-2xl bg-[#18181b] text-white hover:bg-black text-xs sm:text-sm font-medium transition-all shadow-sm active:scale-95 cursor-pointer group"
               >
                 <span>Contact Us</span>
                 <ArrowRight
@@ -180,47 +156,48 @@ const Section7 = () => {
                   className="transition-transform duration-200 group-hover:translate-x-1"
                 />
               </button>
-            </div>
+            </ScrollReveal>
           </div>
 
           {/* ================= RIGHT COLUMN: Category Tabs & Accordions ================= */}
-          <div
-            className={`lg:col-span-7 flex flex-col transition-all duration-700 delay-100 ease-out ${
-              isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
-            }`}
-          >
-            {/* Category Tabs Header */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 border border-zinc-300 bg-[#e0e0e0]/40 overflow-hidden mb-8">
-              {FAQ_CATEGORIES.map((category) => {
-                const isActive = activeCategory === category.id
-                return (
-                  <button
-                    key={category.id}
-                    type="button"
-                    onClick={() => {
-                      setActiveCategory(category.id)
-                      setOpenIndex(null)
-                    }}
-                    className={`py-3.5 px-3 sm:px-4 text-[11px] sm:text-xs font-medium transition-all cursor-pointer border-r border-b sm:border-b-0 last:border-r-0 border-zinc-300 flex items-center justify-center text-center ${
-                      isActive
-                        ? 'bg-[#18181b] text-white font-semibold shadow-sm'
-                        : 'bg-transparent text-zinc-600 hover:text-black hover:bg-black/[0.04]'
-                    }`}
-                  >
-                    {category.label}
-                  </button>
-                )
-              })}
-            </div>
+          <div className="lg:col-span-7 flex flex-col">
+            {/* Category Tabs Header Component Reveal */}
+            <ScrollReveal delay={60} duration={700} yOffset={20}>
+              <div className="grid grid-cols-2 sm:grid-cols-4 border border-zinc-300 bg-[#e0e0e0]/40 overflow-hidden mb-8">
+                {FAQ_CATEGORIES.map((category) => {
+                  const isActive = activeCategory === category.id
+                  return (
+                    <button
+                      key={category.id}
+                      type="button"
+                      onClick={() => {
+                        setActiveCategory(category.id)
+                        setOpenIndex(null)
+                      }}
+                      className={`py-3.5 px-3 sm:px-4 text-[11px] sm:text-xs font-medium transition-all cursor-pointer border-r border-b sm:border-b-0 last:border-r-0 border-zinc-300 flex items-center justify-center text-center ${
+                        isActive
+                          ? 'bg-[#18181b] text-white font-semibold shadow-sm'
+                          : 'bg-transparent text-zinc-600 hover:text-black hover:bg-black/[0.04]'
+                      }`}
+                    >
+                      {category.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </ScrollReveal>
 
-            {/* Accordion Questions List with Balanced Vertical Spacing */}
+            {/* Accordion Questions List with Staggered Component Reveals */}
             <div className="border-t border-zinc-300">
               {currentCategory.questions.map((item, index) => {
                 const isOpen = openIndex === index
 
                 return (
-                  <div
-                    key={index}
+                  <ScrollReveal
+                    key={`${activeCategory}-${index}`}
+                    delay={100 + index * 50}
+                    duration={650}
+                    yOffset={16}
                     className="border-b border-zinc-300 transition-colors"
                   >
                     <button
@@ -255,7 +232,7 @@ const Section7 = () => {
                         {item.a}
                       </p>
                     </div>
-                  </div>
+                  </ScrollReveal>
                 )
               })}
             </div>

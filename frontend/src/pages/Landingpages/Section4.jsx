@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
+import ScrollReveal from '../../components/ScrollReveal';
 import {
   MessageCircle,
   Zap,
@@ -512,7 +513,7 @@ export default function WorkflowEditor() {
   const branchBottom = nodeMap.rag.y + nodeMap.rag.h + 60;
 
   return (
-    <section className="relative mx-4 sm:mx-6 lg:mx-8 my-6">
+    <section className="relative mx-4 sm:mx-6 lg:mx-8 my-8 sm:my-12 lg:my-16">
       {/* Mobile Drawer Overlay */}
       {isMobile && sidebarOpen && (
         <div
@@ -522,7 +523,12 @@ export default function WorkflowEditor() {
       )}
 
       {/* Main Container Card */}
-      <div className="relative w-full h-[520px] sm:h-[600px] lg:h-[680px] bg-[#08080a] text-white overflow-hidden flex select-none font-sans rounded-2xl border border-white/10 shadow-2xl">
+      <ScrollReveal
+        delay={0}
+        duration={800}
+        scale={true}
+        className="relative w-full h-[520px] sm:h-[600px] lg:h-[680px] bg-[#08080a] text-white overflow-hidden flex select-none font-sans rounded-2xl border border-white/10 shadow-2xl"
+      >
         
         {/* ============================= SIDEBAR (Desktop inline, Mobile slide-over) ============================= */}
         <aside
@@ -918,7 +924,7 @@ export default function WorkflowEditor() {
           <div className="w-px flex-1 bg-white/15 my-6" />
           <div className="w-px h-6 bg-white/25" />
         </div>
-      </div>
+      </ScrollReveal>
     </section>
   );
 }

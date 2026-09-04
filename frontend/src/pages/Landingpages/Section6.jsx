@@ -1,9 +1,10 @@
 import React from 'react'
+import ScrollReveal from '../../components/ScrollReveal'
 
 const plans = [
   {
     name: 'Standard',
-    description: 'Casual exploration, quick roadmaps, and testing out the platform.',
+    description: 'Casual Exploration, Quick Roadmaps, And Testing Out The Platform.',
     price: '$0',
     originalPrice: '$10',
     cta: 'Start Free',
@@ -19,7 +20,7 @@ const plans = [
   },
   {
     name: 'Pro',
-    description: 'Unlimited dynamic roadmaps, adaptive quiz loops, and full note synthesis.',
+    description: 'Unlimited Dynamic Roadmaps, Adaptive Quiz Loops, And Full Note Synthesis.',
     price: '$12',
     originalPrice: '$20',
     cta: 'Upgrade To Pro',
@@ -35,7 +36,7 @@ const plans = [
   },
   {
     name: 'Researcher',
-    description: 'For academics, deep-tech researchers, and complex paper synthesis.',
+    description: 'For Academics, Deep-Tech Researchers, And Complex Paper Synthesis.',
     price: '$29',
     originalPrice: '$36',
     cta: 'Get Research Access',
@@ -53,15 +54,15 @@ const plans = [
 
 const Section6 = () => {
   return (
-    <section className="relative w-full bg-black py-24 px-6 overflow-hidden">
+    <section className="relative w-full bg-black py-20 sm:py-28 lg:py-32 px-6 sm:px-12 lg:px-20 overflow-hidden">
       {/* soft radial glow background */}
       <div className="pointer-events-none absolute inset-0 flex justify-center">
         <div className="h-[500px] w-[800px] rounded-full bg-white/[0.02] blur-3xl" />
       </div>
 
-      <div className="relative mx-auto max-w-5xl">
-        {/* Header */}
-        <div className="flex flex-col items-center text-center mb-16">
+      <div className="relative mx-auto max-w-6xl">
+        {/* 1. Header Component Reveal */}
+        <ScrollReveal className="flex flex-col items-center text-center mb-16" delay={0} duration={750}>
           <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-sm text-neutral-300">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
             Pricing
@@ -73,17 +74,20 @@ const Section6 = () => {
             Transparent pricing built for students, independent learners, and academic
             researchers. Start building your knowledge trees for free, then scale as you grow.
           </p>
-        </div>
+        </ScrollReveal>
 
-        {/* Pricing cards */}
+        {/* 2. Pricing Cards: Each reveals individually on scroll */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
-          {plans.map((plan) => (
-            <div
+          {plans.map((plan, idx) => (
+            <ScrollReveal
               key={plan.name}
+              delay={idx * 120}
+              duration={750}
+              scale={plan.recommended}
               className={
                 plan.recommended
-                  ? 'relative flex flex-col rounded-[28px] border border-indigo-400/20 bg-gradient-to-b from-black from-40% to-indigo-900/40 p-7'
-                  : 'relative flex flex-col rounded-2xl border border-white/10 bg-neutral-950 p-7'
+                  ? 'relative flex flex-col rounded-[28px] border border-indigo-400/20 bg-gradient-to-b from-black from-40% to-indigo-900/40 p-7 sm:p-8 md:-translate-y-2'
+                  : 'relative flex flex-col rounded-2xl border border-white/10 bg-neutral-950 p-7 sm:p-8'
               }
             >
               {/* Plan name + badge */}
@@ -114,8 +118,8 @@ const Section6 = () => {
                 type="button"
                 className={
                   plan.ctaStyle === 'filled'
-                    ? 'w-full rounded-lg bg-indigo-500 hover:bg-indigo-400 transition-colors py-2.5 text-sm font-medium text-white mb-7'
-                    : 'w-full rounded-lg border border-white/15 hover:bg-white/5 transition-colors py-2.5 text-sm font-medium text-white mb-7'
+                    ? 'w-full rounded-2xl bg-indigo-600 hover:bg-indigo-500 transition-colors py-3 text-sm font-medium text-white mb-7 cursor-pointer shadow-[0_0_20px_rgba(79,70,229,0.3)]'
+                    : 'w-full rounded-2xl border border-white/15 hover:bg-white/5 transition-colors py-3 text-sm font-medium text-white mb-7 cursor-pointer'
                 }
               >
                 {plan.cta}
@@ -133,7 +137,7 @@ const Section6 = () => {
                   ))}
                 </ul>
               </div>
-            </div>
+            </ScrollReveal>
           ))}
         </div>
       </div>

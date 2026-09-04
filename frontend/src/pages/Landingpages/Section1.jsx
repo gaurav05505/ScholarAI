@@ -32,10 +32,10 @@ const Section1 = () => {
   const subtleParallax = Math.max(-8, Math.min(8, (scrollY - 100) * 0.03))
 
   return (
-    <div className='mx-4 sm:mx-6 lg:mx-8 my-4 mt-6 sm:mt-8 bg-[url("landingBg.svg")] bg-cover bg-center'>
+    <div className='mx-4 sm:mx-6 lg:mx-8 my-4 mt-2 sm:mt-4 min-h-[calc(100dvh-5.5rem)] sm:min-h-[calc(100dvh-6.5rem)] flex flex-col justify-between bg-[url("landingBg.svg")] bg-cover bg-center'>
 
       {/* top  */}
-      <div className='flex flex-col gap-5 sm:gap-10'>
+      <div className='flex flex-col gap-5 sm:gap-8 pt-2 sm:pt-4'>
 
         {/* 1. Main Heading (Entrance: 0ms delay, 700ms duration) */}
         <h1
@@ -68,7 +68,7 @@ const Section1 = () => {
             ? `translateY(${subtleParallax}px) scale(1)`
             : 'translateY(24px) scale(0.97)',
         }}
-        className={`relative w-full max-w-250 mx-auto mt-60 sm:mt-24 lg:mt-32 transition-all duration-900 delay-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+        className={`relative w-full max-w-250 mx-auto mt-auto pt-8 pb-4 sm:pb-6 transition-all duration-900 delay-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
           isLoaded ? 'opacity-100' : 'opacity-0'
         }`}
       >

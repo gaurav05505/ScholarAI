@@ -7,6 +7,7 @@ import Section4 from './Landingpages/Section4'
 import Section5 from './Landingpages/Section5'
 import Section6 from './Landingpages/Section6'
 import Section7 from './Landingpages/Section7'
+import Footer from './Landingpages/Footer'
 
 const Home = () => {
   return (
@@ -19,6 +20,7 @@ const Home = () => {
       <Section5 />
       <Section6 /> 
       <Section7 />
+      <Footer />
     </div>
   )
 }
