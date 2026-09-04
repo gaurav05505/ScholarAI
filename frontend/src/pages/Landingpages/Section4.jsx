@@ -21,8 +21,9 @@ import {
   Mic,
   SendHorizontal,
   MessageSquare,
+  Menu,
+  X,
 } from 'lucide-react';
-
 
 const INITIAL_NODES = [
   {
@@ -132,10 +133,6 @@ const STACK_ICONS = [
   { Icon: Plus, label: 'Add tool' },
 ];
 
-/* ----------------------------------------------------------------------
-   Helpers
-------------------------------------------------------------------------*/
-
 function handlePoint(node, side) {
   const { x, y, w, h } = node;
   switch (side) {
@@ -152,9 +149,12 @@ function handlePoint(node, side) {
   }
 }
 
-/* ----------------------------------------------------------------------
-   Node component
-------------------------------------------------------------------------*/
+function getClientPos(e) {
+  if (e.touches && e.touches.length > 0) {
+    return { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY };
+  }
+  return { clientX: e.clientX, clientY: e.clientY };
+}
 
 function WorkflowNode({ node, selected, onPointerDown, onSelect }) {
   const Icon = node.icon;
@@ -166,6 +166,7 @@ function WorkflowNode({ node, selected, onPointerDown, onSelect }) {
       className="absolute"
       style={{ left: node.x, top: node.y, width: node.w, height: node.h }}
       onMouseDown={(e) => onPointerDown(e, node.id)}
+      onTouchStart={(e) => onPointerDown(e, node.id)}
     >
       <div
         onClick={(e) => {
@@ -188,9 +189,9 @@ function WorkflowNode({ node, selected, onPointerDown, onSelect }) {
             >
               <Icon size={16} strokeWidth={2.25} />
             </div>
-            <div className="flex flex-col leading-tight">
-              <span className="text-[13px] font-semibold text-white">{node.title}</span>
-              <span className="text-[10px] text-zinc-500 mt-0.5">{node.subtitle}</span>
+            <div className="flex flex-col leading-tight min-w-0">
+              <span className="text-[13px] font-semibold text-white truncate">{node.title}</span>
+              <span className="text-[10px] text-zinc-500 mt-0.5 truncate">{node.subtitle}</span>
             </div>
 
             {node.loop && (
@@ -232,10 +233,6 @@ function WorkflowNode({ node, selected, onPointerDown, onSelect }) {
   );
 }
 
-/* ----------------------------------------------------------------------
-   3D Rotating Particle Sphere for AI Chat Mode
-------------------------------------------------------------------------*/
-
 function RotatingParticleSphere() {
   const canvasRef = useRef(null);
 
@@ -253,8 +250,7 @@ function RotatingParticleSphere() {
     resize();
     window.addEventListener('resize', resize);
 
-    // Generate points distributed across a Fibonacci sphere
-    const N = 850;
+    const N = 750;
     const points = [];
     for (let i = 0; i < N; i++) {
       const y = 1 - (i / (N - 1)) * 2;
@@ -273,8 +269,8 @@ function RotatingParticleSphere() {
       const height = canvas.height;
       ctx.clearRect(0, 0, width, height);
 
-      rotY += 0.0035;
-      rotX += 0.0012;
+      rotY += 0.004;
+      rotX += 0.0015;
 
       const cosY = Math.cos(rotY);
       const sinY = Math.sin(rotY);
@@ -282,36 +278,25 @@ function RotatingParticleSphere() {
       const sinX = Math.sin(rotX);
 
       const centerX = width / 2;
-      const centerY = height / 2 - 25;
-      const sphereRadius = Math.min(width, height) * 0.22;
+      const centerY = height / 2 - (height > 500 ? 30 : 20);
+      const sphereRadius = Math.min(width, height) * (width < 500 ? 0.26 : 0.22);
 
       const projected = [];
       for (let i = 0; i < points.length; i++) {
         const p = points[i];
-
-        // Rotate around Y
         const x1 = p.x * cosY - p.z * sinY;
         const z1 = p.x * sinY + p.z * cosY;
-
-        // Rotate around X
         const y2 = p.y * cosX - z1 * sinX;
         const z2 = p.y * sinX + z1 * cosX;
 
-        // Perspective projection
-        const fov = 420;
+        const fov = 400;
         const scale = fov / (fov + z2 * sphereRadius);
         const px = centerX + x1 * sphereRadius * scale;
         const py = centerY + y2 * sphereRadius * scale;
 
-        projected.push({
-          x: px,
-          y: py,
-          z: z2,
-          scale,
-        });
+        projected.push({ x: px, y: py, z: z2, scale });
       }
 
-      // Sort by Z for realistic depth layering
       projected.sort((a, b) => a.z - b.z);
 
       for (let i = 0; i < projected.length; i++) {
@@ -325,7 +310,6 @@ function RotatingParticleSphere() {
         ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
         ctx.fill();
 
-        // Subtle glow for front points
         if (p.z > 0.65) {
           ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.35})`;
           ctx.beginPath();
@@ -348,10 +332,6 @@ function RotatingParticleSphere() {
   return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />;
 }
 
-/* ----------------------------------------------------------------------
-   Main component
-------------------------------------------------------------------------*/
-
 export default function WorkflowEditor() {
   const [nodes, setNodes] = useState(INITIAL_NODES);
   const [selectedId, setSelectedId] = useState(null);
@@ -359,10 +339,52 @@ export default function WorkflowEditor() {
   const [chatInput, setChatInput] = useState('');
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
-  const dragRef = useRef(null); // { id, offsetX, offsetY }
-  const panRef = useRef(null); // { startX, startY, originX, originY }
+  const dragRef = useRef(null);
+  const panRef = useRef(null);
   const canvasRef = useRef(null);
+  const touchDistRef = useRef(null);
+
+  // Auto-fit & auto-center graph dynamically
+  const autoFitGraph = useCallback(() => {
+    const mobile = window.innerWidth < 1024;
+    setIsMobile(mobile);
+
+    const canvas = canvasRef.current;
+    const containerW = canvas ? canvas.offsetWidth : (window.innerWidth - 32);
+    const containerH = canvas ? canvas.offsetHeight : 520;
+
+    const contentW = 1000;
+    const contentH = 410;
+
+    if (mobile) {
+      const padding = 16;
+      const targetZoom = Math.min(0.65, Math.max(0.32, (containerW - padding * 2) / contentW));
+      const targetX = (containerW - contentW * targetZoom) / 2 - 15 * targetZoom;
+      const targetY = (containerH - contentH * targetZoom) / 2 - 10 * targetZoom;
+
+      setZoom(targetZoom);
+      setPan({ x: targetX, y: targetY });
+    } else {
+      const targetZoom = containerW < 1200 ? 0.85 : 1;
+      const targetX = (containerW - contentW * targetZoom) / 2;
+      const targetY = (containerH - contentH * targetZoom) / 2;
+      setZoom(targetZoom);
+      setPan({ x: targetX, y: targetY });
+    }
+  }, []);
+
+  useEffect(() => {
+    autoFitGraph();
+    const timer = setTimeout(autoFitGraph, 100);
+    window.addEventListener('resize', autoFitGraph);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', autoFitGraph);
+    };
+  }, [autoFitGraph]);
 
   const nodeMap = Object.fromEntries(nodes.map((n) => [n.id, n]));
 
@@ -370,11 +392,12 @@ export default function WorkflowEditor() {
     (e, id) => {
       e.stopPropagation();
       setSelectedId(id);
+      const pos = getClientPos(e);
       const node = nodeMap[id];
       dragRef.current = {
         id,
-        startClientX: e.clientX,
-        startClientY: e.clientY,
+        startClientX: pos.clientX,
+        startClientY: pos.clientY,
         originX: node.x,
         originY: node.y,
       };
@@ -384,10 +407,13 @@ export default function WorkflowEditor() {
 
   const onCanvasPointerDown = useCallback(
     (e) => {
-      if (e.button !== 0) return;
+      // Allow normal single-finger page scrolling on mobile/touch screens
+      if (e.touches && e.touches.length < 2) return;
+      if (e.button !== 0 && e.type === 'mousedown') return;
+      const pos = getClientPos(e);
       panRef.current = {
-        startX: e.clientX,
-        startY: e.clientY,
+        startX: pos.clientX,
+        startY: pos.clientY,
         originX: pan.x,
         originY: pan.y,
       };
@@ -398,45 +424,72 @@ export default function WorkflowEditor() {
   useEffect(() => {
     function onMove(e) {
       if (dragRef.current) {
+        const pos = getClientPos(e);
         const { id, startClientX, startClientY, originX, originY } = dragRef.current;
-        const dx = (e.clientX - startClientX) / zoom;
-        const dy = (e.clientY - startClientY) / zoom;
+        const dx = (pos.clientX - startClientX) / zoom;
+        const dy = (pos.clientY - startClientY) / zoom;
         setNodes((prev) =>
           prev.map((n) => (n.id === id ? { ...n, x: originX + dx, y: originY + dy } : n))
         );
-      } else if (panRef.current) {
+      } else if (panRef.current && (!e.touches || e.touches.length >= 2)) {
+        const pos = getClientPos(e);
         const { startX, startY, originX, originY } = panRef.current;
-        setPan({ x: originX + (e.clientX - startX), y: originY + (e.clientY - startY) });
+        setPan({ x: originX + (pos.clientX - startX), y: originY + (pos.clientY - startY) });
       }
     }
     function onUp() {
       dragRef.current = null;
       panRef.current = null;
+      touchDistRef.current = null;
     }
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
+    window.addEventListener('touchmove', onMove, { passive: true });
+    window.addEventListener('touchend', onUp);
     return () => {
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
+      window.removeEventListener('touchmove', onMove);
+      window.removeEventListener('touchend', onUp);
     };
   }, [zoom]);
 
   const onWheel = useCallback((e) => {
-    // Only zoom on an explicit pinch/ctrl+wheel gesture (trackpad pinch or
-    // ctrl/cmd+scroll). A plain scroll leaves the canvas exactly where it is.
     if (!(e.ctrlKey || e.metaKey)) {
       return;
     }
     e.preventDefault();
     setZoom((z) => {
       const next = z - e.deltaY * 0.001;
-      return Math.min(1.6, Math.max(0.5, next));
+      return Math.min(1.6, Math.max(0.3, next));
     });
+  }, []);
+
+  const onTouchStart = useCallback((e) => {
+    if (e.touches && e.touches.length === 2) {
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      touchDistRef.current = dist;
+    }
+  }, []);
+
+  const onTouchMove = useCallback((e) => {
+    if (e.touches && e.touches.length === 2 && touchDistRef.current) {
+      e.preventDefault();
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      const scale = dist / touchDistRef.current;
+      touchDistRef.current = dist;
+      setZoom((z) => Math.min(1.6, Math.max(0.3, z * scale)));
+    }
   }, []);
 
   const deselect = () => setSelectedId(null);
 
-  // Precompute edge paths + label midpoints
   const mainEdgeData = MAIN_EDGES.map((edge) => {
     const a = handlePoint(nodeMap[edge.from], 'right');
     const b = handlePoint(nodeMap[edge.to], 'left');
@@ -449,361 +502,423 @@ export default function WorkflowEditor() {
     return { ...edge, a, b };
   });
 
-  // Connector carrying retrieved context up from the RAG store into the
-  // Teach Topic node (so the "one by one" teaching step can draw on the
-  // user's own uploaded material).
   const ragTop = handlePoint(nodeMap.rag, 'top');
   const teachBottom = handlePoint(nodeMap.teach, 'bottom');
   const dropPath = `M ${ragTop.x} ${ragTop.y} L ${ragTop.x} ${teachBottom.y + 40} Q ${ragTop.x} ${teachBottom.y + 20} ${ragTop.x - 20} ${teachBottom.y + 20} L ${teachBottom.x + 4} ${teachBottom.y + 20} Q ${teachBottom.x} ${teachBottom.y + 20} ${teachBottom.x} ${teachBottom.y} L ${teachBottom.x} ${teachBottom.y}`;
 
-  // Dashed group container around the PDF upload / RAG branch
   const branchLeft = nodeMap.pdfupload.x - 30;
   const branchTop = nodeMap.pdfupload.y - 28;
   const branchRight = nodeMap.rag.x + nodeMap.rag.w + 30;
   const branchBottom = nodeMap.rag.y + nodeMap.rag.h + 60;
 
   return (
-    <div className="h-screen w-screen bg-[#0a0b0b] text-white overflow-hidden flex select-none font-sans">
-      {/* ============================= SIDEBAR ============================= */}
-      <aside className="relative z-20 w-[250px] flex-shrink-0 border-r border-white/10 flex flex-col justify-between px-4 py-5">
-        <div>
-          {/* Hazard stripes */}
-          <div className="flex h-9 w-3 flex-col justify-between overflow-hidden opacity-50 mb-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <span key={i} className="h-[1.5px] w-4 origin-left rotate-45 bg-white" />
-            ))}
-          </div>
+    <section className="relative mx-4 sm:mx-6 lg:mx-8 my-6">
+      {/* Mobile Drawer Overlay */}
+      {isMobile && sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/70 z-50 backdrop-blur-sm transition-opacity"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
-          <button
-            type="button"
-            onClick={() => setActiveMode('agent')}
-            className={`w-full h-9 rounded-md border text-[11px] font-mono font-bold tracking-[0.15em] uppercase transition-colors mt-10 mb-3 cursor-pointer ${
-              activeMode === 'agent'
-                ? 'bg-white text-black border-white shadow-[0_0_12px_rgba(255,255,255,0.25)]'
-                : 'border-white/15 text-white/50 hover:text-white/80 hover:border-white/40'
-            }`}
-          >
-            AI Agent
-          </button>
-
-          <div className="relative mb-6">
-            <button
-              type="button"
-              onClick={() => setActiveMode('chat')}
-              className={`w-full h-9 rounded-md border text-[11px] font-mono font-bold tracking-[0.15em] uppercase transition-colors cursor-pointer ${
-                activeMode === 'chat'
-                  ? 'bg-white text-black border-white shadow-[0_0_12px_rgba(255,255,255,0.25)]'
-                  : 'border-white/15 text-white/50 hover:text-white/80 hover:border-white/40'
-              }`}
-            >
-              AI Chat
-            </button>
-          </div>
-
-          <p className="text-[11px] font-mono uppercase tracking-[0.2em] text-zinc-400 mb-3.5">
-            Stack
-          </p>
-          <div className="grid grid-cols-3 gap-2.5 w-full">
-            {STACK_ICONS.map(({ Icon, label }, idx) => (
-              <div
-                key={idx}
-                title={label}
-                className="flex items-center justify-center aspect-square rounded-xl border border-white/20 bg-white/[0.03] text-zinc-300 hover:text-white hover:border-white/50 hover:bg-white/10 transition-all cursor-pointer shadow-sm group"
-              >
-                <Icon size={21} strokeWidth={1.8} className="transition-transform duration-200 group-hover:scale-110" />
+      {/* Main Container Card */}
+      <div className="relative w-full h-[520px] sm:h-[600px] lg:h-[680px] bg-[#08080a] text-white overflow-hidden flex select-none font-sans rounded-2xl border border-white/10 shadow-2xl">
+        
+        {/* ============================= SIDEBAR (Desktop inline, Mobile slide-over) ============================= */}
+        <aside
+          className={`z-50 flex-shrink-0 border-r border-white/10 flex flex-col justify-between px-4 py-5 bg-[#0a0a0c] transition-all duration-300 ease-out
+            ${isMobile
+              ? `fixed top-0 left-0 h-full w-[270px] shadow-2xl ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`
+              : 'relative w-[240px] translate-x-0'
+            }
+          `}
+        >
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex h-8 w-3 flex-col justify-between overflow-hidden opacity-50">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <span key={i} className="h-[1.5px] w-4 origin-left rotate-45 bg-white" />
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
 
-        {/* AUTO decal */}
-        <div className="flex flex-col gap-2">
-          <div className="w-2.5 h-8 border-l border-b border-white/25 rounded-bl-md ml-1" />
-          <div className="flex items-center gap-2">
-            <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-[0.2em]">Auto</span>
-          </div>
-          <div className="h-2 w-24 bg-[repeating-linear-gradient(115deg,rgba(255,255,255,0.7)_0_2px,transparent_2px_5px)] opacity-50" />
-        </div>
-      </aside>
+              {isMobile && (
+                <button
+                  type="button"
+                  onClick={() => setSidebarOpen(false)}
+                  className="w-8 h-8 rounded-lg border border-white/20 flex items-center justify-center text-white/70 hover:text-white cursor-pointer"
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
 
-      {/* ============================= MAIN ============================= */}
-      <main className="relative flex-1 flex flex-col overflow-hidden">
-        {/* Top toolbar */}
-        <div className="relative z-20 flex items-center justify-between gap-3 px-6 py-4 border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center border border-white/15 rounded-md overflow-hidden h-9">
+            {/* Mode Switcher Buttons */}
+            <div className="flex flex-col gap-2 mt-4 sm:mt-6 mb-6">
               <button
                 type="button"
-                aria-label="Undo"
-                className="px-3 h-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/5 transition-colors border-r border-white/15 cursor-pointer"
+                onClick={() => {
+                  setActiveMode('agent');
+                  if (isMobile) setSidebarOpen(false);
+                }}
+                className={`w-full h-9 rounded-md border text-[11px] font-mono font-bold tracking-[0.15em] uppercase transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                  activeMode === 'agent'
+                    ? 'bg-white text-black border-white shadow-[0_0_12px_rgba(255,255,255,0.25)]'
+                    : 'border-white/15 text-white/50 hover:text-white/80 hover:border-white/40'
+                }`}
               >
-                <RotateCcw size={14} />
+                <Zap size={13} className={activeMode === 'agent' ? 'fill-black' : ''} />
+                <span>AI Agent</span>
               </button>
+
               <button
                 type="button"
-                aria-label="Redo"
-                className="px-3 h-full flex items-center justify-center text-white/30 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                onClick={() => {
+                  setActiveMode('chat');
+                  if (isMobile) setSidebarOpen(false);
+                }}
+                className={`w-full h-9 rounded-md border text-[11px] font-mono font-bold tracking-[0.15em] uppercase transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                  activeMode === 'chat'
+                    ? 'bg-white text-black border-white shadow-[0_0_12px_rgba(255,255,255,0.25)]'
+                    : 'border-white/15 text-white/50 hover:text-white/80 hover:border-white/40'
+                }`}
               >
-                <RotateCw size={14} />
+                <MessageSquare size={13} />
+                <span>AI Chat</span>
               </button>
             </div>
 
-            {activeMode === 'agent' ? (
-              <>
-                <button
-                  type="button"
-                  className="flex items-center gap-2 h-9 px-4 rounded-md border border-white/15 bg-white/[0.02] text-[11px] font-mono font-medium text-white/85 hover:border-white/35 transition-colors cursor-pointer"
+            <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-zinc-400 mb-3">
+              Stack
+            </p>
+            <div className="grid grid-cols-3 gap-2 w-full">
+              {STACK_ICONS.map(({ Icon, label }, idx) => (
+                <div
+                  key={idx}
+                  title={label}
+                  className="flex items-center justify-center aspect-square rounded-xl border border-white/20 bg-white/[0.03] text-zinc-300 hover:text-white hover:border-white/50 hover:bg-white/10 transition-all cursor-pointer shadow-sm group"
                 >
-                  <span>Agent Mode</span>
-                  <Sparkles size={13} className="text-amber-300" />
-                </button>
-
-                <button
-                  type="button"
-                  className="flex items-center gap-2 h-9 px-4 rounded-md border border-white/15 bg-white/[0.02] text-[11px] font-mono font-medium text-white/85 hover:border-white/35 transition-colors cursor-pointer"
-                >
-                  <span>Study Flow</span>
-                  <Link2 size={12} className="text-white/50" />
-                </button>
-              </>
-            ) : (
-              <>
-                <div className="flex items-center gap-2 h-9 px-4 rounded-md border border-white/15 bg-white/[0.02] text-[11px] font-mono font-medium text-white/85">
-                  <span>Chat Mode</span>
-                  <MessageSquare size={13} className="text-blue-400" />
+                  <Icon size={18} strokeWidth={1.8} className="transition-transform duration-200 group-hover:scale-110" />
                 </div>
+              ))}
+            </div>
+          </div>
 
-                <div className="flex items-center gap-2 h-9 px-4 rounded-md border border-white/15 bg-white/[0.02] text-[11px] font-mono text-zinc-300">
-                  <span>AVORA_NEURAL.live</span>
+          <div className="flex flex-col gap-2 pt-4">
+            <div className="w-2.5 h-6 border-l border-b border-white/25 rounded-bl-md ml-1" />
+            <div className="flex items-center gap-2">
+              <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-[0.2em]">Auto</span>
+            </div>
+            <div className="h-1.5 w-20 bg-[repeating-linear-gradient(115deg,rgba(255,255,255,0.7)_0_2px,transparent_2px_5px)] opacity-50" />
+          </div>
+        </aside>
+
+        {/* ============================= MAIN CANVAS / VIEWPORT ============================= */}
+        <main className="relative flex-1 flex flex-col overflow-hidden min-w-0">
+          
+          {/* Top Toolbar */}
+          <div className="relative z-20 flex items-center justify-between gap-2 px-3 sm:px-6 py-2.5 sm:py-3.5 border-b border-white/10 bg-[#08080a]/90 backdrop-blur-md">
+            
+            {/* Left: Mobile Drawer Trigger + Quick Mode Toggle */}
+            <div className="flex items-center gap-2">
+              {isMobile && (
+                <button
+                  type="button"
+                  onClick={() => setSidebarOpen(true)}
+                  className="flex items-center justify-center w-8 h-8 rounded-lg border border-white/20 bg-white/5 text-white/80 hover:text-white cursor-pointer"
+                  aria-label="Open Stack Menu"
+                >
+                  <Menu size={16} />
+                </button>
+              )}
+
+              {/* Mobile Quick Mode Toggle Switch */}
+              <div className="flex items-center border border-white/15 rounded-lg overflow-hidden bg-black/40 p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setActiveMode('agent')}
+                  className={`px-2.5 sm:px-3 py-1 text-[10px] sm:text-[11px] font-mono font-bold tracking-wider uppercase rounded-md transition-all cursor-pointer ${
+                    activeMode === 'agent'
+                      ? 'bg-white text-black shadow-sm'
+                      : 'text-white/60 hover:text-white'
+                  }`}
+                >
+                  Agent
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveMode('chat')}
+                  className={`px-2.5 sm:px-3 py-1 text-[10px] sm:text-[11px] font-mono font-bold tracking-wider uppercase rounded-md transition-all cursor-pointer ${
+                    activeMode === 'chat'
+                      ? 'bg-white text-black shadow-sm'
+                      : 'text-white/60 hover:text-white'
+                  }`}
+                >
+                  Chat
+                </button>
+              </div>
+            </div>
+
+            {/* Right: Badges & Undo/Redo */}
+            <div className="flex items-center gap-2">
+              {activeMode === 'agent' ? (
+                <>
+                  <div className="flex items-center border border-white/15 rounded-lg overflow-hidden h-7 sm:h-8 bg-white/[0.02]">
+                    <button
+                      type="button"
+                      aria-label="Undo"
+                      className="px-2 sm:px-2.5 h-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/5 transition-colors border-r border-white/15 cursor-pointer"
+                    >
+                      <RotateCcw size={12} />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Redo"
+                      className="px-2 sm:px-2.5 h-full flex items-center justify-center text-white/30 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                    >
+                      <RotateCw size={12} />
+                    </button>
+                  </div>
+
+                  <div className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-lg border border-white/15 bg-white/[0.02] text-[10px] font-mono font-medium text-white/85">
+                    <span>Agent Mode</span>
+                    <Sparkles size={12} className="text-amber-300" />
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-center gap-1.5 h-7 sm:h-8 px-2.5 sm:px-3 rounded-lg border border-white/15 bg-white/[0.02] text-[10px] font-mono text-zinc-300">
+                  <span className="hidden sm:inline">AVORA_NEURAL.live</span>
+                  <span className="sm:hidden">LIVE</span>
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
                 </div>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* ================= CANVAS VIEWPORT ================= */}
-        {activeMode === 'chat' ? (
-          /* AI CHAT VIEW matching reference screenshot */
-          <div
-            className="relative flex-1 overflow-hidden flex flex-col items-center justify-center"
-            style={{
-              backgroundImage:
-                'radial-gradient(circle, rgba(255,255,255,0.14) 1px, transparent 1px)',
-              backgroundSize: '22px 22px',
-            }}
-          >
-            {/* 3D Rotating Geodesic Particle Sphere */}
-            <RotatingParticleSphere />
-
-            {/* Bottom Floating Prompt Bar matching reference */}
-            <div className="absolute bottom-6 left-6 right-6 lg:left-10 lg:right-10 border border-white/15 bg-black/70 backdrop-blur-xl rounded-xl p-4 flex flex-col justify-between gap-3.5 z-30 shadow-2xl">
-              {/* Prompt Text Input */}
-              <div className="flex items-center gap-1 font-mono text-xs sm:text-sm text-zinc-300">
-                <input
-                  type="text"
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  placeholder="Ask Daemon AI anything..."
-                  className="w-full bg-transparent outline-none border-none text-white placeholder:text-zinc-400 font-mono text-xs sm:text-sm focus:outline-none"
-                />
-                <span className="animate-pulse text-white font-bold font-mono">_</span>
-              </div>
-
-              {/* Bottom Actions Row */}
-              <div className="flex items-center justify-between pt-1">
-                {/* Left: Plus & Tools */}
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    aria-label="Add attachment"
-                    className="w-7 h-7 rounded-full border border-white/20 bg-white/5 hover:bg-white/15 text-white/70 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
-                  >
-                    <Plus size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    className="flex items-center gap-1.5 px-3 h-7 rounded-full border border-white/20 bg-white/5 hover:bg-white/15 text-white/80 hover:text-white text-[11px] font-mono transition-colors cursor-pointer"
-                  >
-                    <SlidersHorizontal size={12} />
-                    <span>Tools</span>
-                  </button>
-                </div>
-
-                {/* Right: Send & Mic */}
-                <div className="flex items-center gap-2.5">
-                  <button
-                    type="button"
-                    aria-label="Send message"
-                    className="w-7 h-7 rounded-full border border-white/20 bg-white/5 hover:bg-white/15 text-white/70 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
-                  >
-                    <SendHorizontal size={13} />
-                  </button>
-                  <button
-                    type="button"
-                    aria-label="Voice input"
-                    className="w-7 h-7 rounded-full bg-white text-black hover:bg-white/90 flex items-center justify-center transition-colors cursor-pointer shadow-md"
-                  >
-                    <Mic size={14} />
-                  </button>
-                </div>
-              </div>
+              )}
             </div>
           </div>
-        ) : (
-          /* AI AGENT NODE GRAPH VIEW */
-          <div
-            ref={canvasRef}
-            onMouseDown={onCanvasPointerDown}
-            onClick={deselect}
-            onWheel={onWheel}
-            className="relative flex-1 overflow-hidden cursor-default"
-            style={{
-              backgroundImage:
-                'radial-gradient(circle, rgba(255,255,255,0.14) 1px, transparent 1px)',
-              backgroundSize: '22px 22px',
-              backgroundPosition: `${pan.x % 22}px ${pan.y % 22}px`,
-            }}
-          >
-          <div
-            className="absolute"
-            style={{
-              transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-              transformOrigin: '0 0',
-              left: 60,
-              top: 90,
-            }}
-          >
-            {/* Edges */}
-            <svg
-              className="absolute overflow-visible pointer-events-none"
-              style={{ left: 0, top: 0, width: 1, height: 1 }}
-            >
-              <style>{`
-                @keyframes wfDash { from { stroke-dashoffset: 16; } to { stroke-dashoffset: 0; } }
-                .wf-edge { animation: wfDash 1.1s linear infinite; }
-              `}</style>
 
-              {mainEdgeData.map((edge, i) => (
-                <path
-                  key={`main-${i}`}
-                  d={`M ${edge.a.x} ${edge.a.y} L ${edge.b.x} ${edge.b.y}`}
-                  fill="none"
-                  stroke="rgba(255,255,255,0.35)"
-                  strokeWidth="1.3"
-                  strokeDasharray="4 4"
-                  className="wf-edge"
-                />
-              ))}
-
-              {branchEdgeData.map((edge, i) => (
-                <path
-                  key={`branch-${i}`}
-                  d={`M ${edge.a.x} ${edge.a.y} L ${edge.b.x} ${edge.b.y}`}
-                  fill="none"
-                  stroke="rgba(255,255,255,0.35)"
-                  strokeWidth="1.3"
-                  strokeDasharray="4 4"
-                  className="wf-edge"
-                />
-              ))}
-
-              <path
-                d={dropPath}
-                fill="none"
-                stroke="rgba(255,255,255,0.28)"
-                strokeWidth="1.2"
-                strokeDasharray="3 4"
-              />
-
-              {/* dashed group container for the RAG branch */}
-              <rect
-                x={branchLeft}
-                y={branchTop}
-                width={branchRight - branchLeft}
-                height={branchBottom - branchTop}
-                rx={22}
-                fill="rgba(255,255,255,0.015)"
-                stroke="rgba(255,255,255,0.18)"
-                strokeWidth="1"
-                strokeDasharray="5 6"
-              />
-            </svg>
-
-            {/* item labels on main + branch edges */}
-            {mainEdgeData.map((edge, i) => {
-              const midX = (edge.a.x + edge.b.x) / 2;
-              const midY = edge.a.y;
-              return (
-                <div
-                  key={`label-${i}`}
-                  className="absolute text-[9px] font-mono text-zinc-400 bg-[#0a0b0b] px-1 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap"
-                  style={{ left: midX, top: midY - 12 }}
-                >
-                  {edge.label}
-                </div>
-              );
-            })}
-            {branchEdgeData.map((edge, i) => {
-              const midX = (edge.a.x + edge.b.x) / 2;
-              const midY = edge.a.y;
-              return (
-                <div
-                  key={`branch-label-${i}`}
-                  className="absolute text-[9px] font-mono text-zinc-400 bg-[#0a0b0b] px-1 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap"
-                  style={{ left: midX, top: midY - 12 }}
-                >
-                  {edge.label}
-                </div>
-              );
-            })}
-
-            {/* RAG branch group label */}
+          {/* Canvas Viewport */}
+          {activeMode === 'chat' ? (
+            /* ================= AI CHAT VIEW ================= */
             <div
-              className="absolute text-[9px] font-mono uppercase tracking-[0.2em] text-zinc-500 whitespace-nowrap"
-              style={{ left: branchLeft + 14, top: branchTop - 16 }}
-            >
-              RAG pipeline
-            </div>
-
-            {/* Nodes */}
-            {nodes.map((node) => (
-              <WorkflowNode
-                key={node.id}
-                node={node}
-                selected={selectedId === node.id}
-                onPointerDown={onNodePointerDown}
-                onSelect={setSelectedId}
-              />
-            ))}
-
-            {/* add-node plus button after the quiz node */}
-            <div
-              className="absolute w-6 h-6 rounded-full border border-dashed border-white/30 hover:border-white text-white/50 hover:text-white flex items-center justify-center cursor-pointer transition-colors"
+              className="relative flex-1 overflow-hidden flex flex-col items-center justify-center"
               style={{
-                left: nodeMap.quiz.x + nodeMap.quiz.w + 30,
-                top: nodeMap.quiz.y + nodeMap.quiz.h / 2 - 12,
+                backgroundImage:
+                  'radial-gradient(circle, rgba(255,255,255,0.14) 1px, transparent 1px)',
+                backgroundSize: '22px 22px',
               }}
-              onClick={(e) => e.stopPropagation()}
             >
-              <Plus size={13} />
-            </div>
-          </div>
-        </div>
-      )}
-    </main>
+              {/* 3D Geodesic Rotating Sphere */}
+              <RotatingParticleSphere />
 
-      {/* ============================= RIGHT DECORATION ============================= */}
-      <div className="relative z-20 w-8 flex-shrink-0 border-l border-white/10 flex flex-col items-center justify-between py-6">
-        <span
-          className="text-[9px] font-mono text-white/25 tracking-[0.25em] uppercase"
-          style={{ writingMode: 'vertical-rl' }}
-        >
-          Host
-        </span>
-        <div className="w-px flex-1 bg-white/15 my-6" />
-        <div className="w-px h-6 bg-white/25" />
+              {/* Bottom Prompt Bar */}
+              <div className="absolute bottom-3 sm:bottom-5 left-3 right-3 sm:left-6 sm:right-6 lg:left-10 lg:right-10 border border-white/15 bg-black/80 backdrop-blur-xl rounded-xl p-3 sm:p-4 flex flex-col justify-between gap-2.5 sm:gap-3.5 z-30 shadow-2xl">
+                <div className="flex items-center gap-1 font-mono text-xs sm:text-sm text-zinc-300">
+                  <input
+                    type="text"
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    placeholder="Ask Daemon AI anything..."
+                    className="w-full bg-transparent outline-none border-none text-white placeholder:text-zinc-400 font-mono text-xs sm:text-sm focus:outline-none"
+                  />
+                  <span className="animate-pulse text-white font-bold font-mono">_</span>
+                </div>
+
+                <div className="flex items-center justify-between pt-1">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <button
+                      type="button"
+                      aria-label="Add attachment"
+                      className="w-7 h-7 rounded-full border border-white/20 bg-white/5 hover:bg-white/15 text-white/70 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                    >
+                      <Plus size={13} />
+                    </button>
+                    <button
+                      type="button"
+                      className="flex items-center gap-1 px-2.5 sm:px-3 h-7 rounded-full border border-white/20 bg-white/5 hover:bg-white/15 text-white/80 hover:text-white text-[10px] sm:text-[11px] font-mono transition-colors cursor-pointer"
+                    >
+                      <SlidersHorizontal size={11} />
+                      <span>Tools</span>
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      aria-label="Send message"
+                      className="w-7 h-7 rounded-full border border-white/20 bg-white/5 hover:bg-white/15 text-white/70 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                    >
+                      <SendHorizontal size={12} />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Voice input"
+                      className="w-7 h-7 rounded-full bg-white text-black hover:bg-white/90 flex items-center justify-center transition-colors cursor-pointer shadow-md"
+                    >
+                      <Mic size={13} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* ================= AI AGENT NODE GRAPH VIEW ================= */
+            <div
+              ref={canvasRef}
+              onMouseDown={onCanvasPointerDown}
+              onClick={deselect}
+              onWheel={onWheel}
+              onTouchStart={(e) => {
+                onCanvasPointerDown(e);
+                onTouchStart(e);
+              }}
+              onTouchMove={onTouchMove}
+              className="relative flex-1 overflow-hidden cursor-default touch-pan-y"
+              style={{
+                backgroundImage:
+                  'radial-gradient(circle, rgba(255,255,255,0.14) 1px, transparent 1px)',
+                backgroundSize: '22px 22px',
+                backgroundPosition: `${pan.x % 22}px ${pan.y % 22}px`,
+              }}
+            >
+              <div
+                className="absolute"
+                style={{
+                  transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+                  transformOrigin: '0 0',
+                  left: 0,
+                  top: 0,
+                }}
+              >
+                {/* Edges */}
+                <svg
+                  className="absolute overflow-visible pointer-events-none"
+                  style={{ left: 0, top: 0, width: 1, height: 1 }}
+                >
+                  <style>{`
+                    @keyframes wfDash { from { stroke-dashoffset: 16; } to { stroke-dashoffset: 0; } }
+                    .wf-edge { animation: wfDash 1.1s linear infinite; }
+                  `}</style>
+
+                  {mainEdgeData.map((edge, i) => (
+                    <path
+                      key={`main-${i}`}
+                      d={`M ${edge.a.x} ${edge.a.y} L ${edge.b.x} ${edge.b.y}`}
+                      fill="none"
+                      stroke="rgba(255,255,255,0.35)"
+                      strokeWidth="1.3"
+                      strokeDasharray="4 4"
+                      className="wf-edge"
+                    />
+                  ))}
+
+                  {branchEdgeData.map((edge, i) => (
+                    <path
+                      key={`branch-${i}`}
+                      d={`M ${edge.a.x} ${edge.a.y} L ${edge.b.x} ${edge.b.y}`}
+                      fill="none"
+                      stroke="rgba(255,255,255,0.35)"
+                      strokeWidth="1.3"
+                      strokeDasharray="4 4"
+                      className="wf-edge"
+                    />
+                  ))}
+
+                  <path
+                    d={dropPath}
+                    fill="none"
+                    stroke="rgba(255,255,255,0.28)"
+                    strokeWidth="1.2"
+                    strokeDasharray="3 4"
+                  />
+
+                  {/* Dashed group container for RAG branch */}
+                  <rect
+                    x={branchLeft}
+                    y={branchTop}
+                    width={branchRight - branchLeft}
+                    height={branchBottom - branchTop}
+                    rx={22}
+                    fill="rgba(255,255,255,0.015)"
+                    stroke="rgba(255,255,255,0.18)"
+                    strokeWidth="1"
+                    strokeDasharray="5 6"
+                  />
+                </svg>
+
+                {/* Edge item labels */}
+                {mainEdgeData.map((edge, i) => {
+                  const midX = (edge.a.x + edge.b.x) / 2;
+                  const midY = edge.a.y;
+                  return (
+                    <div
+                      key={`label-${i}`}
+                      className="absolute text-[9px] font-mono text-zinc-400 bg-[#0a0b0b] px-1 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap"
+                      style={{ left: midX, top: midY - 12 }}
+                    >
+                      {edge.label}
+                    </div>
+                  );
+                })}
+
+                {branchEdgeData.map((edge, i) => {
+                  const midX = (edge.a.x + edge.b.x) / 2;
+                  const midY = edge.a.y;
+                  return (
+                    <div
+                      key={`branch-label-${i}`}
+                      className="absolute text-[9px] font-mono text-zinc-400 bg-[#0a0b0b] px-1 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap"
+                      style={{ left: midX, top: midY - 12 }}
+                    >
+                      {edge.label}
+                    </div>
+                  );
+                })}
+
+                {/* RAG pipeline group label */}
+                <div
+                  className="absolute text-[9px] font-mono uppercase tracking-[0.2em] text-zinc-500 whitespace-nowrap"
+                  style={{ left: branchLeft + 14, top: branchTop - 16 }}
+                >
+                  RAG pipeline
+                </div>
+
+                {/* Interactive Workflow Nodes */}
+                {nodes.map((node) => (
+                  <WorkflowNode
+                    key={node.id}
+                    node={node}
+                    selected={selectedId === node.id}
+                    onPointerDown={onNodePointerDown}
+                    onSelect={setSelectedId}
+                  />
+                ))}
+
+                {/* Plus button after quiz node */}
+                <div
+                  className="absolute w-6 h-6 rounded-full border border-dashed border-white/30 hover:border-white text-white/50 hover:text-white flex items-center justify-center cursor-pointer transition-colors"
+                  style={{
+                    left: nodeMap.quiz.x + nodeMap.quiz.w + 30,
+                    top: nodeMap.quiz.y + nodeMap.quiz.h / 2 - 12,
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Plus size={13} />
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
+
+        {/* Right Host Deco (Desktop only) */}
+        <div className="hidden lg:flex relative z-20 w-8 flex-shrink-0 border-l border-white/10 flex-col items-center justify-between py-6">
+          <span
+            className="text-[9px] font-mono text-white/25 tracking-[0.25em] uppercase"
+            style={{ writingMode: 'vertical-rl' }}
+          >
+            Host
+          </span>
+          <div className="w-px flex-1 bg-white/15 my-6" />
+          <div className="w-px h-6 bg-white/25" />
+        </div>
       </div>
-    </div>
+    </section>
   );
 }

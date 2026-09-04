@@ -24,11 +24,11 @@ const Navbar = () => {
         // Check if navbar is currently over a light/white section
         const lightSections = document.querySelectorAll('[data-theme="light"]')
         let overLight = false
-        const navHeight = 80
+        const navHeight = 75
 
         lightSections.forEach((sec) => {
           const rect = sec.getBoundingClientRect()
-          if (rect.top <= navHeight && rect.bottom >= navHeight) {
+          if (rect.top <= navHeight && rect.bottom >= 20) {
             overLight = true
           }
         })
