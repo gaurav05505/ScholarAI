@@ -77,7 +77,7 @@ const Section6 = () => {
         </ScrollReveal>
 
         {/* 2. Pricing Cards: Each reveals individually on scroll */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-start">
           {plans.map((plan, idx) => (
             <ScrollReveal
               key={plan.name}
@@ -86,8 +86,8 @@ const Section6 = () => {
               scale={plan.recommended}
               className={
                 plan.recommended
-                  ? 'relative flex flex-col rounded-[28px] border border-indigo-400/20 bg-gradient-to-b from-black from-40% to-indigo-900/40 p-7 sm:p-8 md:-translate-y-2'
-                  : 'relative flex flex-col rounded-2xl border border-white/10 bg-neutral-950 p-7 sm:p-8'
+                  ? 'relative flex flex-col rounded-2xl border border-indigo-400/20 bg-gradient-to-b from-neutral-900/90 via-neutral-950 to-indigo-950/40 p-8 sm:p-9 shadow-[0_0_16px_rgba(79,70,229,0.18)] z-10'
+                  : 'relative flex flex-col rounded-2xl border border-white/10 bg-neutral-950 p-7 sm:p-8 md:mt-8'
               }
             >
               {/* Plan name + badge */}

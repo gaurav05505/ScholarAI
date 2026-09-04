@@ -54,7 +54,7 @@ const CommunityHubIcon = ({ size = 18, className = '' }) => (
 
 const Footer = () => {
   return (
-    <footer className="relative w-full bg-black text-white font-sans overflow-hidden border-t border-white/10">
+    <footer className="relative w-full bg-black text-white font-sans overflow-hidden border-white/10">
       {/* ================= TOP GIANT BRAND HEADER ================= */}
       <ScrollReveal
         delay={0}
@@ -215,7 +215,7 @@ const Footer = () => {
         delay={320}
         duration={650}
         yOffset={10}
-        className="w-full px-8 sm:px-10 lg:px-12 py-6 flex items-center justify-between text-xs text-zinc-500 font-mono"
+        className="w-full px-8 mb-10 sm:px-10 lg:px-12 py-6 flex items-center justify-between text-xs text-zinc-500 font-mono"
       >
         <p>© 2026 Avora. All rights reserved.</p>
       </ScrollReveal>
