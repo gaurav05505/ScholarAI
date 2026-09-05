@@ -250,12 +250,16 @@ const Section3 = () => {
                   }`}
                 >
                   {feature.visual}
+                  {/* Darkening layer for contrast */}
+                  <div className="absolute inset-0 bg-black/20 pointer-events-none" />
                 </div>
 
-                {/* Title */}
+                {/* Title with frosted backdrop blur on hover */}
                 <h3
-                  className={`relative z-10 text-xl sm:text-2xl font-bold tracking-tight transition-colors duration-300 ${
-                    isHovered ? 'text-black drop-shadow-sm' : 'text-black'
+                  className={`relative z-10 text-xl sm:text-2xl font-bold tracking-tight transition-all duration-300 px-4 py-2 rounded-xl border ${
+                    isHovered
+                      ? 'text-white bg-black/40 backdrop-blur-md shadow-lg border-white/20'
+                      : 'text-black bg-transparent border-transparent'
                   }`}
                 >
                   {feature.title}

@@ -178,7 +178,7 @@ const Footer = () => {
 
           <div className="flex items-center gap-5 pt-1">
             <a
-              href="https://linkedin.com"
+              href="https://www.linkedin.com/in/gaurav-829829349/"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="LinkedIn"
@@ -198,7 +198,7 @@ const Footer = () => {
             </a>
 
             <a
-              href="https://twitter.com"
+              href="https://x.com/GAURAV79401139"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Twitter / X"
