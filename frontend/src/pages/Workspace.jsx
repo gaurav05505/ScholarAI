@@ -1430,7 +1430,7 @@ const ChatPanel = ({
               type="button"
               onClick={submit}
               disabled={sending || !value.trim()}
-              className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full bg-[#FFA08C] hover:bg-[#ff8e78] text-white transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 shadow-xs cursor-pointer"
+              className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full bg-[#1D4ED8] hover:bg-[#2563EB] text-white transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 shadow-xs cursor-pointer"
               aria-label="Send message"
             >
               {/* Paper airplane send icon */}
