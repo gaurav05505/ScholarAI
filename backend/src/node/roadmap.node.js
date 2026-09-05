@@ -17,6 +17,56 @@ function cleanAndParseJSON(str) {
   return JSON.parse(cleaned);
 }
 
+function getDefaultRoadmap(topic, context = {}) {
+  const capTopic = topic.charAt(0).toUpperCase() + topic.slice(1);
+  const track = context.track || 'Core Architecture';
+  const level = context.level || 'Beginner';
+
+  return {
+    title: `${capTopic} First-Principles Roadmap`,
+    description: `A personalized, high-yield learning path for ${topic} (${track}, ${level}) built on first principles.`,
+    phases: [
+      {
+        name: "Phase 1: Foundations & Core Mental Models",
+        modules: [
+          {
+            name: `${capTopic} Fundamentals`,
+            description: `Understanding the first principles, primitives, and core mechanisms of ${topic}.`,
+            topics: [
+              { name: "Underlying First Principles & Primitives", completed: false },
+              { name: "Core Architecture & Data Flow", completed: false },
+              { name: "Building Foundational Blocks", completed: false }
+            ]
+          },
+          {
+            name: "Core Mechanics & Patterns",
+            description: `Deep dive into architectural patterns and system design tradeoffs.`,
+            topics: [
+              { name: "Execution Flow & Critical Invariants", completed: false },
+              { name: "Standard Design Patterns & Best Practices", completed: false },
+              { name: "Common Edge Cases & Failure Modes", completed: false }
+            ]
+          }
+        ]
+      },
+      {
+        name: "Phase 2: Scalability, Optimization & Production",
+        modules: [
+          {
+            name: "Production-Grade System Architecture",
+            description: `High-throughput optimization, monitoring, and real-world system design.`,
+            topics: [
+              { name: "Performance Bottlenecks & Optimization", completed: false },
+              { name: "Reliability, Resiliency & Redundancy", completed: false },
+              { name: "End-to-End Real World System Integration", completed: false }
+            ]
+          }
+        ]
+      }
+    ]
+  };
+}
+
 export async function roadmapNode(sessionId) {
   try {
     if (!sessionId) {
@@ -47,33 +97,25 @@ Weekly Hours: ${context.weeklyHours || 'Not specified'}
 Learning Style: ${context.learningStyle || 'Not specified'}`;
 
     console.log(`[Roadmap Node] Requesting LLM for topic: ${session.topic}`);
-    console.log(`[Roadmap Node] Prompt input:\n${promptInput}`);
 
-    // 4. Generate the roadmap JSON using LLM
-    let aiRes;
+    // 4. Generate the roadmap JSON using LLM with fallback
+    let parsed = null;
     try {
-      aiRes = await Aichat(roadmapPrompt, promptInput);
-    } catch (aiError) {
-      throw new Error(`AI generation failed: ${aiError.message}`);
-    }
-
-    console.log(`[Roadmap Node] Raw AI response:`, aiRes);
-
-    // 5. Parse output
-    let parsed;
-    try {
+      const aiRes = await Aichat(roadmapPrompt, promptInput, { timeout: 45000 });
+      console.log(`[Roadmap Node] Raw AI response:`, aiRes);
       parsed = cleanAndParseJSON(aiRes);
-    } catch (parseError) {
-      throw new Error(`Invalid JSON format returned by AI: ${parseError.message}`);
+    } catch (aiError) {
+      console.warn(`[Roadmap Node] AI generation fallback used:`, aiError.message);
     }
 
-    if (!parsed || !parsed.title || !Array.isArray(parsed.phases)) {
-      throw new Error("AI response did not follow the required JSON schema structure.");
+    if (!parsed || !parsed.title || !Array.isArray(parsed.phases) || parsed.phases.length === 0) {
+      console.log(`[Roadmap Node] Using high-yield structured default roadmap template for ${session.topic}`);
+      parsed = getDefaultRoadmap(session.topic, context);
     }
 
     console.log(`[Roadmap Node] Parsed roadmap title: ${parsed.title}`);
 
-    // 6. Create Roadmap in database
+    // 5. Create Roadmap in database
     const roadmap = await Roadmap.create({
       userId: session.userId,
       title: parsed.title,
@@ -82,7 +124,7 @@ Learning Style: ${context.learningStyle || 'Not specified'}`;
       phases: parsed.phases
     });
 
-    // 7. Associate the roadmap with the session
+    // 6. Associate the roadmap with the session
     session.roadmapId = roadmap._id;
     await session.save();
 

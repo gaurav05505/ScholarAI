@@ -1,34 +1,60 @@
-import nvidia from "../config/nvidia.js";
+import axios from 'axios';
+import dotenv from 'dotenv';
 
-export async function chatWithLLM(message) {
-  try {
-    const response = await nvidia.post("/chat/completions", {
-      model: "meta/llama-3.1-70b-instruct",
+dotenv.config();
 
-      messages: [
+const invokeUrl = 'https://integrate.api.nvidia.com/v1/chat/completions';
+
+export async function chatWithLLM(message, options = {}) {
+  const apiKey = process.env.NVIDIA_API_KEY?.trim();
+  if (!apiKey) {
+    throw new Error('NVIDIA_API_KEY is missing from environment variables.');
+  }
+
+  const headers = {
+    Authorization: `Bearer ${apiKey}`,
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+  };
+
+  const messages = Array.isArray(message)
+    ? message
+    : [
         {
-          role: "system",
+          role: 'system',
           content:
-            "You are ScolarAI, an AI assistant specialized in helping students and researchers.",
+            options.systemPrompt ||
+            'You are ScolarAI, an expert AI assistant specialized in teaching students and researchers from first principles.',
         },
         {
-          role: "user",
+          role: 'user',
           content: message,
         },
-      ],
+      ];
 
-      temperature: 0.7,
-      top_p: 0.95,
-      max_tokens: 4096,
-      stream: false,
-    });
+  const payload = {
+    model: options.model || process.env.NVIDIA_MODEL || 'meta/llama-3.2-11b-vision-instruct',
+    messages,
+    max_tokens: options.max_tokens || 4096,
+    temperature: options.temperature !== undefined ? options.temperature : 0.7,
+    stream: false,
+  };
 
-    return response.data.choices[0].message.content;
+  if (options.reasoning_effort) {
+    payload.reasoning_effort = options.reasoning_effort;
+  }
+
+  try {
+    const response = await axios.post(invokeUrl, payload, { headers, timeout: 20000 });
+    return response.data?.choices?.[0]?.message?.content || '';
   } catch (error) {
-    console.error(
-      error.response?.data || error.message
+    console.error('NVIDIA LLM Error:', error.response?.data || error.message);
+    throw new Error(
+      error.response?.data?.message ||
+        error.response?.data?.error ||
+        'Failed to generate AI response from NVIDIA model.'
     );
-
-    throw new Error("Failed to generate AI response.");
   }
 }
+
+export default chatWithLLM;

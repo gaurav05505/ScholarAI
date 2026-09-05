@@ -2,10 +2,10 @@ import Aichat from '../utils/aiClint.util.js';
 import { intentPrompt } from '../Prompt/intent.prompt.js';
 import { contextPrompt } from '../Prompt/context.prompt.js';
 import LearnSchema from '../models/Learn.Schema.js'; 
+import { getFallbackQuestion } from '../constants/learningQuestion.constant.js';
 
 /**
- * Safely extracts and parses JSON content from AI responses,
- * even when wrapped in markdown code blocks or containing extraneous text.
+ * Safely extracts and parses JSON content from AI responses.
  */
 function cleanAndParseJSON(str) {
   if (typeof str !== 'string') return str;
@@ -32,10 +32,17 @@ export async function intentNode(userId, message) {
     try {
       Aires = await Aichat(intentPrompt, message);
     } catch (aiError) {
-      return {
-        success: false,
-        message: `AI service error: ${aiError.message}`
-      }; 
+      // If AI intent classification fails, check heuristic
+      const lower = message.toLowerCase();
+      if (lower.includes("learn") || lower.includes("roadmap") || lower.includes("study") || lower.includes("guide")) {
+        const words = message.replace(/i want to learn|how to learn|teach me|roadmap for/gi, '').trim();
+        Aires = JSON.stringify({ intent: "learn", topic: words || "Web Development" });
+      } else {
+        return {
+          success: false,
+          message: `AI service error: ${aiError.message}`
+        };
+      }
     }
 
     // 2. Parse JSON safely
@@ -98,41 +105,23 @@ export async function intentNode(userId, message) {
 Current Field: track
 Already Collected Context: {}`;
 
-    let questionRes;
+    let nextQuestion = null;
     try {
-      questionRes = await Aichat(contextPrompt, userMsg);
+      const questionRes = await Aichat(contextPrompt, userMsg);
+      const parsed = cleanAndParseJSON(questionRes);
+      if (parsed && parsed.question && Array.isArray(parsed.options)) {
+        nextQuestion = parsed;
+      }
     } catch (aiError) {
-      return {
-        success: false,
-        message: `AI error during question generation: ${aiError.message}`
-      };
+      console.warn(`[Intent Node] AI question generation fallback used:`, aiError.message);
     }
 
-    let nextQuestion;
-    try {
-      nextQuestion = cleanAndParseJSON(questionRes);
-    } catch (parseError) {
-      return {
-        success: false,
-        message: "Invalid JSON returned by AI for onboarding question."
-      };
-    }
-
-    // Validate the nextQuestion structure
-    if (!nextQuestion || typeof nextQuestion !== 'object') {
-      return {
-        success: false,
-        message: "Unexpected response format for onboarding question."
-      };
+    // Fallback if AI fails
+    if (!nextQuestion) {
+      nextQuestion = getFallbackQuestion("track", result.topic);
     }
 
     const { field, question, options, allowCustom } = nextQuestion;
-    if (!field || !question || !Array.isArray(options)) {
-      return {
-        success: false,
-        message: "Onboarding question missing required fields (field, question, or options)."
-      };
-    }
 
     // 7. Return session and next question info
     return {
@@ -141,9 +130,9 @@ Already Collected Context: {}`;
       intent: result.intent,
       topic: result.topic,
       nextQuestion: {
-        field,
+        field: field || "track",
         question,
-        options,
+        options: options || ["Core Fundamentals", "Practical Projects", "Deep Dive"],
         allowCustom: allowCustom !== undefined ? allowCustom : true
       }
     };

@@ -132,7 +132,7 @@ export const getEmbeddings = async (inputs, isQuery = false) => {
   try {
     const response = await nvidia.post('/embeddings', {
       input: inputs,
-      model: 'nvidia/nv-embedqa-e5-v5',
+      model: 'nvidia/nemotron-3-embed-1b',
       input_type: isQuery ? 'query' : 'passage',
       encoding_format: 'float',
     })

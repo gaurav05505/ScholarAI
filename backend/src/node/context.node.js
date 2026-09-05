@@ -2,6 +2,7 @@ import Aichat from '../utils/aiClint.util.js';
 import { contextPrompt } from '../Prompt/context.prompt.js';
 import LearnSchema from '../models/Learn.Schema.js'; 
 import { Learning_Fields } from '../constants/learningField.constant.js';
+import { getFallbackQuestion } from '../constants/learningQuestion.constant.js';
 import { roadmapNode } from './roadmap.node.js';
 
 /**
@@ -74,46 +75,24 @@ Already Collected Context: ${JSON.stringify(contextObj)}`;
 
       console.log(`[Context Node] Calling LLM with prompt:\n${promptInput}`);
 
-      let questionRes;
+      let nextQuestion = null;
       try {
-        questionRes = await Aichat(contextPrompt, promptInput);
+        const questionRes = await Aichat(contextPrompt, promptInput);
+        console.log(`[Context Node] Raw AI Response:`, questionRes);
+        const parsed = cleanAndParseJSON(questionRes);
+        if (parsed && parsed.question && Array.isArray(parsed.options)) {
+          nextQuestion = parsed;
+        }
       } catch (aiError) {
-        console.error(`[Context Node] AI Error:`, aiError);
-        return {
-          success: false,
-          message: `AI error during question generation: ${aiError.message}`
-        };
+        console.warn(`[Context Node] AI question generation fallback used:`, aiError.message);
       }
 
-      console.log(`[Context Node] Raw AI Response:`, questionRes);
-
-      let nextQuestion;
-      try {
-        nextQuestion = cleanAndParseJSON(questionRes);
-      } catch (parseError) {
-        console.error(`[Context Node] Parse Error:`, parseError);
-        return {
-          success: false,
-          message: "Invalid JSON returned by AI for onboarding question."
-        };
-      }
-
-      console.log(`[Context Node] Parsed AI Response:`, JSON.stringify(nextQuestion, null, 2));
-
-      if (!nextQuestion || typeof nextQuestion !== 'object') {
-        return {
-          success: false,
-          message: "Unexpected response format for onboarding question."
-        };
+      // If AI fails or timed out, use guaranteed intelligent fallback
+      if (!nextQuestion) {
+        nextQuestion = getFallbackQuestion(nextField, session.topic);
       }
 
       const { field, question, options, allowCustom } = nextQuestion;
-      if (!field || !question || !Array.isArray(options)) {
-        return {
-          success: false,
-          message: "Onboarding question missing required fields (field, question, or options)."
-        };
-      }
 
       await session.save();
 
@@ -122,9 +101,9 @@ Already Collected Context: ${JSON.stringify(contextObj)}`;
         sessionId: session._id,
         status: session.status,
         nextQuestion: {
-          field,
+          field: field || nextField,
           question,
-          options,
+          options: options || ["Option 1", "Option 2"],
           allowCustom: allowCustom !== undefined ? allowCustom : true
         }
       };

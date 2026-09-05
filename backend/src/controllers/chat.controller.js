@@ -112,6 +112,29 @@ function greet(user) {
       });
     }
 
+    // Fast path for common greetings
+    const trimmedLower = message.trim().toLowerCase();
+    const commonGreetings = [
+      'hey',
+      'hi',
+      'hello',
+      'hey there',
+      'hi there',
+      'hola',
+      'namaste',
+      'good morning',
+      'good evening',
+      'good afternoon',
+      'help',
+      'what can you do',
+    ];
+    if (commonGreetings.includes(trimmedLower)) {
+      return res.status(200).json({
+        success: true,
+        response: `Hello! 👋 I'm **Avora**, your AI first-principles learning companion.\n\nTell me what you'd like to learn or research today (for example: *"Web Development"*, *"Machine Learning"*, or *"System Architecture"*), and I'll generate a custom mastery roadmap and guide you step by step!`,
+      });
+    }
+
     // Call intentNode to determine if this is a learning request
     const intentResult = await intentNode(activeUserId, message);
 

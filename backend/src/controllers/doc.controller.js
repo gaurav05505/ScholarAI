@@ -61,7 +61,7 @@ Answer:`;
   return {
     answer,
     provider: 'nvidia',
-    model: 'meta/llama-3.1-70b-instruct',
+    model: 'moonshotai/kimi-k3',
     sources,
   };
 }
