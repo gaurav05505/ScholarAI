@@ -1,14 +1,65 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback, memo } from 'react';
 import axios from 'axios';
 import {
-  ArrowUpRight, AudioLines, Bolt, Clock3, Eclipse, FolderGit2, Map, Plus, Pencil,
-  MessageCircle, MessageSquareDot, MessagesSquare, StepBack, Trash2, UserRound,
-  Menu, X, PanelLeftClose, PanelLeftOpen, FileText, ListChecks,
+  ArrowUpRight,
+  AudioLines,
+  Bolt,
+  Clock3,
+  Eclipse,
+  FolderGit2,
+  Map,
+  Plus,
+  Pencil,
+  MessageCircle,
+  MessageSquare,
+  MessagesSquare,
+  Trash2,
+  UserRound,
+  Menu,
+  X,
+  FileText,
+  ListChecks,
+  Sparkles,
+  LogOut,
+  ChevronDown,
+  Upload,
+  Globe,
+  Share2,
+  SendHorizontal,
+  SlidersHorizontal,
+  Layers,
+  Settings,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Maximize2,
+  BookOpen,
+  GitBranch,
+  Copy,
+  Check,
+  Volume2,
+  VolumeX,
+  RotateCcw,
+  ThumbsUp,
+  ThumbsDown,
+  Paperclip,
+  BrainCircuit,
+  Lightbulb,
+  Compass,
+  Zap,
+  HelpCircle,
+  Download,
+  ExternalLink,
+  ChevronRight,
+  Search,
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext.jsx';
 
 const API_URL = 'http://localhost:5000/api/chat';
 
-const INLINE_PATTERN = /(!\[([^\]]*?)\]\(([^)]+?)\))|(\[([^\]]+?)\]\(([^)]+?)\))|(\*\*\*([^*]+?)\*\*\*)|(\*\*([^*]+?)\*\*)|(\*([^*]+?)\*)|(`([^`]+?)`)/g;
+/* ---------- Markdown & Inline Formatter ---------- */
+
+const INLINE_PATTERN =
+  /(!\[([^\]]*?)\]\(([^)]+?)\))|(\[([^\]]+?)\]\(([^)]+?)\))|(\*\*\*([^*]+?)\*\*\*)|(\*\*([^*]+?)\*\*)|(\*([^*]+?)\*)|(`([^`]+?)`)/g;
 
 function renderInline(text, keyBase) {
   if (!text) return null;
@@ -17,7 +68,6 @@ function renderInline(text, keyBase) {
   let match;
   let i = 0;
 
-  // Create a fresh regex instance to avoid state sharing bugs
   const regex = new RegExp(INLINE_PATTERN);
 
   while ((match = regex.exec(text)) !== null) {
@@ -27,42 +77,52 @@ function renderInline(text, keyBase) {
     const key = `${keyBase}-${i++}`;
 
     if (match[1] !== undefined) {
-      // Image
       nodes.push(
         <img
           key={key}
           src={match[3]}
           alt={match[2] || ''}
           loading="lazy"
-          className="my-3 max-w-full rounded-xl border border-black/10 shadow-sm transition-transform duration-200 hover:scale-[1.01]"
+          className="my-3 max-w-full rounded-2xl border border-black/10 shadow-sm"
         />
       );
     } else if (match[4] !== undefined) {
-      // Link
       nodes.push(
         <a
           key={key}
           href={match[6]}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-[#9aad2e] hover:text-[#889a24] underline underline-offset-4 decoration-[#9aad2e]/45 hover:decoration-[#889a24] transition-colors font-semibold"
+          className="text-[#2563eb] hover:underline font-medium inline-flex items-center gap-1"
         >
           {match[5]}
+          <ExternalLink size={12} className="inline opacity-70" />
         </a>
       );
     } else if (match[7] !== undefined) {
-      // Bold italic
-      nodes.push(<strong key={key} className="font-semibold"><em>{match[8]}</em></strong>);
-    } else if (match[9] !== undefined) {
-      // Bold
-      nodes.push(<strong key={key} className="font-semibold">{match[10]}</strong>);
-    } else if (match[11] !== undefined) {
-      // Italic
-      nodes.push(<em key={key} className="italic text-black/85">{match[12]}</em>);
-    } else if (match[13] !== undefined) {
-      // Inline code
       nodes.push(
-        <code key={key} className="rounded-md bg-black/[0.06] dark:bg-black/[0.12] px-1.5 py-0.5 text-[0.875em] font-mono font-medium text-[#c83a3a] dark:text-[#f87171]">
+        <strong key={key} className="font-semibold text-zinc-950">
+          <em>{match[8]}</em>
+        </strong>
+      );
+    } else if (match[9] !== undefined) {
+      nodes.push(
+        <strong key={key} className="font-semibold text-zinc-950">
+          {match[10]}
+        </strong>
+      );
+    } else if (match[11] !== undefined) {
+      nodes.push(
+        <em key={key} className="italic text-zinc-800">
+          {match[12]}
+        </em>
+      );
+    } else if (match[13] !== undefined) {
+      nodes.push(
+        <code
+          key={key}
+          className="rounded-lg bg-black/[0.06] px-1.5 py-0.5 text-[0.875em] font-mono font-medium text-red-600"
+        >
           {match[14]}
         </code>
       );
@@ -91,18 +151,28 @@ const CodeBlock = memo(({ language, code }) => {
   }, [code]);
 
   return (
-    <div className="my-4 overflow-hidden rounded-xl border border-black/10 bg-[#1E1E1E] shadow-sm">
-      <div className="flex items-center justify-between bg-black/25 px-4 py-2 text-[11px] font-mono text-white/50 tracking-wider">
-        <span>{language.toUpperCase() || 'CODE'}</span>
+    <div className="my-4 overflow-hidden rounded-2xl border border-zinc-800 bg-[#121316] shadow-md text-left">
+      <div className="flex items-center justify-between border-b border-zinc-800 bg-zinc-900/90 px-4 py-2 text-[11px] font-mono text-zinc-400 tracking-wider">
+        <span>{language ? language.toUpperCase() : 'CODE'}</span>
         <button
           type="button"
           onClick={handleCopy}
-          className="flex items-center gap-1 rounded bg-white/10 px-2.5 py-1 text-[11px] font-medium text-white/80 transition-colors hover:bg-white/20 active:scale-95 cursor-pointer"
+          className="flex items-center gap-1.5 rounded-lg bg-white/10 px-2.5 py-1 text-[11px] font-medium text-zinc-200 transition-colors hover:bg-white/20 active:scale-95 cursor-pointer"
         >
-          {copied ? 'COPIED!' : 'COPY'}
+          {copied ? (
+            <>
+              <Check size={12} className="text-emerald-400" />
+              <span>COPIED!</span>
+            </>
+          ) : (
+            <>
+              <Copy size={12} />
+              <span>COPY</span>
+            </>
+          )}
         </button>
       </div>
-      <pre className="overflow-x-auto p-4 text-[13.5px] leading-relaxed text-[#E8F5C8] font-mono whitespace-pre">
+      <pre className="overflow-x-auto p-4 text-[13.5px] leading-relaxed text-emerald-300 font-mono whitespace-pre">
         <code>{code}</code>
       </pre>
     </div>
@@ -130,12 +200,12 @@ function renderMarkdownBlocks(text, segmentIdx) {
         const level = match[1].length;
         const textContent = match[2];
         const headingClasses = {
-          1: 'text-2xl font-bold mt-6 mb-3 text-[#1E1E1E] border-b border-black/10 pb-1.5 tracking-tight',
-          2: 'text-xl font-semibold mt-5 mb-2.5 text-[#1E1E1E] tracking-tight',
-          3: 'text-lg font-semibold mt-4.5 mb-2 text-[#1E1E1E]/90',
-          4: 'text-md font-medium mt-4 mb-2 text-[#1E1E1E]/80',
-          5: 'text-sm font-medium mt-3.5 mb-1.5 text-[#1E1E1E]/70',
-          6: 'text-xs font-medium mt-3 mb-1.5 text-[#1E1E1E]/60 uppercase tracking-wider',
+          1: 'text-2xl font-bold mt-6 mb-3 text-zinc-950 border-b border-black/10 pb-2 tracking-tight',
+          2: 'text-xl font-semibold mt-5 mb-2.5 text-zinc-950 tracking-tight',
+          3: 'text-lg font-semibold mt-4.5 mb-2 text-zinc-900',
+          4: 'text-base font-medium mt-4 mb-2 text-zinc-800',
+          5: 'text-sm font-medium mt-3.5 mb-1.5 text-zinc-700',
+          6: 'text-xs font-medium mt-3 mb-1.5 text-zinc-600 uppercase tracking-wider',
         };
         const Tag = `h${level}`;
         blocks.push(
@@ -151,12 +221,15 @@ function renderMarkdownBlocks(text, segmentIdx) {
     } else if (currentBlockType === 'blockquote') {
       const content = accumulatedLines.join('\n');
       blocks.push(
-        <blockquote key={key} className="my-4 border-l-4 border-[#A8F35A] bg-[#A8F35A]/5 px-4 py-2.5 text-[14.5px] italic text-[#1E1E1E]/80 rounded-r-lg">
+        <blockquote
+          key={key}
+          className="my-4 border-l-4 border-zinc-900 bg-black/[0.03] px-4 py-2.5 text-[14.5px] italic text-zinc-700 rounded-r-xl"
+        >
           {renderMarkdownBlocks(content, `${segmentIdx}-quote`)}
         </blockquote>
       );
     } else if (currentBlockType === 'table') {
-      const tableLines = accumulatedLines.filter(l => l.trim() !== '');
+      const tableLines = accumulatedLines.filter((l) => l.trim() !== '');
       if (tableLines.length > 0) {
         const headersLine = tableLines[0];
         let startRowIdx = 1;
@@ -165,7 +238,7 @@ function renderMarkdownBlocks(text, segmentIdx) {
         }
 
         const parseTableRow = (rowText) => {
-          let cells = rowText.split('|').map(c => c.trim());
+          let cells = rowText.split('|').map((c) => c.trim());
           if (rowText.startsWith('|')) cells.shift();
           if (rowText.endsWith('|')) cells.pop();
           return cells;
@@ -175,12 +248,18 @@ function renderMarkdownBlocks(text, segmentIdx) {
         const rows = tableLines.slice(startRowIdx).map(parseTableRow);
 
         blocks.push(
-          <div key={key} className="my-4 w-full overflow-x-auto rounded-xl border border-black/10 bg-white shadow-sm">
-            <table className="w-full border-collapse text-left text-sm text-[#1E1E1E]">
+          <div
+            key={key}
+            className="my-4 w-full overflow-x-auto rounded-2xl border border-black/10 bg-white shadow-xs"
+          >
+            <table className="w-full border-collapse text-left text-sm text-zinc-900">
               <thead>
-                <tr className="border-b border-black/10 bg-[#A8F35A]/5 font-semibold text-[#1E1E1E]/95">
+                <tr className="border-b border-black/10 bg-black/[0.02] font-semibold text-zinc-950">
                   {headers.map((h, i) => (
-                    <th key={`th-${i}`} className="px-4 py-3 font-semibold border-r last:border-r-0 border-black/5">
+                    <th
+                      key={`th-${i}`}
+                      className="px-4 py-3 font-semibold border-r last:border-r-0 border-black/5"
+                    >
                       {renderInline(h, `${key}-h-${i}`)}
                     </th>
                   ))}
@@ -188,9 +267,15 @@ function renderMarkdownBlocks(text, segmentIdx) {
               </thead>
               <tbody className="divide-y divide-black/5">
                 {rows.map((row, rIdx) => (
-                  <tr key={`tr-${rIdx}`} className="hover:bg-black/[0.005] transition-colors odd:bg-white even:bg-black/[0.005]">
+                  <tr
+                    key={`tr-${rIdx}`}
+                    className="hover:bg-black/[0.01] transition-colors odd:bg-white even:bg-black/[0.01]"
+                  >
                     {row.map((cell, cIdx) => (
-                      <td key={`td-${rIdx}-${cIdx}`} className="px-4 py-2.5 text-black/85 border-r last:border-r-0 border-black/5">
+                      <td
+                        key={`td-${rIdx}-${cIdx}`}
+                        className="px-4 py-2.5 text-zinc-700 border-r last:border-r-0 border-black/5"
+                      >
                         {renderInline(cell, `${key}-r-${rIdx}-c-${cIdx}`)}
                       </td>
                     ))}
@@ -202,45 +287,50 @@ function renderMarkdownBlocks(text, segmentIdx) {
         );
       }
     } else if (currentBlockType === 'list') {
-      const firstLine = accumulatedLines[0];
-      const isOrdered = /^\s*\d+\.\s+/.test(firstLine);
+      const isOrdered = /^\s*\d+\.\s+/.test(accumulatedLines[0]);
+      const items = accumulatedLines.map((l, i) => {
+        const itemKey = `${key}-li-${i}`;
+        const match = l.match(/^\s*(?:(?:[-*+])|(?:\d+\.))\s+(.*)$/);
+        const textContent = match ? match[1] : l;
 
-      const items = accumulatedLines.map((line, idx) => {
-        let textContent = line;
-        let isTask = false;
-        let isChecked = false;
-
-        const indentMatch = line.match(/^(\s*)/);
+        const indentMatch = l.match(/^(\s*)/);
         const indentSpaces = indentMatch ? indentMatch[1].length : 0;
 
-        textContent = textContent.replace(/^\s*([-*+])\s+/, '');
-        textContent = textContent.replace(/^\s*\d+\.\s+/, '');
-
-        if (textContent.startsWith('[ ]') || textContent.toLowerCase().startsWith('[x]')) {
-          isTask = true;
-          isChecked = textContent.toLowerCase().startsWith('[x]');
-          textContent = textContent.slice(3).trim();
-        }
-
-        const itemKey = `${key}-li-${idx}`;
-        if (isTask) {
+        const taskMatch = textContent.match(/^\[([ xX])\]\s+(.*)$/);
+        if (taskMatch) {
+          const checked = taskMatch[1].toLowerCase() === 'x';
+          const taskContent = taskMatch[2];
           return (
-            <li key={itemKey} style={{ paddingLeft: `${indentSpaces * 4}px` }} className="flex items-start gap-2.5 list-none my-1">
+            <li
+              key={itemKey}
+              style={{ paddingLeft: `${indentSpaces * 4}px` }}
+              className="flex items-start gap-2.5 my-1 text-zinc-800 list-none"
+            >
               <input
                 type="checkbox"
-                checked={isChecked}
+                checked={checked}
                 readOnly
-                className="mt-1 h-4 w-4 shrink-0 rounded border-gray-300 text-[#9aad2e] focus:ring-[#9aad2e] cursor-default"
+                className="mt-1 h-4 w-4 rounded-md border-black/20 text-zinc-950 focus:ring-0 cursor-default accent-zinc-950"
               />
-              <span className={isChecked ? 'line-through text-black/45' : 'text-black/85'}>
-                {renderInline(textContent, itemKey)}
+              <span
+                className={
+                  checked
+                    ? 'line-through text-zinc-400'
+                    : 'text-zinc-800'
+                }
+              >
+                {renderInline(taskContent, itemKey)}
               </span>
             </li>
           );
         }
 
         return (
-          <li key={itemKey} style={{ paddingLeft: `${indentSpaces * 4}px` }} className="my-0.5 leading-relaxed text-black/85">
+          <li
+            key={itemKey}
+            style={{ paddingLeft: `${indentSpaces * 4}px` }}
+            className="my-0.5 leading-relaxed text-zinc-800"
+          >
             {renderInline(textContent, itemKey)}
           </li>
         );
@@ -248,14 +338,24 @@ function renderMarkdownBlocks(text, segmentIdx) {
 
       if (isOrdered) {
         blocks.push(
-          <ol key={key} className="my-3 list-decimal space-y-1.5 pl-6 text-[14.5px]">
+          <ol
+            key={key}
+            className="my-3 list-decimal space-y-1.5 pl-6 text-[14.5px]"
+          >
             {items}
           </ol>
         );
       } else {
-        const containsTasks = accumulatedLines.some(l => /^\s*[-*+]\s+\[[ xX]\]/i.test(l));
+        const containsTasks = accumulatedLines.some((l) =>
+          /^\s*[-*+]\s+\[[ xX]\]/i.test(l)
+        );
         blocks.push(
-          <ul key={key} className={`my-3 space-y-1.5 text-[14.5px] ${containsTasks ? 'pl-1.5' : 'list-disc pl-6'}`}>
+          <ul
+            key={key}
+            className={`my-3 space-y-1.5 text-[14.5px] ${
+              containsTasks ? 'pl-1.5' : 'list-disc pl-6'
+            }`}
+          >
             {items}
           </ul>
         );
@@ -263,7 +363,10 @@ function renderMarkdownBlocks(text, segmentIdx) {
     } else if (currentBlockType === 'paragraph') {
       const pText = accumulatedLines.join('\n');
       blocks.push(
-        <p key={key} className="my-2.5 leading-relaxed text-[14.5px] text-[#1E1E1E]/90 whitespace-pre-line">
+        <p
+          key={key}
+          className="my-2.5 leading-relaxed text-[14.5px] text-zinc-850 whitespace-pre-line"
+        >
           {renderInline(pText, key)}
         </p>
       );
@@ -302,7 +405,10 @@ function renderMarkdownBlocks(text, segmentIdx) {
         flushBlock('table');
       }
       accumulatedLines.push(line);
-    } else if (/^\s*(?:[-*+])\s+(.*)$/.test(line) || /^\s*\d+\.\s+(.*)$/.test(line)) {
+    } else if (
+      /^\s*(?:[-*+])\s+(.*)$/.test(line) ||
+      /^\s*\d+\.\s+(.*)$/.test(line)
+    ) {
       if (currentBlockType !== 'list') {
         flushBlock('list');
       }
@@ -332,9 +438,15 @@ function renderMarkdown(raw) {
 
     if (isCode) {
       const lines = segment.split('\n');
-      const firstLineIsLang = lines[0] && /^[a-zA-Z0-9_+-]*$/.test(lines[0].trim()) && lines.length > 1;
+      const firstLineIsLang =
+        lines[0] &&
+        /^[a-zA-Z0-9_+-]*$/.test(lines[0].trim()) &&
+        lines.length > 1;
       const language = firstLineIsLang ? lines[0].trim() : '';
-      const code = (firstLineIsLang ? lines.slice(1) : lines).join('\n').replace(/^\n/, '').replace(/\n$/, '');
+      const code = (firstLineIsLang ? lines.slice(1) : lines)
+        .join('\n')
+        .replace(/^\n/, '')
+        .replace(/\n$/, '');
 
       elements.push(
         <CodeBlock key={`code-${segIdx}`} language={language} code={code} />
@@ -347,71 +459,96 @@ function renderMarkdown(raw) {
   return elements;
 }
 
-/* ---------- small building blocks ---------- */
+/* ---------- Nav building blocks ---------- */
 
-const NavButton = memo(({ text, icon: Icon, collapsed, active, onClick }) => (
+const NavItem = memo(({ text, icon: Icon, active, onClick, collapsed, badge }) => (
   <button
     type="button"
     onClick={onClick}
     title={collapsed ? text : undefined}
-    className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-[15px] transition-colors
-      ${active ? 'bg-white text-[#1E1E1E]' : 'text-[#1E1E1E]/70 hover:bg-white/60'}
+    className={`flex w-full items-center justify-between rounded-2xl px-3.5 py-2.5 text-sm font-medium transition-colors cursor-pointer select-none group
+      ${
+        active
+          ? 'bg-white text-zinc-950 font-semibold shadow-xs'
+          : 'text-zinc-750 hover:text-zinc-950 hover:bg-white/40'
+      }
       ${collapsed ? 'justify-center px-0' : ''}`}
   >
-    <Icon size={18} className="shrink-0" />
-    {!collapsed && <span className="truncate">{text}</span>}
+    <div className="flex items-center gap-3.5 min-w-0">
+      <Icon size={18} className="shrink-0 text-zinc-800 group-hover:scale-105 transition-transform" strokeWidth={1.8} />
+      {!collapsed && <span className="truncate">{text}</span>}
+    </div>
+    {!collapsed && badge !== undefined && (
+      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-black/5 text-zinc-700">
+        {badge}
+      </span>
+    )}
   </button>
 ));
 
 const TABS = [
-  { key: 'source', label: 'Source', icon: FileText },
-  { key: 'chats', label: 'Ai Chats', icon: MessageCircle },
+  { key: 'source', label: 'Sources', icon: FileText },
+  { key: 'chats', label: 'Ai chat', icon: MessageSquare },
   { key: 'roadmap', label: 'Roadmap', icon: Map },
-  { key: 'questions', label: 'Important question', icon: ListChecks },
+  { key: 'questions', label: 'Important Questions', icon: ListChecks },
 ];
 
-// Full set of slides shown in the right panel. The first four are controlled by the
-// header tabs; the last two ("All Chats" / "All Roadmaps") are separate list views only
-// reachable from the sidebar — they are intentionally not the same as the header tabs.
-const VIEWS = ['source', 'chats', 'roadmap', 'questions', 'allChats', 'allRoadmaps', 'projects'];
+const VIEWS = [
+  'source',
+  'chats',
+  'roadmap',
+  'questions',
+  'allChats',
+  'allRoadmaps',
+  'projects',
+];
 
-/* ---------- panel content for non-chat tabs ---------- */
-
-const InfoPanel = memo(({ title, body }) => (
+const InfoPanel = memo(({ title, body, icon: Icon = Sparkles, action }) => (
   <div className="flex h-full flex-col items-center justify-center text-center px-6">
-    <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full border-[4px] border-[#1E1E1E]/70">
-      <div className="h-8 w-8 rounded-[48%_48%_42%_42%/58%_58%_40%_40%] border-[4px] border-[#1E1E1E]/70 border-b-transparent border-l-transparent border-r-transparent" />
+    <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/80 border border-black/5 text-zinc-800 shadow-xs">
+      <Icon size={26} strokeWidth={1.75} />
     </div>
-    <h2 className="text-[22px] font-medium text-[#1E1E1E]">{title}</h2>
-    <p className="mt-2 max-w-sm text-[14px] text-black/45">{body}</p>
+    <h2 className="text-xl sm:text-2xl font-bold text-zinc-900 tracking-tight">
+      {title}
+    </h2>
+    <p className="mt-2 max-w-sm text-sm text-zinc-600 leading-relaxed">
+      {body}
+    </p>
+    {action && <div className="mt-5">{action}</div>}
   </div>
 ));
 
 const ListPanel = memo(({ title, items, onOpen, emptyLabel, action }) => (
-  <div className="flex h-full flex-col">
-    <div className="flex items-center justify-between mb-4 sm:mb-6 px-1">
-      <h2 className="text-[20px] sm:text-[22px] font-medium text-[#1E1E1E]">{title}</h2>
+  <div className="flex h-full flex-col p-6 sm:p-8">
+    <div className="flex items-center justify-between mb-6">
+      <h2 className="text-xl sm:text-2xl font-bold text-zinc-900 tracking-tight">
+        {title}
+      </h2>
       {action}
     </div>
     {items.length === 0 ? (
-      <div className="flex-1 flex flex-col items-center justify-center text-center p-6 border-2 border-dashed border-black/10 rounded-2xl bg-white/30">
-        <p className="text-[14px] text-black/45 mb-4">{emptyLabel}</p>
+      <div className="flex-1 flex flex-col items-center justify-center text-center p-8 border-2 border-dashed border-black/10 rounded-3xl bg-white/40">
+        <p className="text-sm text-zinc-500 mb-4">{emptyLabel}</p>
         {action}
       </div>
     ) : (
-      <div className="flex-1 min-h-0 overflow-y-auto pr-1">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="flex-1 min-h-0 overflow-y-auto pr-1 no-scrollbar">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {items.map((item) => (
             <button
               key={item.id}
               type="button"
               onClick={() => onOpen(item.id)}
-              className="text-left rounded-2xl bg-white px-4 py-3.5 transition-colors hover:bg-white/80"
+              className="text-left rounded-2xl bg-white p-5 transition-all hover:shadow-sm cursor-pointer group border border-black/5"
             >
-              <p className="text-[15px] font-medium text-[#1E1E1E] truncate">{item.title}</p>
+              <p className="text-base font-semibold text-zinc-900 group-hover:text-black truncate">
+                {item.title}
+              </p>
               {'messages' in item && (
-                <p className="mt-1 text-[12px] text-black/40">
-                  {item.messages.length === 0 ? 'No messages yet' : `${item.messages.length} messages`}
+                <p className="mt-1 text-xs text-zinc-400">
+                  {item.messages.length === 0
+                    ? 'No messages yet'
+                    : `${item.messages.length} messages`}
                 </p>
               )}
             </button>
@@ -422,19 +559,30 @@ const ListPanel = memo(({ title, items, onOpen, emptyLabel, action }) => (
   </div>
 ));
 
-/* ---------- roadmap panel ---------- */
+/* ---------- Roadmap Tree Component ---------- */
+
 const RoadmapPanel = memo(({ roadmap, onToggleTopic, onTopicClick }) => {
   const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
 
   if (!roadmap) {
-    return <InfoPanel title="Roadmap" body="Your personalized learning path for this roadmap will show up here." />;
+    return (
+      <InfoPanel
+        title="Learning Roadmap"
+        body="Your personalized, first-principles learning path will appear here as soon as you generate one in the AI Chat."
+        icon={Map}
+      />
+    );
   }
 
   if (!roadmap.phases || roadmap.phases.length === 0) {
     return (
       <div className="flex h-full flex-col items-center justify-center text-center px-6">
-        <h2 className="text-[22px] font-medium text-[#1E1E1E]">{roadmap.title}</h2>
-        <p className="mt-2 max-w-sm text-[14px] text-black/45">Loading your custom learning roadmap...</p>
+        <h2 className="text-xl sm:text-2xl font-semibold text-zinc-900">
+          {roadmap.title}
+        </h2>
+        <p className="mt-2 max-w-sm text-sm text-zinc-500">
+          Loading your custom learning roadmap...
+        </p>
       </div>
     );
   }
@@ -452,75 +600,75 @@ const RoadmapPanel = memo(({ roadmap, onToggleTopic, onTopicClick }) => {
     });
   });
 
-  const progressPercent = totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
+  const progressPercent =
+    totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
 
   return (
-    <div className="flex h-full flex-col overflow-hidden px-1 sm:px-3">
+    <div className="flex h-full flex-col overflow-hidden px-4 sm:px-6 py-6 sm:py-8 bg-transparent">
       {/* Title block */}
-      <div className="mb-6 rounded-2xl bg-white p-4 sm:p-5 border border-black/5 shadow-sm shrink-0 transition-all duration-300 relative overflow-hidden">
-        
+      <div className="mb-6 rounded-3xl bg-white p-5 sm:p-6 border border-black/5 shadow-xs shrink-0 transition-all duration-300 relative overflow-hidden">
         {/* Toggle Collapse/Expand Button */}
         <button
           type="button"
           onClick={() => setIsHeaderCollapsed((prev) => !prev)}
-          className="absolute right-4 top-4 rounded-xl p-1 bg-black/[0.03] hover:bg-[#A8F35A]/20 hover:text-[#5b9610] transition-colors cursor-pointer text-black/40"
-          title={isHeaderCollapsed ? "Expand Info" : "Minimize Info"}
+          className="absolute right-4 top-4 rounded-xl p-1.5 bg-black/[0.04] hover:bg-black/[0.08] text-zinc-600 transition-colors cursor-pointer"
+          title={isHeaderCollapsed ? 'Expand Info' : 'Minimize Info'}
         >
           {isHeaderCollapsed ? (
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="4 14 10 14 10 20"/>
-              <polyline points="20 10 14 10 14 4"/>
-              <line x1="14" y1="10" x2="21" y2="3"/>
-              <line x1="3" y1="21" x2="10" y2="14"/>
-            </svg>
+            <ChevronDown size={18} />
           ) : (
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="10 20 10 14 4 14"/>
-              <polyline points="14 4 14 10 20 10"/>
-              <line x1="14" y1="10" x2="21" y2="3"/>
-              <line x1="3" y1="21" x2="10" y2="14"/>
-            </svg>
+            <ChevronDown size={18} className="rotate-180" />
           )}
         </button>
 
         {isHeaderCollapsed ? (
-          /* Collapsed Version (Very compact) */
           <div className="flex flex-row items-center justify-between pr-8 gap-4">
             <div className="flex items-center gap-3 truncate">
-              <span className="rounded-full bg-[#A8F35A]/20 px-2 py-0.5 text-[10px] font-bold uppercase text-[#5b9610] tracking-wider shrink-0">
+              <span className="rounded-full bg-[#E5ECC9] text-zinc-900 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider shrink-0">
                 {roadmap.topic || 'Path'}
               </span>
-              <h2 className="text-[14px] sm:text-[15px] font-bold text-[#1E1E1E] truncate leading-none">{roadmap.title}</h2>
+              <h2 className="text-base font-bold text-zinc-950 truncate leading-none">
+                {roadmap.title}
+              </h2>
             </div>
-            
+
             <div className="flex items-center gap-3 shrink-0">
-              <span className="text-xs font-bold text-[#1E1E1E]">{progressPercent}%</span>
-              <div className="h-1.5 w-16 sm:w-24 rounded-full bg-black/[0.07] overflow-hidden">
+              <span className="text-xs font-bold text-zinc-900">
+                {progressPercent}%
+              </span>
+              <div className="h-2 w-20 sm:w-28 rounded-full bg-black/10 overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-[#A8F35A] transition-all duration-500 ease-out"
+                  className="h-full rounded-full bg-zinc-950 transition-all duration-500 ease-out"
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
             </div>
           </div>
         ) : (
-          /* Full Version */
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pr-6">
             <div>
-              <span className="rounded-full bg-[#A8F35A]/25 px-2.5 py-1 text-xs font-semibold uppercase text-[#5b9610] tracking-wider">
+              <span className="rounded-full bg-[#E5ECC9] px-3 py-1 text-xs font-semibold uppercase text-zinc-800 tracking-wider">
                 {roadmap.topic || 'Learning Path'}
               </span>
-              <h2 className="mt-2 text-xl sm:text-2xl font-semibold text-[#1E1E1E] leading-snug">{roadmap.title}</h2>
-              <p className="mt-2 text-sm text-black/60 leading-relaxed max-w-2xl">{roadmap.description}</p>
+              <h2 className="mt-3 text-2xl font-bold text-zinc-950 leading-snug">
+                {roadmap.title}
+              </h2>
+              <p className="mt-2 text-sm text-zinc-600 leading-relaxed max-w-2xl font-normal">
+                {roadmap.description}
+              </p>
             </div>
             <div className="flex flex-col items-end justify-center shrink-0 min-w-[120px] self-start sm:self-center">
-              <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-bold text-[#1E1E1E]">{progressPercent}%</span>
-                <span className="text-[11px] text-black/45 uppercase font-semibold">Progress</span>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-3xl font-bold text-zinc-950">
+                  {progressPercent}%
+                </span>
+                <span className="text-xs text-zinc-500 uppercase font-semibold">
+                  Completed
+                </span>
               </div>
-              <div className="mt-2 h-2 w-full rounded-full bg-black/[0.07] overflow-hidden min-w-[100px]">
+              <div className="mt-2.5 h-2.5 w-full rounded-full bg-black/10 overflow-hidden min-w-[120px]">
                 <div
-                  className="h-full rounded-full bg-[#A8F35A] transition-all duration-500 ease-out"
+                  className="h-full rounded-full bg-zinc-950 transition-all duration-500 ease-out"
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
@@ -529,98 +677,119 @@ const RoadmapPanel = memo(({ roadmap, onToggleTopic, onTopicClick }) => {
         )}
       </div>
 
-      {/* Phases scrollable container (Roadmap.sh Style Tree) */}
+      {/* Phases Tree */}
       <div className="flex-1 overflow-y-auto pr-2 no-scrollbar pb-10">
-        <div className="relative py-8 pl-8 md:pl-0 md:flex md:flex-col md:items-center">
-          
-          {/* Vertical Backbone Connector Line */}
-          <div className="absolute left-4 md:left-1/2 top-0 bottom-0 w-1 bg-gradient-to-b from-[#A8F35A] via-black/10 to-[#A8F35A] -translate-x-1/2 z-0 hidden md:block" />
-          <div className="absolute left-4 top-0 bottom-0 w-1 bg-gradient-to-b from-[#A8F35A] via-black/10 to-[#A8F35A] z-0 block md:hidden" />
+        <div className="relative py-6 pl-8 md:pl-0 md:flex md:flex-col md:items-center">
+          <div className="absolute left-4 md:left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-zinc-900 via-zinc-400 to-zinc-900 -translate-x-1/2 z-0 hidden md:block" />
+          <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-zinc-900 via-zinc-400 to-zinc-900 z-0 block md:hidden" />
 
           {roadmap.phases.map((phase, phaseIdx) => (
-            <div key={phaseIdx} className="w-full relative z-10 flex flex-col items-center">
-              
-              {/* Phase Milestone Node (Centered along timeline) */}
+            <div
+              key={phaseIdx}
+              className="w-full relative z-10 flex flex-col items-center"
+            >
               <div className="relative z-20 mb-8 mt-6 w-full flex items-center md:justify-center">
-                <div className="flex items-center gap-3 bg-[#EAF2CF] text-[#5b9610] font-bold px-6 py-3 rounded-full border-2 border-[#A8F35A] shadow-md text-sm md:text-base">
-                  <Map size={18} className="shrink-0" />
+                <div className="flex items-center gap-2.5 bg-white text-zinc-900 font-bold px-6 py-2.5 rounded-full border border-black/10 shadow-sm text-sm">
+                  <Map size={16} className="shrink-0" />
                   <span>{phase.name}</span>
                 </div>
               </div>
 
-              {/* Module Cards as alternating branches */}
               <div className="w-full relative z-10">
                 {phase.modules.map((mod, modIdx) => {
-                  // Alternate left and right blocks on desktop
                   const isLeft = modIdx % 2 === 0;
                   return (
-                    <div key={modIdx} className="relative flex items-start w-full mb-10 last:mb-0 md:justify-center">
-                      
-                      {/* Branch Horizontal Line connecting to main trunk (Desktop) */}
-                      <div className={`absolute top-8 w-[calc(50%-1.5rem)] h-0.5 border-t-2 border-dashed border-black/15 z-0 hidden md:block
+                    <div
+                      key={modIdx}
+                      className="relative flex items-start w-full mb-8 last:mb-0 md:justify-center"
+                    >
+                      <div
+                        className={`absolute top-8 w-[calc(50%-1.5rem)] h-0.5 border-t border-dashed border-black/20 z-0 hidden md:block
                         ${isLeft ? 'right-1/2' : 'left-1/2'}`}
                       />
-                      
-                      {/* Central small node connector dot on the backbone (Desktop) */}
-                      <div className="absolute left-4 md:left-1/2 top-8 h-4.5 w-4.5 -translate-x-1/2 rounded-full border-4 border-[#A8F35A] bg-white z-20 shadow-sm" />
+                      <div className="absolute left-4 md:left-1/2 top-8 h-4 w-4 -translate-x-1/2 rounded-full border-2 border-zinc-900 bg-white z-20 shadow-xs" />
+                      <div className="absolute left-4 top-8 h-3.5 w-3.5 -translate-x-1/2 rounded-full border-2 border-zinc-900 bg-white z-20 shadow-xs md:hidden" />
 
-                      {/* Branch connector dot on the backbone (Mobile) */}
-                      <div className="absolute left-4 top-8 h-3.5 w-3.5 -translate-x-1/2 rounded-full border-2 border-[#A8F35A] bg-white z-20 shadow-sm md:hidden" />
-
-                      {/* Module Box Container */}
-                      <div className={`w-full max-w-md pl-10 md:pl-0 z-10
+                      <div
+                        className={`w-full max-w-md pl-8 md:pl-0 z-10
                         ${isLeft ? 'md:mr-auto md:pr-10' : 'md:ml-auto md:pl-10'}`}
                       >
-                        <div className="bg-white rounded-2xl border border-black/10 p-5 shadow-[0_4px_12px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.06)] hover:border-black/15 transition-all duration-300 relative group">
-                          
-                          {/* Left indicator branch dot for mobile */}
-                          <div className="absolute left-0 top-8 w-3 h-3 rounded-full bg-black/10 -translate-x-1/2 md:hidden" />
-                          
-                          {/* Module Header Details */}
+                        <div className="bg-white rounded-3xl border border-black/5 p-5 shadow-xs hover:shadow-sm transition-all duration-300 relative group">
                           <div className="flex items-start justify-between gap-3 mb-2">
                             <div>
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-black/40">Module {phaseIdx + 1}.{modIdx + 1}</span>
-                              <h4 className="font-semibold text-[15px] sm:text-[16px] text-[#1E1E1E] group-hover:text-[#5b9610] transition-colors">{mod.name}</h4>
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                                Module {phaseIdx + 1}.{modIdx + 1}
+                              </span>
+                              <h4 className="font-semibold text-[15px] sm:text-[16px] text-zinc-900 group-hover:text-black transition-colors">
+                                {mod.name}
+                              </h4>
                             </div>
-                            <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-black/[0.04] text-black/50 uppercase tracking-wide shrink-0">
-                              {mod.topics.filter(t => t.completed).length}/{mod.topics.length} Done
+                            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-black/[0.04] text-zinc-700 tracking-wide shrink-0">
+                              {mod.topics.filter((t) => t.completed).length}/
+                              {mod.topics.length}
                             </span>
                           </div>
 
-                          <p className="text-xs text-black/50 leading-relaxed mb-4">{mod.description}</p>
-                          
-                          {/* Interactive Topic Capsules (Skill Nodes) */}
+                          <p className="text-xs text-zinc-500 leading-relaxed mb-4">
+                            {mod.description}
+                          </p>
+
                           <div className="flex flex-wrap gap-2">
                             {mod.topics.map((topic, topicIdx) => (
                               <div
                                 key={topicIdx}
-                                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full border transition-all text-xs font-semibold cursor-pointer select-none
-                                  ${topic.completed 
-                                    ? 'bg-[#EAF2CF]/40 border-[#A8F35A] text-[#426e0b] hover:bg-[#EAF2CF]/60' 
-                                    : 'bg-black/[0.02] border-black/5 text-[#1E1E1E] hover:bg-black/[0.05] hover:border-black/10 hover:scale-[1.02] active:scale-[0.98]'}`}
-                                onClick={() => onTopicClick && onTopicClick(topic.name, roadmap.topic)}
-                                title={`Click to learn ${topic.name} from First Principles`}
+                                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-2xl border transition-all text-xs font-medium cursor-pointer select-none
+                                  ${
+                                    topic.completed
+                                      ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
+                                      : 'bg-black/[0.02] border-black/5 text-zinc-800 hover:bg-black/[0.05] hover:scale-[1.02] active:scale-[0.98]'
+                                  }`}
+                                onClick={() =>
+                                  onTopicClick &&
+                                  onTopicClick(topic.name, roadmap.topic)
+                                }
+                                title={`Click to learn ${topic.name}`}
                               >
-                                {/* Completion Circular Checkbox */}
                                 <button
                                   type="button"
                                   onClick={(e) => {
-                                    e.stopPropagation(); // prevent launching lesson chat
-                                    onToggleTopic(roadmap.id, phaseIdx, modIdx, topicIdx);
+                                    e.stopPropagation();
+                                    onToggleTopic(
+                                      roadmap.id,
+                                      phaseIdx,
+                                      modIdx,
+                                      topicIdx
+                                    );
                                   }}
                                   className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-all cursor-pointer
-                                    ${topic.completed
-                                      ? 'bg-[#A8F35A] border-[#A8F35A] text-[#1E1E1E]'
-                                      : 'border-black/20 hover:border-black/35 bg-white'}`}
-                                  aria-label={`Toggle completion of ${topic.name}`}
+                                    ${
+                                      topic.completed
+                                        ? 'bg-emerald-600 border-emerald-600 text-white'
+                                        : 'border-zinc-300 bg-white'
+                                    }`}
                                 >
                                   {topic.completed && (
-                                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round">
-                                      <polyline points="20 6 9 17 4 12"/>
+                                    <svg
+                                      width="9"
+                                      height="9"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="4"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    >
+                                      <polyline points="20 6 9 17 4 12" />
                                     </svg>
                                   )}
                                 </button>
-                                <span className={topic.completed ? 'line-through opacity-70' : ''}>
+                                <span
+                                  className={
+                                    topic.completed
+                                      ? 'line-through opacity-70'
+                                      : ''
+                                  }
+                                >
                                   {topic.name}
                                 </span>
                               </div>
@@ -634,117 +803,405 @@ const RoadmapPanel = memo(({ roadmap, onToggleTopic, onTopicClick }) => {
               </div>
             </div>
           ))}
-
         </div>
       </div>
     </div>
   );
 });
 
-/* ---------- chat panel ---------- */
+/* ---------- Modern Interactive Important Questions Panel ---------- */
 
-// Three-dot "thinking" indicator, staggered so it reads as active work rather
-// than a stuck loader.
+/* ---------- Dynamic AI-Generated Important Questions Panel ---------- */
+
+const QuestionsPanel = memo(
+  ({
+    topic,
+    questions = [],
+    generating = false,
+    onGenerate,
+    onAskQuestion,
+    onGoToChat,
+  }) => {
+    const [revealedIds, setRevealedIds] = useState({});
+
+    const toggleReveal = (id) => {
+      setRevealedIds((prev) => ({ ...prev, [id]: !prev[id] }));
+    };
+
+    if (!topic) {
+      return (
+        <div className="flex h-full flex-col items-center justify-center text-center px-6">
+          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-white border border-black/5 text-zinc-800 shadow-xs">
+            <ListChecks size={26} strokeWidth={1.75} />
+          </div>
+          <h2 className="text-xl sm:text-2xl font-bold text-zinc-900 tracking-tight">
+            Important Questions
+          </h2>
+          <p className="mt-2 max-w-sm text-sm text-zinc-600 leading-relaxed">
+            Important questions will be created by Avora AI specifically for the topic you are learning. Ask a question or start a topic in the AI Chat first.
+          </p>
+          <button
+            type="button"
+            onClick={onGoToChat}
+            className="mt-5 bg-zinc-950 hover:bg-black text-white px-5 py-2.5 rounded-2xl text-xs font-semibold transition-all shadow-xs flex items-center gap-2 cursor-pointer active:scale-95"
+          >
+            <MessageSquare size={14} />
+            <span>Go to AI Chat</span>
+          </button>
+        </div>
+      );
+    }
+
+    if (questions.length === 0) {
+      return (
+        <div className="flex h-full flex-col items-center justify-center text-center px-6">
+          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-white border border-black/5 text-zinc-800 shadow-xs">
+            <Sparkles size={26} strokeWidth={1.75} />
+          </div>
+          <span className="rounded-full bg-[#E5ECC9] px-3 py-1 text-xs font-semibold uppercase text-zinc-800 tracking-wider mb-2">
+            Topic: {topic}
+          </span>
+          <h2 className="text-xl sm:text-2xl font-bold text-zinc-900 tracking-tight">
+            Curate Important Questions
+          </h2>
+          <p className="mt-2 max-w-md text-sm text-zinc-600 leading-relaxed">
+            Generate high-yield conceptual mastery and interview-level questions created by AI specifically for <strong className="font-semibold text-zinc-900">{topic}</strong>.
+          </p>
+          <button
+            type="button"
+            disabled={generating}
+            onClick={() => onGenerate(topic)}
+            className="mt-6 bg-zinc-950 hover:bg-black text-white px-6 py-3 rounded-2xl text-xs font-semibold transition-all shadow-xs flex items-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50"
+          >
+            <Sparkles size={15} className={generating ? 'animate-spin' : ''} />
+            <span>{generating ? 'Generating Questions with AI...' : `Generate Questions for ${topic}`}</span>
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex h-full flex-col p-6 sm:p-8 overflow-y-auto no-scrollbar">
+        <div className="max-w-4xl mx-auto w-full flex flex-col gap-6">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-black/5 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="p-2.5 rounded-2xl bg-[#E5ECC9] text-zinc-900">
+                <ListChecks size={22} />
+              </span>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="rounded-full bg-[#E5ECC9] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-zinc-800">
+                    {topic}
+                  </span>
+                  <span className="text-xs text-zinc-400 font-medium">
+                    {questions.length} AI-curated questions
+                  </span>
+                </div>
+                <h2 className="text-xl sm:text-2xl font-bold text-zinc-950 tracking-tight mt-1">
+                  Important Topic Questions
+                </h2>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              disabled={generating}
+              onClick={() => onGenerate(topic)}
+              className="bg-zinc-100 hover:bg-zinc-200 text-zinc-900 px-4 py-2 rounded-2xl text-xs font-semibold transition-all flex items-center gap-1.5 self-start sm:self-center cursor-pointer active:scale-95 disabled:opacity-50"
+            >
+              <RotateCcw size={13} className={generating ? 'animate-spin' : ''} />
+              <span>{generating ? 'Regenerating...' : 'Regenerate'}</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+            {questions.map((q, idx) => {
+              const qKey = q.id || `q-${idx}`;
+              const isRevealed = !!revealedIds[qKey];
+              return (
+                <div
+                  key={qKey}
+                  className="bg-white rounded-3xl p-5 sm:p-6 border border-black/5 shadow-xs hover:shadow-sm transition-all"
+                >
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#E5ECC9] text-zinc-800">
+                        {q.tag || topic}
+                      </span>
+                      <span className="text-[11px] font-semibold text-zinc-500">
+                        {q.difficulty || 'Core Principle'}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => onAskQuestion && onAskQuestion(q.question)}
+                      className="flex items-center gap-1.5 text-xs font-semibold text-zinc-800 hover:text-black bg-zinc-100 hover:bg-zinc-200 px-3 py-1.5 rounded-xl transition-colors cursor-pointer"
+                    >
+                      <Sparkles size={13} />
+                      <span>Practice in Chat</span>
+                    </button>
+                  </div>
+
+                  <h3 className="text-base font-bold text-zinc-900 leading-snug">
+                    {q.question}
+                  </h3>
+
+                  {isRevealed && (
+                    <div className="mt-4 pt-4 border-t border-black/5 bg-[#E5ECC9]/25 rounded-2xl p-4 text-xs sm:text-sm text-zinc-800 leading-relaxed msg-in">
+                      <p className="font-semibold text-zinc-900 mb-1">First-Principles Explanation:</p>
+                      <p>{q.explanation}</p>
+                    </div>
+                  )}
+
+                  <div className="mt-4 flex items-center justify-between pt-2">
+                    <button
+                      type="button"
+                      onClick={() => toggleReveal(qKey)}
+                      className="text-xs font-semibold text-zinc-600 hover:text-zinc-950 transition-colors cursor-pointer flex items-center gap-1"
+                    >
+                      {isRevealed ? 'Hide Explanation' : 'Reveal Core Principle'}
+                      <ChevronDown size={14} className={isRevealed ? 'rotate-180' : ''} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+);
+
+/* ---------- Modern AI Chat Message & Controls ---------- */
+
 const ThinkingIndicator = memo(() => (
-  <div className="flex items-center gap-1.5 px-1 py-1.5" aria-label="AI is thinking">
-    <span className="thinking-dot" style={{ animationDelay: '0ms' }} />
-    <span className="thinking-dot" style={{ animationDelay: '140ms' }} />
-    <span className="thinking-dot" style={{ animationDelay: '280ms' }} />
+  <div
+    className="flex items-center gap-2 py-1 px-1 text-xs text-zinc-500 font-medium"
+    aria-label="Avora is formulating first-principles response"
+  >
+    <div className="flex items-center gap-1">
+      <span className="thinking-dot" style={{ animationDelay: '0ms' }} />
+      <span className="thinking-dot" style={{ animationDelay: '140ms' }} />
+      <span className="thinking-dot" style={{ animationDelay: '280ms' }} />
+    </div>
+    <span>Formulating first-principles reasoning...</span>
   </div>
 ));
 
 const MessageBubble = memo(({ message, onOptionClick }) => {
   const isUser = message.role === 'user';
-  const isThinking = !isUser && message.typing && message.text === 'Thinking...';
-  const content = useMemo(() => (isThinking ? null : renderMarkdown(message.text)), [message.text, isThinking]);
+  const isThinking =
+    !isUser && message.typing && message.text === 'Thinking...';
+  const [copied, setCopied] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
+  const [liked, setLiked] = useState(null);
+
+  const content = useMemo(
+    () => (isThinking ? null : renderMarkdown(message.text)),
+    [message.text, isThinking]
+  );
+
+  const handleCopyMessage = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(message.text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (e) {
+      console.error('Failed to copy message:', e);
+    }
+  }, [message.text]);
+
+  const handleToggleSpeak = useCallback(() => {
+    if (!('speechSynthesis' in window)) return;
+    if (speaking) {
+      window.speechSynthesis.cancel();
+      setSpeaking(false);
+    } else {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(message.text.replace(/[#*`_]/g, ''));
+      utterance.onend = () => setSpeaking(false);
+      utterance.onerror = () => setSpeaking(false);
+      window.speechSynthesis.speak(utterance);
+      setSpeaking(true);
+    }
+  }, [speaking, message.text]);
 
   return (
-    <div className={`msg-in flex items-end gap-2 ${isUser ? 'justify-end' : 'justify-start'}`}>
+    <div
+      className={`msg-in flex flex-col gap-1.5 ${
+        isUser ? 'items-end' : 'items-start'
+      }`}
+    >
+      {/* Sender Header for Assistant */}
       {!isUser && (
-        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#A8F35A] text-[11px] font-medium text-[#1E1E1E]">
-          AI
+        <div className="flex items-center gap-2 px-1 mb-0.5 text-xs text-zinc-500 font-medium">
+          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-zinc-950 text-[10px] font-bold text-white shadow-2xs">
+            A
+          </div>
+          <span className="font-semibold text-zinc-900">Avora</span>
+          <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/5 text-zinc-600 font-mono">
+            First Principles
+          </span>
         </div>
       )}
 
       <div
-        className={`max-w-[80%] sm:max-w-[75%] rounded-2xl px-4 py-2.5 text-[14px] leading-relaxed shadow-[0_1px_2px_rgba(0,0,0,0.04)]
-          ${isUser ? 'bg-[#1E1E1E] text-white rounded-br-sm user-message-bubble' : 'bg-white text-[#1E1E1E] rounded-bl-sm'}`}
+        className={`group relative max-w-[88%] sm:max-w-[80%] rounded-[26px] px-5 py-4 text-[14.5px] leading-relaxed shadow-xs
+          ${
+            isUser
+              ? 'bg-zinc-950 text-white rounded-br-xs user-message-bubble'
+              : 'bg-white text-zinc-900 border border-black/5 rounded-tl-xs'
+          }`}
       >
         {isThinking ? (
           <ThinkingIndicator />
         ) : (
           <>
             {content}
-            {message.typing && <span className="typing-caret" aria-hidden="true" />}
-            
-            {/* Render dynamically generated option buttons below question */}
-            {!message.typing && message.options && message.options.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {message.options.map((opt) => (
-                  <button
-                    key={opt}
-                    type="button"
-                    onClick={() => onOptionClick && onOptionClick(opt)}
-                    className="rounded-xl bg-[#A8F35A]/10 hover:bg-[#A8F35A]/35 text-[#1E1E1E] px-3.5 py-1.5 text-[13px] font-semibold border border-[#A8F35A]/45 cursor-pointer transition-colors shadow-sm"
-                  >
-                    {opt}
-                  </button>
-                ))}
-              </div>
+            {message.typing && (
+              <span className="typing-caret" aria-hidden="true" />
             )}
 
-            {/* Render retrieved document sources context */}
-            {!message.typing && message.sources && message.sources.length > 0 && (
-              <div className="mt-3 border-t border-black/5 pt-2">
-                <p className="text-[10px] font-bold text-black/40 uppercase tracking-widest mb-1.5">Retrieved Sources:</p>
-                <div className="flex flex-col gap-1.5">
-                  {message.sources.map((src, sIdx) => {
-                    const token = localStorage.getItem('token');
-                    const viewUrl = src.docId 
-                      ? `http://localhost:5000/docs/${src.docId}/view?token=${token}` 
-                      : null;
-                    return (
-                      <div key={sIdx} className="text-[11px] text-black/60 bg-black/[0.02] border border-black/5 rounded-xl p-2.5 leading-snug">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="font-semibold text-black/80 truncate">📄 {src.title}</p>
-                          {viewUrl && (
-                            <a
-                              href={viewUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-[10px] font-bold text-white bg-black hover:bg-black/80 px-2 py-0.5 rounded-lg transition-colors cursor-pointer shrink-0"
-                            >
-                              Open Source
-                            </a>
-                          )}
+            {/* Quick Option Pills */}
+            {!message.typing &&
+              message.options &&
+              message.options.length > 0 && (
+                <div className="mt-4 flex flex-wrap gap-2 pt-2 border-t border-black/5">
+                  {message.options.map((opt) => (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => onOptionClick && onOptionClick(opt)}
+                      className="rounded-2xl bg-[#E5ECC9] hover:bg-[#dbe4ba] text-zinc-900 px-4 py-2 text-xs font-semibold cursor-pointer transition-all shadow-xs active:scale-95"
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+            {/* Retrieved Sources / Citations */}
+            {!message.typing &&
+              message.sources &&
+              message.sources.length > 0 && (
+                <div className="mt-4 border-t border-black/5 pt-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <BrainCircuit size={13} className="text-zinc-600" />
+                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                      Semantic Citations ({message.sources.length}):
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {message.sources.map((src, sIdx) => {
+                      const token = localStorage.getItem('token');
+                      const viewUrl = src.docId
+                        ? `http://localhost:5000/docs/${src.docId}/view?token=${token}`
+                        : null;
+                      return (
+                        <div
+                          key={sIdx}
+                          className="text-xs text-zinc-700 bg-black/[0.02] hover:bg-black/[0.04] border border-black/5 rounded-2xl p-3 leading-snug transition-colors"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="font-semibold text-zinc-900 truncate">
+                              📄 {src.title}
+                            </p>
+                            {viewUrl && (
+                              <a
+                                href={viewUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-[10px] font-semibold text-white bg-zinc-900 hover:bg-black px-2.5 py-1 rounded-xl transition-colors cursor-pointer shrink-0 inline-flex items-center gap-1"
+                              >
+                                <span>Source</span>
+                                <ArrowUpRight size={11} />
+                              </a>
+                            )}
+                          </div>
+                          <p className="mt-1.5 text-zinc-500 italic line-clamp-2">
+                            "{src.text}"
+                          </p>
                         </div>
-                        <p className="mt-1 text-black/55 italic line-clamp-2">"{src.text}"</p>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+            {/* Modern Action Bar on AI Responses */}
+            {!isUser && !message.typing && (
+              <div className="mt-3 flex items-center justify-between pt-2 border-t border-black/5 text-zinc-400">
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={handleCopyMessage}
+                    className="p-1.5 rounded-lg hover:bg-black/5 hover:text-zinc-800 transition-colors cursor-pointer"
+                    title="Copy response"
+                  >
+                    {copied ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleToggleSpeak}
+                    className={`p-1.5 rounded-lg hover:bg-black/5 hover:text-zinc-800 transition-colors cursor-pointer ${
+                      speaking ? 'text-indigo-600 bg-indigo-50' : ''
+                    }`}
+                    title={speaking ? 'Stop audio' : 'Read aloud'}
+                  >
+                    {speaking ? <VolumeX size={14} /> : <Volume2 size={14} />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLiked((v) => (v === 'up' ? null : 'up'))}
+                    className={`p-1.5 rounded-lg hover:bg-black/5 hover:text-zinc-800 transition-colors cursor-pointer ${
+                      liked === 'up' ? 'text-emerald-600' : ''
+                    }`}
+                    title="Helpful"
+                  >
+                    <ThumbsUp size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLiked((v) => (v === 'down' ? null : 'down'))}
+                    className={`p-1.5 rounded-lg hover:bg-black/5 hover:text-zinc-800 transition-colors cursor-pointer ${
+                      liked === 'down' ? 'text-red-500' : ''
+                    }`}
+                    title="Not helpful"
+                  >
+                    <ThumbsDown size={14} />
+                  </button>
                 </div>
               </div>
             )}
           </>
         )}
       </div>
-
-      {isUser && (
-        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-black/10 text-[11px] font-medium text-[#1E1E1E]">
-          <UserRound size={14} />
-        </div>
-      )}
     </div>
   );
 });
 
-const ChatPanel = ({ chat, onSend, sending = false, semanticSearchEnabled, onToggleSemanticSearch }) => {
+/* ---------- Main Chat Viewport & Floating Prompt Box ---------- */
+
+const ChatPanel = ({
+  chat,
+  onSend,
+  sending = false,
+  semanticSearchEnabled,
+  onToggleSemanticSearch,
+  studyModeEnabled,
+  onToggleStudyMode,
+  userName = 'Devos',
+  onTriggerUpload,
+}) => {
   const [value, setValue] = useState('');
   const scrollRef = useRef(null);
   const inputRef = useRef(null);
 
   const lastMessage = chat?.messages?.[chat.messages.length - 1];
-  const scrollSignature = chat ? `${chat.id}:${chat.messages.length}:${lastMessage?.text?.length ?? 0}` : '';
+  const scrollSignature = chat
+    ? `${chat.id}:${chat.messages.length}:${lastMessage?.text?.length ?? 0}`
+    : '';
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -770,159 +1227,237 @@ const ChatPanel = ({ chat, onSend, sending = false, semanticSearchEnabled, onTog
     [submit]
   );
 
+  const starterPrompts = [
+    {
+      title: 'First-Principles Breakdown',
+      desc: 'Explain how modern LLMs work from fundamental mathematics',
+      icon: Zap,
+    },
+    {
+      title: 'Roadmap Generator',
+      desc: 'Create a 6-month mastery roadmap for Full-Stack AI Engineering',
+      icon: Map,
+    },
+    {
+      title: 'Research Analysis',
+      desc: 'Analyze my uploaded documentation and summarize key principles',
+      icon: FileText,
+    },
+    {
+      title: 'Conceptual Mastery Quiz',
+      desc: 'Test my understanding of distributed systems with interactive Q&A',
+      icon: Lightbulb,
+    },
+  ];
+
   const hasMessages = chat && chat.messages.length > 0;
 
-  // Memoize retrieved references from the latest AI message
-  const activeSources = useMemo(() => {
-    if (!chat || !chat.messages) return [];
-    // Iterate backwards to find the last AI response that has sources
-    for (let i = chat.messages.length - 1; i >= 0; i--) {
-      const msg = chat.messages[i];
-      if (msg.role === 'ai' && msg.sources && msg.sources.length > 0) {
-        return msg.sources;
-      }
-    }
-    return [];
-  }, [chat]);
-
   return (
-    <div className="flex h-full w-full gap-4 overflow-hidden">
-      {/* Left Main Chat Area */}
-      <div className="flex flex-1 flex-col h-full min-w-0">
-        {hasMessages ? (
-          <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto px-2 sm:px-4">
-            <div className="flex flex-col gap-4 py-4">
-              {chat.messages.map((m) => (
-                <MessageBubble key={m.id} message={m} onOptionClick={onSend} />
-              ))}
-            </div>
+    <div className="flex flex-col h-full w-full justify-between overflow-hidden relative">
+      {/* Top / Message Area */}
+      {hasMessages ? (
+        <div
+          ref={scrollRef}
+          className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-8 no-scrollbar"
+        >
+          <div className="flex flex-col gap-6 py-6 max-w-4xl mx-auto">
+            {chat.messages.map((m) => (
+              <MessageBubble key={m.id} message={m} onOptionClick={onSend} />
+            ))}
           </div>
-        ) : (
-          <div className="flex flex-1 flex-col items-center justify-center text-center px-4">
-            <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full border-[5px] border-[#1E1E1E]">
-              <div className="h-10 w-10 rounded-[48%_48%_42%_42%/58%_58%_40%_40%] border-[5px] border-[#1E1E1E] border-b-transparent border-l-transparent border-r-transparent" />
+        </div>
+      ) : (
+        /* Empty State Center Hero matching reference screenshot with modern starter cards */
+        <div className="flex-1 flex flex-col items-center justify-center text-center px-4 sm:px-6 my-auto overflow-y-auto no-scrollbar py-6">
+          <div className="max-w-3xl mx-auto flex flex-col items-center">
+            {/* Delta / Triangular rounded geometric outline icon from user screenshot */}
+            <div className="mb-6 flex items-center justify-center hover:scale-105 transition-transform duration-300">
+              <svg
+                width="54"
+                height="54"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#18181b"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M12 3c.8 0 1.5.4 1.9 1.1l7.5 13c.8 1.4-.2 3.1-1.8 3.1H4.4c-1.6 0-2.6-1.7-1.8-3.1l7.5-13c.4-.7 1.1-1.1 1.9-1.1z" />
+              </svg>
             </div>
-            <h1 className="text-[24px] sm:text-[30px] font-medium text-[#1E1E1E]">Welcome Devos</h1>
-            <p className="mt-3 text-[14px] sm:text-[15px] text-black/45">
+
+            <h1 className="text-3xl sm:text-4xl font-bold text-zinc-950 tracking-tight">
+              Welcome {userName}
+            </h1>
+            <p className="mt-2.5 text-sm sm:text-base text-zinc-600 font-normal">
               what do you want to learn or research today?
             </p>
-          </div>
-        )}
 
-        <div className="mt-auto flex flex-col gap-2 px-1 sm:px-4 pb-1">
-          {/* iOS-Style Toggle Switch for RAG Semantic Search */}
-          <div className="flex items-center justify-between text-xs text-black/50 px-1 py-1.5 select-none bg-black/[0.02] rounded-xl border border-black/5">
-            <div className="flex items-center gap-2">
-              <span className={`inline-block h-2 w-2 rounded-full ${semanticSearchEnabled ? 'bg-green-500 animate-pulse' : 'bg-black/25'}`} />
-              <span>Semantic Search (RAG): {semanticSearchEnabled ? 'ON' : 'OFF'}</span>
+            {/* Modern AI Workspace Starter Prompt Grid */}
+            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-2xl text-left">
+              {starterPrompts.map((p, idx) => {
+                const Icon = p.icon;
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setValue(p.desc);
+                      onSend(p.desc);
+                    }}
+                    className="p-4 rounded-3xl bg-white/90 hover:bg-white border border-black/5 hover:border-black/10 shadow-xs hover:shadow-sm transition-all duration-200 flex items-start gap-3.5 group cursor-pointer active:scale-98"
+                  >
+                    <div className="p-2.5 rounded-2xl bg-[#E5ECC9] group-hover:bg-[#dbe4ba] text-zinc-900 shrink-0 transition-colors">
+                      <Icon size={16} />
+                    </div>
+                    <div className="min-w-0">
+                      <h4 className="text-xs font-bold text-zinc-900 group-hover:text-black">
+                        {p.title}
+                      </h4>
+                      <p className="text-[11px] text-zinc-500 mt-1 line-clamp-2 leading-relaxed">
+                        {p.desc}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Bottom Prompt Box matching user uploaded screenshot media_1788621041830.png */}
+      <div className="w-full px-4 sm:px-8 pb-5 sm:pb-7 pt-2 shrink-0">
+        <div className="max-w-2xl mx-auto bg-white rounded-[32px] sm:rounded-[36px] p-4 sm:p-5 shadow-[0_12px_40px_rgba(0,0,0,0.06)] border border-white/80 flex flex-col gap-3.5">
+          {/* Top Pill Controls Row */}
+          <div className="flex items-center flex-wrap gap-2.5">
+            {/* Semantic Search Toggle Pill (1:1 with screenshot) */}
             <button
               type="button"
               onClick={onToggleSemanticSearch}
-              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none
-                ${semanticSearchEnabled ? 'bg-[#A8F35A]' : 'bg-black/10'}`}
-              title="Toggle Semantic Search (Retrieval-Augmented Generation)"
+              className={`flex items-center gap-2.5 px-4 py-2 rounded-full text-xs font-semibold cursor-pointer transition-all duration-200 select-none active:scale-95
+                ${
+                  semanticSearchEnabled
+                    ? 'bg-[#DCE6C6] text-zinc-900 shadow-2xs hover:bg-[#d2dda9]'
+                    : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200'
+                }`}
+              title="Toggle Semantic Knowledge Retrieval"
             >
+              {/* iOS-style toggle slider switch from screenshot */}
               <span
-                className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out
-                  ${semanticSearchEnabled ? 'translate-x-4' : 'translate-x-0'}`}
-              />
+                className={`relative inline-flex h-4 w-7 shrink-0 rounded-full border border-black/10 bg-black/15 transition-colors duration-200 ease-in-out`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-zinc-950 shadow-xs transition duration-200 ease-in-out mt-0.5 ml-0.5
+                    ${
+                      semanticSearchEnabled
+                        ? 'translate-x-3 bg-zinc-950'
+                        : 'translate-x-0 bg-zinc-500'
+                    }`}
+                />
+              </span>
+              <span>Semantic search</span>
             </button>
+
+            {/* Study Mode Pill (1:1 with screenshot) */}
+            <button
+              type="button"
+              onClick={onToggleStudyMode}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold cursor-pointer transition-all duration-200 select-none active:scale-95
+                ${
+                  studyModeEnabled
+                    ? 'bg-[#DCE6C6] text-zinc-900 shadow-2xs hover:bg-[#d2dda9]'
+                    : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200'
+                }`}
+              title="Toggle First-Principles Study Mode"
+            >
+              {/* Node Network 3-circle branching icon from screenshot */}
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="shrink-0"
+              >
+                <circle cx="18" cy="5" r="3" />
+                <circle cx="6" cy="12" r="3" />
+                <circle cx="18" cy="19" r="3" />
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+              </svg>
+              <span>Study mode</span>
+            </button>
+
+            {/* Quick Document Attachment trigger */}
+            {onTriggerUpload && (
+              <button
+                type="button"
+                onClick={onTriggerUpload}
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-zinc-600 hover:text-zinc-950 hover:bg-black/5 transition-colors cursor-pointer"
+                title="Attach PDF or Document"
+              >
+                <Paperclip size={13} />
+                <span>Add Source</span>
+              </button>
+            )}
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="flex h-14 flex-1 items-center gap-3 rounded-2xl border border-black/10 bg-white px-4 transition-shadow focus-within:border-black/20 focus-within:shadow-[0_0_0_3px_rgba(168,243,90,0.35)]">
-              <AudioLines size={18} className="shrink-0 text-[#1E1E1E]/70" />
-              <input
-                ref={inputRef}
-                type="text"
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                onKeyDown={handleKey}
-                placeholder={sending ? 'Waiting for a response...' : 'Start typing...'}
-                className="w-full bg-transparent text-[14px] text-[#1E1E1E] outline-none placeholder:text-black/35"
-              />
-            </div>
+          {/* Inner Input Capsule with Node Graph icon and Pastel Coral Send Button (1:1 with screenshot) */}
+          <div className="flex items-center gap-3 border border-zinc-200/90 rounded-full px-4 sm:px-5 py-2 sm:py-2.5 bg-white focus-within:border-zinc-400 focus-within:ring-2 focus-within:ring-black/5 transition-all shadow-2xs">
+            {/* Left Node Graph icon */}
+            <Share2 size={18} className="text-zinc-400 shrink-0" />
 
+            <input
+              ref={inputRef}
+              type="text"
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              onKeyDown={handleKey}
+              placeholder={
+                sending
+                  ? 'Avora is thinking...'
+                  : 'i want to learn about web dev |'
+              }
+              className="flex-1 bg-transparent text-sm sm:text-base text-zinc-900 outline-none placeholder:text-zinc-400 font-sans"
+            />
+
+            {/* Pastel Coral / Peach Circular Send Button matching uploaded screenshot */}
             <button
               type="button"
               onClick={submit}
               disabled={sending || !value.trim()}
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#A8F35A] text-[#1E1E1E] transition-all active:scale-[0.95] disabled:cursor-not-allowed disabled:opacity-40"
-              aria-label="Send"
+              className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full bg-[#FFA08C] hover:bg-[#ff8e78] text-white transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 shadow-xs cursor-pointer"
+              aria-label="Send message"
             >
-              <ArrowUpRight size={20} />
+              {/* Paper airplane send icon */}
+              <SendHorizontal size={17} />
             </button>
           </div>
         </div>
       </div>
-
-      {/* Right Side RAG Reference Panel */}
-      {activeSources.length > 0 && (
-        <div className="hidden lg:flex flex-col w-[300px] shrink-0 h-full bg-white rounded-3xl border border-black/5 p-4 shadow-sm overflow-hidden">
-          <div className="flex items-center gap-2 border-b border-black/5 pb-3 mb-3 shrink-0">
-            <Sparkles className="text-black shrink-0 animate-pulse" size={16} />
-            <h3 className="font-semibold text-xs text-[#1E1E1E] tracking-wide uppercase">RAG Sources Context</h3>
-          </div>
-          <div className="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-3">
-            {activeSources.map((src, idx) => {
-              const token = localStorage.getItem('token');
-              const viewUrl = src.docId 
-                ? `http://localhost:5000/docs/${src.docId}/view?token=${token}` 
-                : null;
-              return (
-                <div key={idx} className="text-[11px] text-black/75 bg-black/[0.015] border border-black/5 rounded-2xl p-3 hover:bg-black/[0.03] transition-colors leading-relaxed">
-                  <div className="flex items-center justify-between gap-2 mb-1.5">
-                    <p className="font-semibold text-[#1E1E1E] truncate">📄 {src.title}</p>
-                    {viewUrl && (
-                      <a
-                        href={viewUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[9px] font-bold text-white bg-black hover:bg-black/85 px-1.5 py-0.5 rounded-lg transition-colors cursor-pointer shrink-0"
-                      >
-                        View
-                      </a>
-                    )}
-                  </div>
-                  <p className="italic text-black/60 bg-white/70 p-2.5 rounded-xl border border-black/5 font-serif text-[10.5px]">
-                    "{src.text}"
-                  </p>
-                  {src.score !== undefined && (
-                    <div className="mt-2 text-[8px] font-bold text-black/35 tracking-wider uppercase">
-                      Confidence Match: {Math.round(src.score * 100)}%
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
     </div>
   );
 };
 
-/* ---------- main ---------- */
+/* ---------- Main Workspace Page ---------- */
 
 let idCounter = 100;
 const nextId = () => idCounter++;
 
-const initialChats = [];
-
-const initialRoadmaps = [];
-
 const Workspace = () => {
+  const { user } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('chats');
 
-  // chats history (independent)
-  const [chats, setChats] = useState(initialChats);
+  const [chats, setChats] = useState([]);
   const [activeChatId, setActiveChatId] = useState(null);
 
-  // roadmaps history (independent, not synced with chats)
-  const [roadmaps, setRoadmaps] = useState(initialRoadmaps);
+  const [roadmaps, setRoadmaps] = useState([]);
   const [activeRoadmapId, setActiveRoadmapId] = useState(null);
   const [sending, setSending] = useState(false);
   const [modalData, setModalData] = useState(null);
@@ -930,13 +1465,15 @@ const Workspace = () => {
   const [activeProjectId, setActiveProjectId] = useState(null);
   const [projectSubTab, setProjectSubTab] = useState('chats');
 
-  // RAG Sources Integration states
+  // RAG and Mode States
   const [documents, setDocuments] = useState([]);
-  const [semanticSearchEnabled, setSemanticSearchEnabled] = useState(true);
+  const [semanticSearchEnabled, setSemanticSearchEnabled] = useState(false);
+  const [studyModeEnabled, setStudyModeEnabled] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [urlInput, setUrlInput] = useState('');
   const [urlTitleInput, setUrlTitleInput] = useState('');
+  const fileInputRef = useRef(null);
 
   const fetchDocuments = useCallback(async () => {
     try {
@@ -945,11 +1482,10 @@ const Workspace = () => {
         setDocuments(res.data.data);
       }
     } catch (err) {
-      console.error('Failed to fetch documents from library:', err);
+      console.error('Failed to fetch documents:', err);
     }
   }, []);
 
-  // Poll for document status updates if any document is processing, queued, or pending
   useEffect(() => {
     fetchDocuments();
   }, [fetchDocuments]);
@@ -987,7 +1523,7 @@ const Workspace = () => {
       setUploadError(err.response?.data?.message || 'Failed to upload PDF.');
     } finally {
       setUploading(false);
-      e.target.value = '';
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -999,8 +1535,7 @@ const Workspace = () => {
     setUploadError('');
 
     try {
-      await axios.post('http://localhost:5000/docs/upload', {
-        sourceType: 'url',
+      await axios.post('http://localhost:5000/docs/url', {
         url: urlInput.trim(),
         title: urlTitleInput.trim() || undefined,
       });
@@ -1008,41 +1543,143 @@ const Workspace = () => {
       setUrlTitleInput('');
       fetchDocuments();
     } catch (err) {
-      setUploadError(err.response?.data?.message || 'Failed to add website URL.');
+      setUploadError(err.response?.data?.message || 'Failed to index URL.');
     } finally {
       setUploading(false);
     }
   };
 
-  const handleDocDelete = async (id) => {
-    if (
-      !window.confirm(
-        'Are you sure you want to delete this knowledge source? This will remove all associated vector embeddings and history.'
-      )
-    )
-      return;
+  const handleDocDelete = async (docId) => {
     try {
-      await axios.delete(`http://localhost:5000/docs/${id}`);
-      setDocuments((prev) => prev.filter((d) => d._id !== id));
+      await axios.delete(`http://localhost:5000/docs/${docId}`);
+      setDocuments((prev) => prev.filter((d) => d._id !== docId));
     } catch (err) {
-      console.error(err);
-      alert('Failed to delete document source.');
+      console.error('Failed to delete doc:', err);
     }
   };
 
+  // Dynamic Important Questions state (generated specifically for user's active topic)
+  const [topicQuestions, setTopicQuestions] = useState({});
+  const [generatingQuestions, setGeneratingQuestions] = useState(false);
 
-  const activeChat = chats.find((c) => c.id === activeChatId);
-  const activeRoadmap = roadmaps.find((r) => r.id === activeRoadmapId);
-  const activeIndex = VIEWS.indexOf(activeTab);
+  const activeChat = useMemo(() => {
+    return chats.find((c) => c.id === activeChatId) || chats[0] || null;
+  }, [chats, activeChatId]);
 
-  // Lazy-load roadmap details from database when a roadmap is selected
+  const activeRoadmap = useMemo(() => {
+    return (
+      roadmaps.find((r) => r.id === activeRoadmapId) || roadmaps[0] || null
+    );
+  }, [roadmaps, activeRoadmapId]);
+
+  const currentTopic = useMemo(() => {
+    if (activeRoadmap?.topic) return activeRoadmap.topic;
+    if (activeProjectId) {
+      const proj = projects.find((p) => p.id === activeProjectId);
+      if (proj?.topic) return proj.topic;
+    }
+    if (
+      activeChat &&
+      activeChat.title &&
+      activeChat.title !== 'Avora Learning Chat' &&
+      activeChat.title !== 'New Chat'
+    ) {
+      return activeChat.title;
+    }
+    return null;
+  }, [activeRoadmap, activeProjectId, projects, activeChat]);
+
+  const handleGenerateQuestions = useCallback(
+    async (targetTopic) => {
+      const topicToUse = targetTopic || currentTopic;
+      if (!topicToUse || generatingQuestions) return;
+
+      setGeneratingQuestions(true);
+      try {
+        const prompt = `You are an expert AI tutor. Generate 4 high-yield, first-principles interview and conceptual review questions for the topic: "${topicToUse}".
+Each question must test fundamental conceptual understanding and core mechanisms of ${topicToUse}.
+Return your response ONLY as a valid JSON array of objects matching this exact schema:
+[
+  {
+    "id": "q1",
+    "tag": "${topicToUse}",
+    "difficulty": "Foundational",
+    "question": "Question text here?",
+    "explanation": "Clear first-principles explanation of the answer."
+  }
+]
+Do not wrap in markdown quotes if possible, output pure JSON.`;
+
+        const res = await axios.post(API_URL, {
+          message: prompt,
+          semanticSearch: false,
+        });
+
+        const rawReply =
+          res.data?.message ||
+          res.data?.reply ||
+          res.data?.response ||
+          '';
+
+        let parsed = [];
+        const jsonMatch = rawReply.match(/\[\s*\{[\s\S]*\}\s*\]/);
+        if (jsonMatch) {
+          try {
+            parsed = JSON.parse(jsonMatch[0]);
+          } catch (pe) {
+            console.error('Failed to parse questions JSON:', pe);
+          }
+        }
+
+        if (!parsed || parsed.length === 0) {
+          const blocks = rawReply
+            .split(/\n(?=\d+\.|\*\*Question)/i)
+            .filter((b) => b.trim().length > 10);
+          parsed = blocks.slice(0, 4).map((b, i) => ({
+            id: `q-${Date.now()}-${i}`,
+            tag: topicToUse,
+            difficulty:
+              i === 0
+                ? 'Foundational'
+                : i === 1
+                ? 'Core Principle'
+                : 'Deep Dive',
+            question: b.replace(/^\d+\.\s*/, '').slice(0, 120),
+            explanation: b,
+          }));
+        }
+
+        const key = topicToUse.toLowerCase().trim();
+        setTopicQuestions((prev) => ({
+          ...prev,
+          [key]: parsed,
+        }));
+      } catch (err) {
+        console.error('Failed to generate important questions:', err);
+      } finally {
+        setGeneratingQuestions(false);
+      }
+    },
+    [currentTopic, generatingQuestions]
+  );
+
+  const activeIndex = useMemo(() => {
+    const idx = VIEWS.indexOf(activeTab);
+    return idx >= 0 ? idx : 1;
+  }, [activeTab]);
+
   useEffect(() => {
     if (!activeRoadmapId) return;
 
     const existing = roadmaps.find((r) => r.id === activeRoadmapId);
-    // Only fetch if we don't have phases data yet, and it is a 24-character ObjectId string
-    if (existing && !existing.phases && typeof activeRoadmapId === 'string' && activeRoadmapId.length === 24) {
-      axios.get(`http://localhost:5000/api/learning/roadmap/${activeRoadmapId}`)
+    if (
+      existing &&
+      !existing.phases &&
+      typeof activeRoadmapId === 'string' &&
+      activeRoadmapId.length === 24
+    ) {
+      axios
+        .get(`http://localhost:5000/api/learning/roadmap/${activeRoadmapId}`)
         .then((res) => {
           if (res.data?.success && res.data?.roadmap) {
             setRoadmaps((prev) =>
@@ -1061,46 +1698,50 @@ const Workspace = () => {
             );
           }
         })
-        .catch((err) => console.error("Failed to fetch roadmap:", err));
+        .catch((err) => console.error('Failed to fetch roadmap:', err));
     }
   }, [activeRoadmapId, roadmaps]);
 
-  const handleToggleTopic = useCallback(async (roadmapId, phaseIndex, moduleIndex, topicIndex) => {
-    // Optimistic UI updates
-    setRoadmaps((prev) =>
-      prev.map((r) => {
-        if (r.id !== roadmapId) return r;
+  const handleToggleTopic = useCallback(
+    async (roadmapId, phaseIndex, moduleIndex, topicIndex) => {
+      setRoadmaps((prev) =>
+        prev.map((r) => {
+          if (r.id !== roadmapId) return r;
 
-        const updatedPhases = r.phases.map((phase, pIdx) => {
-          if (pIdx !== phaseIndex) return phase;
+          const updatedPhases = r.phases.map((phase, pIdx) => {
+            if (pIdx !== phaseIndex) return phase;
 
-          const updatedModules = phase.modules.map((mod, mIdx) => {
-            if (mIdx !== moduleIndex) return mod;
+            const updatedModules = phase.modules.map((mod, mIdx) => {
+              if (mIdx !== moduleIndex) return mod;
 
-            const updatedTopics = mod.topics.map((topic, tIdx) => {
-              if (tIdx !== topicIndex) return topic;
-              return { ...topic, completed: !topic.completed };
+              const updatedTopics = mod.topics.map((topic, tIdx) => {
+                if (tIdx !== topicIndex) return topic;
+                return { ...topic, completed: !topic.completed };
+              });
+              return { ...mod, topics: updatedTopics };
             });
-            return { ...mod, topics: updatedTopics };
+            return { ...phase, modules: updatedModules };
           });
-          return { ...phase, modules: updatedModules };
-        });
 
-        return { ...r, phases: updatedPhases };
-      })
-    );
+          return { ...r, phases: updatedPhases };
+        })
+      );
 
-    // Call API in background
-    try {
-      await axios.post(`http://localhost:5000/api/learning/roadmap/${roadmapId}/toggle-topic`, {
-        phaseIndex,
-        moduleIndex,
-        topicIndex,
-      });
-    } catch (err) {
-      console.error("Failed to sync completion state with backend:", err);
-    }
-  }, []);
+      try {
+        await axios.post(
+          `http://localhost:5000/api/learning/roadmap/${roadmapId}/toggle-topic`,
+          {
+            phaseIndex,
+            moduleIndex,
+            topicIndex,
+          }
+        );
+      } catch (err) {
+        console.error('Failed to sync completion state with backend:', err);
+      }
+    },
+    []
+  );
 
   const handleNewChat = useCallback(() => {
     const chat = { id: nextId(), title: 'New Chat', messages: [] };
@@ -1122,8 +1763,6 @@ const Workspace = () => {
     setMobileOpen(false);
   }, []);
 
-  // opening an item from the "All Chats" / "All Roadmaps" list views jumps
-  // into the single chat/roadmap view, same as clicking a history item
   const openChatFromList = handleChatHistoryClick;
   const openRoadmapFromList = handleRoadmapHistoryClick;
 
@@ -1131,88 +1770,117 @@ const Workspace = () => {
     setChats((prev) => {
       const nextChats = prev.filter((chat) => chat.id !== id);
       if (nextChats.length > 0) {
-        setActiveChatId((current) => (current === id ? nextChats[0].id : current));
+        setActiveChatId((current) =>
+          current === id ? nextChats[0].id : current
+        );
       }
       return nextChats;
     });
   }, []);
 
-  const handleRenameChat = useCallback(async (chatId, currentTitle) => {
-    const newTitle = window.prompt("Rename Chat", currentTitle);
-    if (!newTitle || newTitle.trim() === "") return;
-    
-    setChats((prev) => prev.map(c => String(c.id) === String(chatId) ? { ...c, title: newTitle } : c));
-    
-    if (activeProjectId) {
-      const targetChat = chats.find(c => String(c.id) === String(chatId));
-      if (targetChat) {
-        try {
-          await axios.post(`http://localhost:5000/api/learning/projects/${activeProjectId}/chats`, {
-            chat: {
-              id: chatId,
-              title: newTitle,
-              messages: targetChat.messages
-            }
-          });
-          setProjects(prev => prev.map(p => {
-            if (p.id !== activeProjectId) return p;
-            return {
-              ...p,
-              chats: p.chats.map(c => String(c.id) === String(chatId) ? { ...c, title: newTitle } : c)
-            };
-          }));
-        } catch (dbErr) {
-          console.error("Failed to sync rename to project DB:", dbErr);
+  const handleRenameChat = useCallback(
+    async (chatId, currentTitle) => {
+      const newTitle = window.prompt('Rename Chat', currentTitle);
+      if (!newTitle || newTitle.trim() === '') return;
+
+      setChats((prev) =>
+        prev.map((c) =>
+          String(c.id) === String(chatId) ? { ...c, title: newTitle } : c
+        )
+      );
+
+      if (activeProjectId) {
+        const targetChat = chats.find((c) => String(c.id) === String(chatId));
+        if (targetChat) {
+          try {
+            await axios.post(
+              `http://localhost:5000/api/learning/projects/${activeProjectId}/chats`,
+              {
+                chat: {
+                  id: chatId,
+                  title: newTitle,
+                  messages: targetChat.messages,
+                },
+              }
+            );
+            setProjects((prev) =>
+              prev.map((p) => {
+                if (p.id !== activeProjectId) return p;
+                return {
+                  ...p,
+                  chats: p.chats.map((c) =>
+                    String(c.id) === String(chatId)
+                      ? { ...c, title: newTitle }
+                      : c
+                  ),
+                };
+              })
+            );
+          } catch (dbErr) {
+            console.error('Failed to sync rename to project DB:', dbErr);
+          }
         }
       }
-    }
-  }, [chats, activeProjectId]);
+    },
+    [chats, activeProjectId]
+  );
 
   const handleRenameRoadmap = useCallback(async (roadmapId, currentTitle) => {
-    const newTitle = window.prompt("Rename Roadmap", currentTitle);
-    if (!newTitle || newTitle.trim() === "") return;
+    const newTitle = window.prompt('Rename Roadmap', currentTitle);
+    if (!newTitle || newTitle.trim() === '') return;
 
-    setRoadmaps((prev) => prev.map(r => r.id === roadmapId ? { ...r, title: newTitle } : r));
+    setRoadmaps((prev) =>
+      prev.map((r) => (r.id === roadmapId ? { ...r, title: newTitle } : r))
+    );
 
     try {
-      await axios.patch(`http://localhost:5000/api/learning/roadmap/${roadmapId}`, {
-        title: newTitle
-      });
+      await axios.patch(
+        `http://localhost:5000/api/learning/roadmap/${roadmapId}`,
+        {
+          title: newTitle,
+        }
+      );
     } catch (err) {
-      console.error("Failed to rename roadmap:", err);
-      alert("Error renaming roadmap in database.");
+      console.error('Failed to rename roadmap:', err);
     }
   }, []);
 
   const handleRenameProject = useCallback(async (projectId, currentTitle) => {
-    const newTitle = window.prompt("Rename Project", currentTitle);
-    if (!newTitle || newTitle.trim() === "") return;
+    const newTitle = window.prompt('Rename Project', currentTitle);
+    if (!newTitle || newTitle.trim() === '') return;
 
-    setProjects((prev) => prev.map(p => p.id === projectId ? { ...p, title: newTitle } : p));
+    setProjects((prev) =>
+      prev.map((p) => (p.id === projectId ? { ...p, title: newTitle } : p))
+    );
 
     try {
-      await axios.patch(`http://localhost:5000/api/learning/projects/${projectId}`, {
-        title: newTitle
-      });
+      await axios.patch(
+        `http://localhost:5000/api/learning/projects/${projectId}`,
+        {
+          title: newTitle,
+        }
+      );
     } catch (err) {
-      console.error("Failed to rename project:", err);
-      alert("Error renaming project in database.");
+      console.error('Failed to rename project:', err);
     }
   }, []);
 
-  const updateTypingMessage = useCallback((chatId, typingId, text, typing) => {
-    setChats((prev) =>
-      prev.map((chat) => {
-        if (chat.id !== chatId) return chat;
-        return {
-          ...chat,
-          messages: chat.messages.map((message) =>
-            message.id === typingId ? { ...message, text, typing } : message
-          ),
-        };
-      })
-    );
-  }, []);
+  const updateTypingMessage = useCallback(
+    (chatId, typingId, text, typing) => {
+      setChats((prev) =>
+        prev.map((chat) => {
+          if (chat.id !== chatId) return chat;
+          return {
+            ...chat,
+            messages: chat.messages.map((message) =>
+              message.id === typingId ? { ...message, text, typing } : message
+            ),
+          };
+        })
+      );
+    },
+    []
+  );
 
   const typeAiResponse = useCallback(
     async (chatId, typingId, responseText) => {
@@ -1223,11 +1891,12 @@ const Workspace = () => {
         return;
       }
 
-      // Stream in small chunks rather than one character at a time: it reads
-      // just as "live" but cuts the number of renders/markdown re-parses by
-      // roughly 3-4x on longer responses.
-      const chunkSize = characters.length > 400 ? 4 : characters.length > 120 ? 3 : 1;
-      const delay = Math.max(8, Math.min(24, Math.round((1000 * chunkSize) / characters.length)));
+      const chunkSize =
+        characters.length > 400 ? 4 : characters.length > 120 ? 3 : 1;
+      const delay = Math.max(
+        8,
+        Math.min(24, Math.round((1000 * chunkSize) / characters.length))
+      );
       let renderedText = '';
 
       for (let i = 0; i < characters.length; i += chunkSize) {
@@ -1244,14 +1913,16 @@ const Workspace = () => {
 
   const loadRoadmaps = useCallback(async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/learning/roadmaps');
+      const res = await axios.get(
+        'http://localhost:5000/api/learning/roadmaps'
+      );
       if (res.data?.success && res.data?.roadmaps) {
-        const formattedRoadmaps = res.data.roadmaps.map(r => ({
+        const formattedRoadmaps = res.data.roadmaps.map((r) => ({
           id: r._id,
           title: r.title,
           topic: r.topic,
           description: r.description,
-          phases: r.phases
+          phases: r.phases,
         }));
         setRoadmaps(formattedRoadmaps);
         if (formattedRoadmaps.length > 0) {
@@ -1259,7 +1930,7 @@ const Workspace = () => {
         }
       }
     } catch (err) {
-      console.error("Failed to load roadmaps list:", err);
+      console.error('Failed to load roadmaps list:', err);
     }
   }, []);
 
@@ -1271,14 +1942,8 @@ const Workspace = () => {
     if (chats.length === 0) {
       const welcomeChat = {
         id: 'default-welcome',
-        title: 'ScolarAI Learning Chat',
-        messages: [
-          {
-            id: 'welcome-msg',
-            role: 'ai',
-            text: 'Hello! I am **ScolarAI**, your dynamic learning tutor.\n\nTo get started, tell me what topic or subject you want to learn (for example: `"I want to learn Dynamic Programming and Graphs"` or `"Teach me Web Development basics"`). I will ask you a few questions and generate a premium interactive learning roadmap for you!'
-          }
-        ]
+        title: 'Avora Learning Chat',
+        messages: [],
       };
       setChats([welcomeChat]);
       setActiveChatId('default-welcome');
@@ -1287,20 +1952,24 @@ const Workspace = () => {
 
   const loadProjects = useCallback(async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/learning/projects');
+      const res = await axios.get(
+        'http://localhost:5000/api/learning/projects'
+      );
       if (res.data?.success && res.data?.projects) {
-        setProjects(res.data.projects.map(p => ({
-          id: p._id,
-          title: p.title,
-          topic: p.topic,
-          description: p.description,
-          roadmapId: p.roadmapId,
-          sessionId: p.sessionId,
-          chats: p.chats || []
-        })));
+        setProjects(
+          res.data.projects.map((p) => ({
+            id: p._id,
+            title: p.title,
+            topic: p.topic,
+            description: p.description,
+            roadmapId: p.roadmapId,
+            sessionId: p.sessionId,
+            chats: p.chats || [],
+          }))
+        );
       }
     } catch (err) {
-      console.error("Failed to load projects list:", err);
+      console.error('Failed to load projects list:', err);
     }
   }, []);
 
@@ -1311,10 +1980,13 @@ const Workspace = () => {
   const handleCreateProject = useCallback(async () => {
     if (!modalData) return;
     try {
-      const res = await axios.post('http://localhost:5000/api/learning/create-project', {
-        sessionId: modalData.sessionId,
-        topic: modalData.topic
-      });
+      const res = await axios.post(
+        'http://localhost:5000/api/learning/create-project',
+        {
+          sessionId: modalData.sessionId,
+          topic: modalData.topic,
+        }
+      );
       if (res.data?.success && res.data?.project) {
         const p = res.data.project;
         const newProj = {
@@ -1324,82 +1996,82 @@ const Workspace = () => {
           description: p.description,
           roadmapId: p.roadmapId,
           sessionId: p.sessionId,
-          chats: p.chats || []
+          chats: p.chats || [],
         };
-        setProjects((prev) => [newProj, ...prev.filter(x => x.id !== newProj.id)]);
+        setProjects((prev) => [
+          newProj,
+          ...prev.filter((x) => x.id !== newProj.id),
+        ]);
         setActiveProjectId(newProj.id);
-        alert(`Study project "${newProj.title}" successfully created inside database!`);
       }
     } catch (err) {
-      console.error("Failed to create project workspace:", err);
-      alert("Error creating workspace. Please try again.");
+      console.error('Failed to create project workspace:', err);
     } finally {
       setModalData(null);
     }
   }, [modalData]);
 
-  const handleProjectSelect = useCallback(async (projectId) => {
-    try {
-      const res = await axios.get(`http://localhost:5000/api/learning/projects/${projectId}`);
-      if (res.data?.success && res.data?.project) {
-        const proj = res.data.project;
-        
-        setActiveProjectId(proj._id);
+  const handleProjectSelect = useCallback((projectId) => {
+    axios
+      .get(`http://localhost:5000/api/learning/projects/${projectId}`)
+      .then((res) => {
+        if (res.data?.success && res.data?.project) {
+          const proj = res.data.project;
+          setActiveProjectId(proj._id);
 
-        if (proj.roadmapId) {
-          const rm = proj.roadmapId;
-          const formattedRoadmap = {
-            id: rm._id,
-            title: rm.title,
-            topic: rm.topic,
-            description: rm.description,
-            phases: rm.phases
-          };
-          setRoadmaps((prev) => [formattedRoadmap, ...prev.filter(r => r.id !== formattedRoadmap.id)]);
-          setActiveRoadmapId(formattedRoadmap.id);
+          if (proj.roadmapId) {
+            const rm = proj.roadmapId;
+            const formattedRoadmap = {
+              id: rm._id,
+              title: rm.title,
+              topic: rm.topic,
+              description: rm.description,
+              phases: rm.phases,
+            };
+            setRoadmaps((prev) => [
+              formattedRoadmap,
+              ...prev.filter((r) => r.id !== formattedRoadmap.id),
+            ]);
+            setActiveRoadmapId(formattedRoadmap.id);
+          }
+
+          if (proj.chats && proj.chats.length > 0) {
+            const formattedChats = proj.chats.map((c) => ({
+              id: c.id,
+              title: c.title,
+              messages: c.messages,
+              sessionId: proj.sessionId,
+            }));
+            setChats(formattedChats);
+            setActiveChatId(formattedChats[0].id);
+          }
+
+          setActiveTab('projects');
         }
-
-        if (proj.chats && proj.chats.length > 0) {
-          const formattedChats = proj.chats.map(c => ({
-            id: c.id,
-            title: c.title,
-            messages: c.messages,
-            sessionId: proj.sessionId
-          }));
-          
-          setChats(formattedChats);
-          setActiveChatId(formattedChats[0].id);
-        } else {
-          const defaultChat = {
-            id: nextId(),
-            title: 'Welcome to Project',
-            messages: [
-              { id: nextId(), role: 'ai', text: `Welcome to your study project for **${proj.title}**! Click on any topic in your roadmap tab to start your first-principles lesson.` }
-            ]
-          };
-          setChats([defaultChat]);
-          setActiveChatId(defaultChat.id);
-        }
-
-        setActiveTab('projects');
-      }
-    } catch (err) {
-      console.error("Failed to load project details:", err);
-    }
+      })
+      .catch((err) => console.error('Failed to load project details:', err));
   }, []);
 
   const handleCreateProjectDirectly = useCallback(async () => {
-    const topic = window.prompt("Enter study topic for the new project (e.g. React Development):");
-    if (!topic || topic.trim() === "") return;
-    const title = window.prompt("Enter project title (optional, defaults to topic):", topic);
-    const description = window.prompt("Enter project description (optional):");
+    const topic = window.prompt(
+      'Enter study topic for the new project (e.g. Web Development):'
+    );
+    if (!topic || topic.trim() === '') return;
+    const title = window.prompt(
+      'Enter project title (optional, defaults to topic):',
+      topic
+    );
+    const description = window.prompt('Enter project description (optional):');
 
     try {
-      const res = await axios.post('http://localhost:5000/api/learning/create-project', {
-        topic: topic.trim(),
-        title: title ? title.trim() : topic.trim(),
-        description: description ? description.trim() : undefined
-      });
+      const res = await axios.post(
+        'http://localhost:5000/api/learning/create-project',
+        {
+          topic: topic.trim(),
+          title: title ? title.trim() : topic.trim(),
+          description: description ? description.trim() : undefined,
+        }
+      );
       if (res.data?.success && res.data?.project) {
         const p = res.data.project;
         const newProj = {
@@ -1409,282 +2081,180 @@ const Workspace = () => {
           description: p.description,
           roadmapId: p.roadmapId,
           sessionId: p.sessionId,
-          chats: p.chats || []
+          chats: p.chats || [],
         };
-        setProjects((prev) => [newProj, ...prev.filter(x => x.id !== newProj.id)]);
+        setProjects((prev) => [
+          newProj,
+          ...prev.filter((x) => x.id !== newProj.id),
+        ]);
         setActiveProjectId(newProj.id);
         setActiveTab('projects');
-        alert(`Study project "${newProj.title}" successfully created inside database!`);
       }
     } catch (err) {
-      console.error("Failed to create project workspace:", err);
-      alert("Error creating workspace. Please try again.");
+      console.error('Failed to create project workspace:', err);
     }
   }, []);
 
-  const handleDeleteProject = useCallback(async (projectId) => {
-    if (!window.confirm("Are you sure you want to delete this study project? This will permanently remove the project and all of its chats.")) return;
-    try {
-      const res = await axios.delete(`http://localhost:5000/api/learning/projects/${projectId}`);
-      if (res.data?.success) {
-        setProjects((prev) => prev.filter((p) => p.id !== projectId));
-        if (activeProjectId === projectId) {
-          setActiveProjectId(null);
+  const handleDeleteProject = useCallback(
+    async (projectId) => {
+      if (
+        !window.confirm(
+          'Are you sure you want to delete this study project?'
+        )
+      )
+        return;
+      try {
+        const res = await axios.delete(
+          `http://localhost:5000/api/learning/projects/${projectId}`
+        );
+        if (res.data?.success) {
+          setProjects((prev) => prev.filter((p) => p.id !== projectId));
+          if (activeProjectId === projectId) {
+            setActiveProjectId(null);
+          }
         }
-        alert("Project deleted successfully.");
+      } catch (err) {
+        console.error('Failed to delete project:', err);
       }
-    } catch (err) {
-      console.error("Failed to delete project:", err);
-      alert("Failed to delete project from database.");
-    }
+    },
+    [activeProjectId]
+  );
+
+  const handleStartNewProjectChat = useCallback(() => {
+    if (!activeProjectId) return;
+    const newChatId = `proj-${activeProjectId}-${Date.now()}`;
+    const newChat = {
+      id: newChatId,
+      title: 'Project Chat',
+      messages: [],
+    };
+    setChats((prev) => [newChat, ...prev]);
+    setActiveChatId(newChat.id);
+    setActiveTab('chats');
   }, [activeProjectId]);
 
-  const handleDeleteProjectChat = useCallback(async (projectId, chatId) => {
-    if (!window.confirm("Are you sure you want to delete this chat from the project?")) return;
-    try {
-      const res = await axios.delete(`http://localhost:5000/api/learning/projects/${projectId}/chats/${chatId}`);
-      if (res.data?.success) {
-        setChats(prev => prev.filter(c => String(c.id) !== String(chatId)));
-        setProjects(prev => prev.map(p => {
-          if (p.id !== projectId) return p;
-          return {
-            ...p,
-            chats: p.chats.filter(c => String(c.id) !== String(chatId))
-          };
-        }));
-        setActiveChatId(prev => String(prev) === String(chatId) ? null : prev);
-      }
-    } catch (err) {
-      console.error("Failed to delete project chat:", err);
-      alert("Failed to delete chat.");
-    }
-  }, []);
-
-  const handleStartNewProjectChat = useCallback(async () => {
-    if (!activeProjectId) return;
-    const project = projects.find(p => p.id === activeProjectId);
-    if (!project) return;
-    
-    const chatId = nextId();
-    const newChat = {
-      id: chatId,
-      title: `Project Chat ${project.chats.length + 1}`,
-      messages: [],
-      sessionId: project.sessionId
-    };
-
-    try {
-      await axios.post(`http://localhost:5000/api/learning/projects/${activeProjectId}/chats`, {
-        chat: newChat
-      });
-      
-      setChats(prev => [newChat, ...prev]);
-      setActiveChatId(chatId);
-      
-      setProjects(prev => prev.map(p => {
-        if (p.id !== activeProjectId) return p;
-        return {
-          ...p,
-          chats: [newChat, ...p.chats]
-        };
-      }));
-      
+  const handleStartTopicLesson = useCallback(
+    (topicName, roadmapTopic) => {
       setActiveTab('chats');
-    } catch (err) {
-      console.error("Failed to create new project chat:", err);
-      alert("Error starting a new chat in this project.");
-    }
-  }, [activeProjectId, projects]);
-
-  const handleStartTopicLesson = useCallback(async (topicName, roadmapSubject) => {
-    let chatId = activeChatId;
-    let currentChat = chats.find(c => c.id === chatId);
-
-    if (!chatId || chatId === 'default-welcome' || !currentChat) {
-      const unifiedChat = chats.find(c => c.title.startsWith("Study:") || c.title === "Study Chat");
-      if (unifiedChat) {
-        chatId = unifiedChat.id;
-        currentChat = unifiedChat;
-        setActiveChatId(chatId);
-      } else {
-        chatId = nextId();
-        const activeProj = activeProjectId ? projects.find(p => p.id === activeProjectId) : null;
-        currentChat = {
-          id: chatId,
-          title: `Study Chat`,
-          messages: [],
-          sessionId: activeProj ? activeProj.sessionId : null
-        };
-        setChats((prev) => [currentChat, ...prev]);
-        setActiveChatId(chatId);
-      }
-    }
-
-    const userMsgId = nextId();
-    const typingId = nextId();
-    const userMsg = { id: userMsgId, role: 'user', text: `Explain the topic: "${topicName}" using First-Principles thinking.` };
-    const aiPlaceholder = { id: typingId, role: 'ai', text: 'Thinking...', typing: true };
-
-    setChats((prev) =>
-      prev.map((c) => {
-        if (c.id !== chatId) return c;
-        return {
-          ...c,
-          title: c.title === 'Study Chat' || c.title === 'New Chat' ? `Study: ${topicName}` : c.title,
-          messages: [...c.messages, userMsg, aiPlaceholder],
-        };
-      })
-    );
-
-    setActiveTab('chats');
-    setSending(true);
-
-    try {
-      const response = await axios.post('http://localhost:5000/api/learning/explain-topic', {
-        topic: topicName,
-        subject: roadmapSubject
-      });
-
-      const explanation = response.data?.explanation || 'Failed to generate explanation.';
-
-      await typeAiResponse(chatId, typingId, explanation);
-
-      if (activeProjectId) {
-        try {
-          setChats((prev) => {
-            const target = prev.find(c => c.id === chatId);
-            if (!target) return prev;
-
-            const updatedMessages = target.messages.map((m) =>
-              m.id === typingId ? { ...m, text: explanation, typing: false } : m
-            );
-
-            const updatedChat = {
-              ...target,
-              messages: updatedMessages
-            };
-
-            axios.post(`http://localhost:5000/api/learning/projects/${activeProjectId}/chats`, {
-              chat: {
-                id: updatedChat.id,
-                title: updatedChat.title,
-                messages: updatedChat.messages
-              }
-            })
-            .then(() => {
-              setProjects(prevProj => prevProj.map(p => {
-                if (p.id !== activeProjectId) return p;
-                const chatExists = p.chats.some(x => String(x.id) === String(updatedChat.id));
-                return {
-                  ...p,
-                  chats: chatExists
-                    ? p.chats.map(x => String(x.id) === String(updatedChat.id) ? { ...x, title: updatedChat.title, messages: updatedChat.messages } : x)
-                    : [...p.chats, { id: updatedChat.id, title: updatedChat.title, messages: updatedChat.messages }]
-                };
-              }));
-            })
-            .catch(dbErr => console.error("Failed to sync message to project DB:", dbErr));
-
-            return prev.map(c => c.id === chatId ? updatedChat : c);
-          });
-        } catch (dbErr) {
-          console.error("Failed to save chat to database project:", dbErr);
-        }
-      }
-
-    } catch (error) {
-      const errorMessage =
-        error.response?.data?.message ||
-        error.response?.data?.error ||
-        error.message ||
-        'Something went wrong. Please try again.';
-
-      updateTypingMessage(chatId, typingId, `Error: ${errorMessage}`, false);
-    } finally {
-      setSending(false);
-    }
-  }, [chats, activeChatId, activeProjectId, projects, typeAiResponse, updateTypingMessage]);
+      const query = `Explain ${topicName} from first principles in the context of ${roadmapTopic}.`;
+      handleSend(query);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [chats, activeChatId]
+  );
 
   const handleSend = useCallback(
-    async (text) => {
-      const chatId = activeChatId;
-      const currentChat = chats.find((c) => c.id === chatId);
-      const isFirstMessage = (currentChat?.messages?.length ?? 0) === 0;
-      const userMsg = { id: nextId(), role: 'user', text };
+    async (userMessageText) => {
+      const chatId = activeChatId || 'default-welcome';
+      const userMsg = {
+        id: nextId(),
+        role: 'user',
+        text: userMessageText,
+      };
+
       const typingId = nextId();
+      const typingMsg = {
+        id: typingId,
+        role: 'ai',
+        text: 'Thinking...',
+        typing: true,
+      };
 
-      setSending(true);
-      setChats((prev) =>
-        prev.map((chat) => {
-          if (chat.id !== chatId) return chat;
-          return {
-            ...chat,
-            title: isFirstMessage ? text.slice(0, 28) : chat.title,
-            messages: [...chat.messages, userMsg, { id: typingId, role: 'ai', text: 'Thinking...', typing: true }],
+      setChats((prev) => {
+        const chatExists = prev.some((c) => c.id === chatId);
+        if (!chatExists) {
+          const newChat = {
+            id: chatId,
+            title:
+              userMessageText.slice(0, 30) +
+              (userMessageText.length > 30 ? '...' : ''),
+            messages: [userMsg, typingMsg],
           };
-        })
-      );
-
-      try {
-        const payload = { message: text, semanticSearchEnabled };
-        if (currentChat?.sessionId) {
-          payload.sessionId = currentChat.sessionId;
+          return [newChat, ...prev];
         }
 
-        const response = await axios.post(API_URL, payload);
-        
-        const nextQuestion = response.data?.nextQuestion;
-        const options = nextQuestion?.options || [];
-        
-        const aiText =
-          nextQuestion?.question ||
+        return prev.map((chat) => {
+          if (chat.id !== chatId) return chat;
+          const isFirstMessage = chat.messages.length === 0;
+          return {
+            ...chat,
+            title: isFirstMessage
+              ? userMessageText.slice(0, 30) +
+                (userMessageText.length > 30 ? '...' : '')
+              : chat.title,
+            messages: [...chat.messages, userMsg, typingMsg],
+          };
+        });
+      });
+
+      setSending(true);
+
+      try {
+        const currentChat = chats.find((c) => c.id === chatId);
+        const payloadSessionId = currentChat?.sessionId || undefined;
+
+        const response = await axios.post(API_URL, {
+          message: userMessageText,
+          sessionId: payloadSessionId,
+          projectId: activeProjectId || undefined,
+          semanticSearch: semanticSearchEnabled,
+        });
+
+        const resRoadmap = response.data?.roadmap || null;
+        const resNextQuestion = response.data?.nextQuestion || null;
+        const resSessionId = response.data?.sessionId || null;
+        const resSources = response.data?.sources || [];
+
+        const aiResponseText =
+          resNextQuestion?.question ||
           response.data?.message ||
-          response.data?.response ||
           response.data?.reply ||
-          response.data?.text ||
-          'No response received.';
+          response.data?.response ||
+          (resRoadmap
+            ? `I have generated your personalized learning roadmap for **${resRoadmap.topic || resRoadmap.title}**! You can explore the interactive visual phases in the **Roadmap** tab.`
+            : 'Here is what I found based on first principles.');
 
-        const sources = response.data?.sources || [];
+        const resOptions =
+          resNextQuestion?.options ||
+          response.data?.options ||
+          [];
 
-        await typeAiResponse(chatId, typingId, aiText);
-
-        const resSessionId = response.data?.sessionId;
-        const resStatus = response.data?.status;
-        const resRoadmap = response.data?.roadmap;
+        await typeAiResponse(chatId, typingId, aiResponseText);
 
         setChats((prev) => {
           const nextChats = prev.map((chat) => {
             if (chat.id !== chatId) return chat;
+
+            const updatedMessages = chat.messages.map((m) =>
+              m.id === typingId
+                ? {
+                    ...m,
+                    text: aiResponseText,
+                    typing: false,
+                    options: resOptions,
+                    roadmap: resRoadmap,
+                    sources: resSources,
+                  }
+                : m
+            );
+
             const updatedChat = {
               ...chat,
+              messages: updatedMessages,
               sessionId: resSessionId || chat.sessionId,
-              learningStatus: resStatus || chat.learningStatus,
-              messages: chat.messages.map((message) =>
-                message.id === typingId ? { ...message, options, sources } : message
-              ),
             };
 
             if (activeProjectId) {
-              axios.post(`http://localhost:5000/api/learning/projects/${activeProjectId}/chats`, {
-                chat: {
-                  id: updatedChat.id,
-                  title: updatedChat.title,
-                  messages: updatedChat.messages
+              axios.post(
+                `http://localhost:5000/api/learning/projects/${activeProjectId}/chats`,
+                {
+                  chat: {
+                    id: updatedChat.id,
+                    title: updatedChat.title,
+                    messages: updatedChat.messages,
+                  },
                 }
-              })
-              .then(() => {
-                setProjects(prev => prev.map(p => {
-                  if (p.id !== activeProjectId) return p;
-                  const chatExists = p.chats.some(c => String(c.id) === String(updatedChat.id));
-                  return {
-                    ...p,
-                    chats: chatExists
-                      ? p.chats.map(c => String(c.id) === String(updatedChat.id) ? { ...c, title: updatedChat.title, messages: updatedChat.messages } : c)
-                      : [...p.chats, { id: updatedChat.id, title: updatedChat.title, messages: updatedChat.messages }]
-                  };
-                }));
-              })
-              .catch(dbErr => console.error("Failed to sync message to project DB:", dbErr));
+              );
             }
 
             return updatedChat;
@@ -1700,13 +2270,22 @@ const Workspace = () => {
             description: resRoadmap.description,
             phases: resRoadmap.phases,
           };
-          setRoadmaps((prev) => [newRoadmapItem, ...prev.filter((r) => r.id !== newRoadmapItem.id)]);
+          setRoadmaps((prev) => [
+            newRoadmapItem,
+            ...prev.filter((r) => r.id !== newRoadmapItem.id),
+          ]);
           setActiveRoadmapId(newRoadmapItem.id);
           setActiveTab('roadmap');
 
-          // Open the workspace modal popup if project has not been created yet
+          if (resRoadmap.topic) {
+            handleGenerateQuestions(resRoadmap.topic);
+          }
+
           if (!response.data?.projectCreated) {
-            setModalData({ sessionId: resSessionId, topic: resRoadmap.topic });
+            setModalData({
+              sessionId: resSessionId,
+              topic: resRoadmap.topic,
+            });
           }
         }
       } catch (error) {
@@ -1721,328 +2300,364 @@ const Workspace = () => {
         setSending(false);
       }
     },
-    [activeChatId, chats, activeProjectId, typeAiResponse, updateTypingMessage, semanticSearchEnabled]
+    [
+      activeChatId,
+      chats,
+      activeProjectId,
+      typeAiResponse,
+      updateTypingMessage,
+      semanticSearchEnabled,
+      handleGenerateQuestions,
+    ]
   );
 
-  const sidebarWidthClass = collapsed ? 'lg:w-[88px]' : 'lg:w-[280px]';
+  const sidebarWidthClass = collapsed ? 'lg:w-[84px]' : 'lg:w-[270px]';
 
   return (
-    <div className="flex h-screen w-full flex-col bg-white p-2 sm:p-2.5 text-[#1E1E1E] overflow-hidden">
-      {/* header */}
-      <div className="mb-2.5 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3 sm:gap-5 min-w-0">
-          <div className="flex items-center gap-3 sm:gap-6 lg:gap-28 min-w-0">
-            {/* logo */}
-            <div className="flex items-end gap-1 shrink-0">
-              <img src="logo.svg" alt="" />
-              <a className="text-xl sm:text-2xl font-medium" href="#">
-                ScolarAi
-              </a>
-            </div>
+    <div className="flex h-screen w-full flex-col bg-white p-3 sm:p-4 text-zinc-900 font-sans overflow-hidden">
+      {/* Hidden File Input for PDF Upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="application/pdf"
+        onChange={handlePdfUpload}
+        className="hidden"
+      />
 
-            {/* mobile menu toggle */}
-            <button
-              type="button"
-              onClick={() => setMobileOpen(true)}
-              className="lg:hidden flex h-9 w-9 items-center justify-center rounded-full bg-[#EAF2CF]"
-              aria-label="Open menu"
-            >
-              <Menu size={18} />
-            </button>
+      {/* ================= TOP HEADER matching Reference Image ================= */}
+      <header className="mb-3 flex items-center justify-between gap-4 px-2">
+        {/* Left: Brand Logo & Sidebar Collapse icon */}
+        <div className="flex items-center gap-4 sm:gap-6">
+          <a
+            href="/"
+            className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-950 font-sans flex items-center gap-2"
+          >
+            <span>Avora</span>
+          </a>
 
-            <button
-              type="button"
-              onClick={() => setCollapsed((v) => !v)}
-              className="hidden lg:flex items-center justify-center"
-              aria-label="Toggle sidebar"
-              title="Toggle sidebar"
-            >
-              <StepBack size={20} color="#1E1E1E" className={`transition-transform ${collapsed ? 'rotate-180' : ''}`} />
-            </button>
-          </div>
+          {/* Sidebar Collapse Toggle icon */}
+          <button
+            type="button"
+            onClick={() => setCollapsed((v) => !v)}
+            className="hidden lg:flex items-center justify-center p-1 text-zinc-700 hover:text-black cursor-pointer"
+            aria-label="Toggle sidebar collapse"
+            title="Toggle sidebar"
+          >
+            <PanelLeftClose
+              size={19}
+              className={`transition-transform duration-200 ${
+                collapsed ? 'rotate-180' : ''
+              }`}
+            />
+          </button>
 
-          {/* menu - desktop */}
-          <div className="hidden md:block overflow-x-auto no-scrollbar">
-            <ul className="flex w-fit items-center gap-1 rounded-full bg-[#EAF2CF] px-1.5 py-1.5">
-              {TABS.map((t) => (
-                <li key={t.key}>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab(t.key)}
-                    className={`whitespace-nowrap rounded-full px-4 lg:px-6 py-2 lg:py-2.5 text-sm lg:text-base transition-colors
-                      ${activeTab === t.key ? 'bg-white text-[#1E1E1E]' : 'text-[#1E1E1E]/70 hover:text-[#1E1E1E]'}`}
-                  >
-                    {t.label}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {/* Mobile hamburger button */}
+          <button
+            type="button"
+            onClick={() => setMobileOpen(true)}
+            className="lg:hidden flex h-8 w-8 items-center justify-center rounded-xl bg-[#E5ECC9] text-zinc-800 cursor-pointer"
+            aria-label="Open sidebar menu"
+          >
+            <Menu size={18} />
+          </button>
         </div>
 
-        <div className="flex w-fit items-center gap-2 sm:gap-4 rounded-full bg-[#EAF2CF] px-1 py-1 shrink-0">
-          <div className="h-9 w-9 sm:h-10 sm:w-10 flex items-center justify-center rounded-full bg-white">
-            <Eclipse size={18} />
-          </div>
-          <MessageSquareDot size={18} className="hidden sm:block" />
-          <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-black/10" />
+        {/* Center: Matcha Green Pill Navigation Tabs */}
+        <div className="hidden md:block overflow-x-auto no-scrollbar">
+          <ul className="flex w-fit items-center gap-1 rounded-full bg-[#E5ECC9] p-1 shadow-xs">
+            {TABS.map((t) => (
+              <li key={t.key}>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab(t.key)}
+                  className={`whitespace-nowrap rounded-full px-5 py-2 text-xs font-semibold transition-all cursor-pointer flex items-center gap-2
+                    ${
+                      activeTab === t.key
+                        ? 'bg-white text-zinc-950 shadow-xs'
+                        : 'text-zinc-700 hover:text-zinc-950'
+                    }`}
+                >
+                  <t.icon size={14} />
+                  <span>{t.label}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
         </div>
-      </div>
 
-      {/* mobile tab bar */}
+        {/* Right: Pill Group with Theme, Maximize, and User Avatar */}
+        <div className="flex items-center gap-2 rounded-full bg-[#E5ECC9] px-2 py-1.5 shrink-0 shadow-xs">
+          <button
+            type="button"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-zinc-800 hover:text-black shadow-xs cursor-pointer"
+            title="Theme Toggle"
+          >
+            <Eclipse size={15} />
+          </button>
+
+          <button
+            type="button"
+            className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-black/5 text-zinc-800 hover:text-black cursor-pointer"
+            title="Full Screen View"
+          >
+            <Maximize2 size={15} />
+          </button>
+
+          <div
+            className="h-8 w-8 rounded-full bg-linear-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold shadow-xs overflow-hidden"
+            title={user?.name || 'Devos'}
+          >
+            {user?.name ? user.name.slice(0, 2).toUpperCase() : 'D'}
+          </div>
+        </div>
+      </header>
+
+      {/* Mobile Tab Bar (Center Tabs on Mobile) */}
       <div className="md:hidden mb-2.5 overflow-x-auto no-scrollbar">
-        <ul className="flex w-max items-center gap-1 rounded-full bg-[#EAF2CF] px-1.5 py-1.5">
+        <ul className="flex w-max items-center gap-1 rounded-full bg-[#E5ECC9] p-1 shadow-xs">
           {TABS.map((t) => (
             <li key={t.key}>
               <button
                 type="button"
                 onClick={() => setActiveTab(t.key)}
-                className={`whitespace-nowrap rounded-full px-4 py-2 text-sm transition-colors
-                  ${activeTab === t.key ? 'bg-white text-[#1E1E1E]' : 'text-[#1E1E1E]/70'}`}
+                className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5
+                  ${
+                    activeTab === t.key
+                      ? 'bg-white text-zinc-950 shadow-xs'
+                      : 'text-zinc-700'
+                  }`}
               >
-                {t.label}
+                <t.icon size={13} />
+                <span>{t.label}</span>
               </button>
             </li>
           ))}
         </ul>
       </div>
 
-      {/* body */}
-      <div className="flex flex-1 min-h-0 gap-2.5 lg:gap-5 relative">
-        {/* mobile overlay */}
+      {/* ================= WORKSPACE BODY matching Reference Image ================= */}
+      <div className="flex flex-1 min-h-0 gap-3 lg:gap-4 relative">
+        {/* Mobile Backdrop */}
         {mobileOpen && (
           <div
-            className="fixed inset-0 z-30 bg-black/30 lg:hidden"
+            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-xs lg:hidden"
             onClick={() => setMobileOpen(false)}
           />
         )}
 
-        {/* sidebar */}
-        <div
+        {/* ================= LEFT SIDEBAR (Matcha Green Container) ================= */}
+        <aside
           className={`
-            font-normal text-[#1E1E1E] bg-[#EAF2CF] overflow-hidden rounded-3xl
+            bg-[#E5ECC9] text-zinc-900 overflow-hidden rounded-[28px]
             transition-all duration-300 ease-in-out
-            fixed lg:static inset-y-2 left-2 z-40 lg:z-auto
-            w-[260px] ${sidebarWidthClass}
-            ${mobileOpen ? 'translate-x-0' : '-translate-x-[120%] lg:translate-x-0'}
-            px-2.5 py-5 flex flex-col
+            fixed lg:static inset-y-3 left-3 z-50 lg:z-auto
+            w-[270px] ${sidebarWidthClass}
+            ${
+              mobileOpen
+                ? 'translate-x-0 shadow-2xl'
+                : '-translate-x-[120%] lg:translate-x-0'
+            }
+            p-4 flex flex-col justify-between
           `}
         >
-          <div className="flex items-center justify-between gap-2 mb-2 lg:hidden">
-            <span className="text-[15px] font-medium px-1">Menu</span>
+          <div className="flex-1 flex flex-col min-h-0 overflow-y-auto no-scrollbar">
+            {/* Mobile Close Button in Drawer */}
+            <div className="flex items-center justify-between gap-2 mb-3 lg:hidden">
+              <span className="text-xs font-bold text-zinc-900 uppercase tracking-wider px-1">
+                Menu
+              </span>
+              <button
+                type="button"
+                onClick={() => setMobileOpen(false)}
+                className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-zinc-700 hover:text-black cursor-pointer"
+              >
+                <X size={15} />
+              </button>
+            </div>
+
+            {/* Top Primary Action: White New Chats Button */}
             <button
               type="button"
-              onClick={() => setMobileOpen(false)}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-white"
-              aria-label="Close menu"
+              onClick={handleNewChat}
+              title={collapsed ? 'New Chats' : undefined}
+              className={`flex w-full items-center gap-3 rounded-2xl bg-white text-zinc-900 px-4 py-3.5 text-sm font-semibold transition-all hover:bg-white/90 hover:shadow-xs cursor-pointer active:scale-98
+                ${collapsed ? 'justify-center px-0' : ''}`}
             >
-              <X size={16} />
+              <MessagesSquare size={18} className="shrink-0 text-zinc-800" />
+              {!collapsed && <span>New Chats</span>}
             </button>
-          </div>
 
-          <button
-            type="button"
-            onClick={handleNewChat}
-            title={collapsed ? 'New Chat' : undefined}
-            className={`flex w-full items-center gap-3 rounded-2xl bg-white p-4 text-[16px] transition-all hover:shadow-sm
-              ${collapsed ? 'justify-center px-0' : ''}`}
-          >
-            <MessagesSquare size={20} color="#1E1E1E" className="shrink-0" />
-            {!collapsed && 'New Chat'}
-          </button>
-
-          <div className="mt-6 flex-1 overflow-y-auto no-scrollbar">
-            {/* features */}
-            <div>
-              {!collapsed && <p className="mb-3 text-[15px] text-black/52 px-1">Features</p>}
-              <div className="flex flex-col gap-2">
-                <NavButton text="All Chats" icon={MessageCircle} collapsed={collapsed} active={activeTab === 'allChats'} onClick={() => { setActiveTab('allChats'); setMobileOpen(false); }} />
-                <NavButton text="Roadmaps" icon={Map} collapsed={collapsed} active={activeTab === 'allRoadmaps'} onClick={() => { setActiveTab('allRoadmaps'); setMobileOpen(false); }} />
-                <NavButton text="Projects" icon={FolderGit2} collapsed={collapsed} active={activeTab === 'projects'} onClick={() => { setActiveTab('projects'); setMobileOpen(false); }} />
-              </div>
+            {/* Features Section */}
+            <div className="mt-6 flex flex-col gap-1">
+              {!collapsed && (
+                <p className="mb-2 text-xs font-semibold text-zinc-600 px-2">
+                  Features
+                </p>
+              )}
+              <NavItem
+                text="Chat"
+                icon={MessageSquare}
+                active={activeTab === 'chats'}
+                onClick={() => {
+                  setActiveTab('chats');
+                  setMobileOpen(false);
+                }}
+                collapsed={collapsed}
+              />
+              <NavItem
+                text="Projects"
+                icon={FolderGit2}
+                active={activeTab === 'projects'}
+                onClick={() => {
+                  setActiveTab('projects');
+                  setMobileOpen(false);
+                }}
+                collapsed={collapsed}
+                badge={projects.length > 0 ? projects.length : undefined}
+              />
+              <NavItem
+                text="RoadMaps"
+                icon={Share2}
+                active={activeTab === 'roadmap' || activeTab === 'allRoadmaps'}
+                onClick={() => {
+                  setActiveTab('roadmap');
+                  setMobileOpen(false);
+                }}
+                collapsed={collapsed}
+                badge={roadmaps.length > 0 ? roadmaps.length : undefined}
+              />
             </div>
 
-            {/* history - shows chats or roadmaps depending on which tab is active, never mixed */}
-            {!collapsed && (activeTab === 'chats' || activeTab === 'allChats') && (
-              <div className="mt-6">
-                <div className="mb-3 flex items-center gap-3 text-black/52 px-1">
-                  <Clock3 size={17} />
-                  <p className="text-[15px]">Chat History</p>
-                </div>
-
-                <div className="flex flex-col gap-1 border-l border-black/15 pl-6 text-[14px] text-[#1E1E1E]/78">
-                  {chats.map((c) => (
-                    <div key={c.id} className="group flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-white/50">
-                      <button
-                        type="button"
+            {/* History Section */}
+            {!collapsed && chats.length > 0 && (
+              <div className="mt-6 flex flex-col min-h-0">
+                <p className="mb-2 text-xs font-semibold text-zinc-600 px-2 flex items-center justify-between">
+                  <span>History</span>
+                  <span className="text-[10px] text-zinc-500 font-normal">Recent</span>
+                </p>
+                <div className="relative pl-3 border-l-2 border-zinc-800/15 flex flex-col gap-1 overflow-y-auto max-h-[180px] no-scrollbar">
+                  {chats.map((c) => {
+                    const isActive = c.id === activeChatId && activeTab === 'chats';
+                    return (
+                      <div
+                        key={c.id}
+                        className={`group relative flex items-center justify-between rounded-xl px-2.5 py-1.5 text-xs font-medium transition-colors cursor-pointer
+                          ${
+                            isActive
+                              ? 'bg-white text-zinc-950 font-semibold shadow-2xs'
+                              : 'text-zinc-700 hover:text-zinc-950 hover:bg-white/40'
+                          }`}
                         onClick={() => handleChatHistoryClick(c.id)}
-                        className={`flex-1 truncate text-left transition-colors hover:text-[#000]
-                          ${activeChatId === c.id ? 'text-black font-medium' : ''}`}
                       >
-                        {c.title}
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleRenameChat(c.id, c.title)}
-                        className="opacity-0 transition-opacity group-hover:opacity-100 text-black/35 hover:text-black"
-                        title="Rename Chat"
-                      >
-                        <Pencil size={12} />
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteChat(c.id)}
-                        className="opacity-0 transition-opacity group-hover:opacity-100 text-black/35 hover:text-black"
-                        aria-label={`Delete ${c.title}`}
-                        title="Delete"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {!collapsed && (activeTab === 'roadmap' || activeTab === 'allRoadmaps') && (
-              <div className="mt-6">
-                <div className="mb-3 flex items-center gap-3 text-black/52 px-1">
-                  <Clock3 size={17} />
-                  <p className="text-[15px]">Roadmap History</p>
-                </div>
-
-                <div className="flex flex-col gap-1 border-l border-black/15 pl-6 text-[14px] text-[#1E1E1E]/78">
-                  {roadmaps.map((r) => (
-                    <div key={r.id} className="group flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-white/50">
-                      <button
-                        type="button"
-                        onClick={() => handleRoadmapHistoryClick(r.id)}
-                        className={`flex-1 truncate text-left transition-colors hover:text-[#000]
-                          ${activeRoadmapId === r.id ? 'text-black font-semibold' : ''}`}
-                      >
-                        {r.title}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleRenameRoadmap(r.id, r.title)}
-                        className="opacity-0 transition-opacity group-hover:opacity-100 text-black/35 hover:text-black"
-                        title="Rename Roadmap"
-                      >
-                        <Pencil size={12} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {!collapsed && activeTab === 'projects' && (
-              <div className="mt-6 animate-fade-in">
-                <div className="mb-3 flex items-center justify-between gap-3 text-black/52 px-1">
-                  <div className="flex items-center gap-3">
-                    <FolderGit2 size={17} />
-                    <p className="text-[15px]">My Projects</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleCreateProjectDirectly}
-                    className="hover:text-black text-black/60 transition-colors p-0.5 rounded-md hover:bg-black/5 flex items-center justify-center cursor-pointer"
-                    title="Start New Project"
-                  >
-                    <Plus size={16} />
-                  </button>
-                </div>
-
-                <div className="flex flex-col gap-1 border-l border-black/15 pl-6 text-[14px] text-[#1E1E1E]/78">
-                  {projects.length === 0 ? (
-                    <span className="text-xs text-black/40 italic px-2 py-1">No projects yet.</span>
-                  ) : (
-                    projects.map((p) => (
-                      <div key={p.id} className="group flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-white/50">
-                        <button
-                          type="button"
-                          onClick={() => handleProjectSelect(p.id)}
-                          className={`flex-1 truncate text-left transition-colors hover:text-[#000] cursor-pointer
-                            ${activeProjectId === p.id ? 'text-black font-semibold' : 'text-black/70'}`}
-                        >
-                          📁 {p.title}
-                         </button>
-                        <button
-                          type="button"
-                          onClick={() => handleRenameProject(p.id, p.title)}
-                          className="opacity-0 transition-opacity group-hover:opacity-100 text-black/35 hover:text-black cursor-pointer"
-                          title="Rename Project"
-                        >
-                          <Pencil size={12} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteProject(p.id)}
-                          className="opacity-0 transition-opacity group-hover:opacity-100 text-black/35 hover:text-red-600 ml-1 cursor-pointer"
-                          title="Delete Project"
-                        >
-                          <Trash2 size={13} />
-                        </button>
+                        <span className="truncate pr-2">{c.title || 'Untitled Chat'}</span>
+                        <div className="hidden group-hover:flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRenameChat(c.id, c.title);
+                            }}
+                            className="text-zinc-500 hover:text-zinc-900 p-0.5"
+                            title="Rename"
+                          >
+                            <Pencil size={11} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteChat(c.id);
+                            }}
+                            className="text-zinc-500 hover:text-red-600 p-0.5"
+                            title="Delete"
+                          >
+                            <Trash2 size={11} />
+                          </button>
+                        </div>
                       </div>
-                    ))
-                  )}
+                    );
+                  })}
                 </div>
               </div>
             )}
           </div>
 
-          {/* help and setting */}
-          <div className="mt-4">
-            {!collapsed && <p className="mb-3 text-[15px] text-black/52 px-1">Setting and help</p>}
-            <div className="flex flex-col gap-2">
-              <NavButton text="Setting" icon={Bolt} collapsed={collapsed} active={false} onClick={() => {}} />
-              <NavButton text="Contact Us" icon={UserRound} collapsed={collapsed} active={false} onClick={() => {}} />
-            </div>
+          {/* Setting and Help Section at bottom */}
+          <div className="pt-4 flex flex-col gap-1 border-t border-black/5">
+            {!collapsed && (
+              <p className="mb-2 text-xs font-semibold text-zinc-600 px-2">
+                Setting and Help
+              </p>
+            )}
+            <NavItem
+              text="Setting"
+              icon={Settings}
+              active={false}
+              onClick={() => {}}
+              collapsed={collapsed}
+            />
+            <NavItem
+              text="Contact Us"
+              icon={UserRound}
+              active={false}
+              onClick={() => {}}
+              collapsed={collapsed}
+            />
           </div>
-        </div>
+        </aside>
 
-        {/* right panel with sliding tabs */}
-        <div className="flex flex-1 min-w-0 flex-col rounded-3xl bg-[#EAF2CF] overflow-hidden">
+        {/* ================= RIGHT MAIN VIEWPORT (Matcha Green Container) ================= */}
+        <main className="flex flex-1 min-w-0 flex-col rounded-[28px] bg-[#E5ECC9] overflow-hidden shadow-xs relative">
           <div
             className="flex h-full w-[700%] transition-transform duration-300 ease-in-out"
-            style={{ transform: `translateX(-${activeIndex * (100 / VIEWS.length)}%)` }}
+            style={{
+              transform: `translateX(-${
+                activeIndex * (100 / VIEWS.length)
+              }%)`,
+            }}
           >
-            <div className="w-1/7 h-full px-4 sm:px-6 py-6 sm:py-8 overflow-y-auto no-scrollbar bg-white rounded-3xl">
-              {/* RAG Sources Management */}
-              <div className="flex h-full flex-col gap-6">
+            {/* View 1: Knowledge Sources (RAG Library) */}
+            <div className="w-1/7 h-full p-6 sm:p-8 overflow-y-auto no-scrollbar">
+              <div className="flex h-full flex-col gap-6 max-w-5xl mx-auto bg-white rounded-3xl p-6 sm:p-8 shadow-xs border border-black/5">
                 <div>
-                  <h2 className="text-[22px] font-semibold text-[#1E1E1E]">Knowledge Sources</h2>
-                  <p className="text-sm text-black/50 mt-1">Upload PDF documents or add website URLs to customize ScolarAi's knowledge base.</p>
+                  <h2 className="text-2xl font-bold text-zinc-950 tracking-tight">
+                    Knowledge Sources
+                  </h2>
+                  <p className="text-sm text-zinc-500 mt-1 font-normal leading-relaxed">
+                    Upload research papers (PDF) or add webpage URLs to customize
+                    Avora's first-principles knowledge base.
+                  </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 min-h-0">
-                  {/* Left: Add Source Forms */}
-                  <div className="flex flex-col gap-5">
-                    {/* PDF Uploader Card */}
-                    <div className="border border-black/10 rounded-2xl p-5 bg-black/[0.01] hover:bg-black/[0.02] transition-colors relative flex flex-col items-center justify-center text-center group cursor-pointer min-h-[160px]">
-                      <input
-                        type="file"
-                        accept="application/pdf"
-                        onChange={handlePdfUpload}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        disabled={uploading}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-0">
+                  <div className="lg:col-span-5 flex flex-col gap-5">
+                    <div
+                      onClick={() => fileInputRef.current?.click()}
+                      className="border-2 border-dashed border-zinc-300 hover:border-zinc-500 rounded-2xl p-6 bg-zinc-50 hover:bg-zinc-100/70 transition-all relative flex flex-col items-center justify-center text-center group cursor-pointer min-h-[170px]"
+                    >
+                      <Upload
+                        size={30}
+                        className="text-zinc-400 mb-2 group-hover:scale-110 group-hover:text-zinc-900 transition-all"
                       />
-                      <FileText size={32} className="text-[#1E1E1E]/60 mb-2 group-hover:scale-110 transition-transform" />
-                      <p className="font-semibold text-sm text-[#1E1E1E]">{uploading ? 'Processing file...' : 'Upload PDF Document'}</p>
-                      <p className="text-xs text-black/45 mt-1">Drag and drop or click to browse (Max 20MB)</p>
+                      <p className="font-semibold text-sm text-zinc-900">
+                        {uploading ? 'Processing & Vectorizing...' : 'Upload PDF Document'}
+                      </p>
+                      <p className="text-xs text-zinc-500 mt-1">Supports Papers, Books, Codebases (Max 20MB)</p>
                     </div>
 
-                    {/* URL Input Card */}
-                    <form onSubmit={handleUrlAdd} className="border border-black/10 rounded-2xl p-5 bg-white flex flex-col gap-3.5">
-                      <h3 className="font-semibold text-[14px] text-[#1E1E1E]">Add Webpage Source</h3>
+                    <form
+                      onSubmit={handleUrlAdd}
+                      className="border border-zinc-200 rounded-2xl p-5 bg-white shadow-xs flex flex-col gap-3.5"
+                    >
+                      <h3 className="font-semibold text-xs text-zinc-900">
+                        Add Web Documentation
+                      </h3>
                       <input
                         type="text"
                         placeholder="Optional Title (e.g. React Docs)"
                         value={urlTitleInput}
                         onChange={(e) => setUrlTitleInput(e.target.value)}
-                        className="w-full bg-black/[0.02] border border-black/10 rounded-xl px-3.5 py-2 text-xs text-[#1E1E1E] outline-none focus:border-black/20"
+                        className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-2 text-xs text-zinc-900 outline-none focus:border-zinc-400"
                       />
                       <div className="flex gap-2">
                         <input
@@ -2051,60 +2666,54 @@ const Workspace = () => {
                           placeholder="https://example.com/docs"
                           value={urlInput}
                           onChange={(e) => setUrlInput(e.target.value)}
-                          className="flex-1 bg-black/[0.02] border border-black/10 rounded-xl px-3.5 py-2 text-xs text-[#1E1E1E] outline-none focus:border-black/20"
+                          className="flex-1 bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-2 text-xs text-zinc-900 outline-none focus:border-zinc-400"
                         />
                         <button
                           type="submit"
                           disabled={uploading || !urlInput.trim()}
-                          className="bg-[#A8F35A] hover:bg-[#97db51] text-[#1E1E1E] font-semibold text-xs px-4 py-2.5 rounded-xl transition-colors cursor-pointer disabled:opacity-40"
+                          className="bg-zinc-950 hover:bg-black text-white font-medium text-xs px-4 py-2 rounded-xl transition-colors cursor-pointer disabled:opacity-40"
                         >
-                          Add URL
+                          Add
                         </button>
                       </div>
                     </form>
-
-                    {uploadError && (
-                      <div className="bg-red-500/10 border border-red-500/20 text-red-600 rounded-xl px-4 py-3 text-xs text-center">
-                        {uploadError}
-                      </div>
-                    )}
                   </div>
 
-                  {/* Right: Document List */}
-                  <div className="flex flex-col min-h-0 bg-black/[0.01] border border-black/5 rounded-2xl p-4 overflow-y-auto no-scrollbar">
-                    <h3 className="font-semibold text-sm text-[#1E1E1E] mb-3">Document Library ({documents.length})</h3>
+                  <div className="lg:col-span-7 flex flex-col min-h-0 bg-zinc-50 border border-zinc-200 rounded-2xl p-5 overflow-y-auto no-scrollbar">
+                    <h3 className="font-semibold text-sm text-zinc-900 mb-4">
+                      Document Library ({documents.length})
+                    </h3>
                     {documents.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center flex-1 py-10 text-center text-black/35">
-                        <FileText size={24} className="mb-2 opacity-50" />
-                        <p className="text-xs italic">No sources added yet</p>
+                      <div className="flex flex-col items-center justify-center flex-1 py-12 text-center text-zinc-400">
+                        <FileText size={28} className="mb-2 opacity-50" />
+                        <p className="text-xs">No sources added yet</p>
                       </div>
                     ) : (
                       <div className="flex flex-col gap-2.5">
                         {documents.map((doc) => (
-                          <div key={doc._id} className="flex items-center justify-between gap-3 bg-white border border-black/10 rounded-xl p-3 shadow-sm hover:border-black/15 transition-all">
+                          <div
+                            key={doc._id}
+                            className="flex items-center justify-between gap-3 bg-white border border-zinc-200 rounded-2xl p-3.5 shadow-xs"
+                          >
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-1.5 min-w-0">
-                                <span className={`h-2 w-2 rounded-full shrink-0
-                                  ${doc.status === 'completed' ? 'bg-green-500' : ''}
-                                  ${doc.status === 'failed' ? 'bg-red-500' : ''}
-                                  ${['queued', 'pending', 'processing'].includes(doc.status) ? 'bg-blue-500 animate-pulse' : ''}
-                                `} />
-                                <p className="font-semibold text-xs text-[#1E1E1E] truncate" title={doc.title}>{doc.title}</p>
+                              <p className="font-semibold text-xs text-zinc-900 truncate">
+                                📄 {doc.title}
+                              </p>
+                              <div className="flex items-center gap-2 mt-1 text-[10px] text-zinc-500 font-medium">
+                                <span className="uppercase px-1.5 py-0.5 bg-zinc-100 rounded">
+                                  {doc.sourceType}
+                                </span>
+                                {doc.fileSize && (
+                                  <span>
+                                    {(doc.fileSize / 1024 / 1024).toFixed(2)} MB
+                                  </span>
+                                )}
                               </div>
-                              <div className="flex items-center gap-2 mt-1 text-[10px] text-black/45 font-medium">
-                                <span className="uppercase font-semibold tracking-wider px-1 bg-black/[0.04] rounded">{doc.sourceType}</span>
-                                {doc.fileSize && <span>{(doc.fileSize / 1024 / 1024).toFixed(2)} MB</span>}
-                                {doc.status === 'completed' && <span>{doc.chunkCount} chunks</span>}
-                              </div>
-                              {doc.status === 'failed' && (
-                                <p className="text-[10px] text-red-500/80 mt-1 truncate" title={doc.errorMessage}>Error: {doc.errorMessage}</p>
-                              )}
                             </div>
                             <button
                               type="button"
                               onClick={() => handleDocDelete(doc._id)}
-                              className="text-black/30 hover:text-red-500 hover:bg-red-500/10 p-1.5 rounded-lg transition-colors cursor-pointer shrink-0"
-                              title="Delete source"
+                              className="text-zinc-400 hover:text-red-600 p-1.5 rounded-lg cursor-pointer"
                             >
                               <Trash2 size={14} />
                             </button>
@@ -2116,22 +2725,56 @@ const Workspace = () => {
                 </div>
               </div>
             </div>
-            <div className="w-1/7 h-full px-2 sm:px-6 py-4 sm:py-10">
+
+            {/* View 2: Main AI Chat Panel matching reference screenshot */}
+            <div className="w-1/7 h-full">
               <ChatPanel
                 chat={activeChat}
                 onSend={handleSend}
                 sending={sending}
                 semanticSearchEnabled={semanticSearchEnabled}
-                onToggleSemanticSearch={() => setSemanticSearchEnabled((prev) => !prev)}
+                onToggleSemanticSearch={() =>
+                  setSemanticSearchEnabled((prev) => !prev)
+                }
+                studyModeEnabled={studyModeEnabled}
+                onToggleStudyMode={() =>
+                  setStudyModeEnabled((prev) => !prev)
+                }
+                userName={user?.name || 'Devos'}
+                onTriggerUpload={() => fileInputRef.current?.click()}
               />
             </div>
-            <div className="w-1/7 h-full px-2 sm:px-6 py-4 sm:py-8 overflow-hidden bg-white rounded-3xl">
-              <RoadmapPanel roadmap={activeRoadmap} onToggleTopic={handleToggleTopic} onTopicClick={handleStartTopicLesson} />
+
+            {/* View 3: Roadmap Interactive Tree View */}
+            <div className="w-1/7 h-full">
+              <RoadmapPanel
+                roadmap={activeRoadmap}
+                onToggleTopic={handleToggleTopic}
+                onTopicClick={handleStartTopicLesson}
+              />
             </div>
-            <div className="w-1/7 h-full px-4 sm:px-6 py-6 sm:py-10">
-              <InfoPanel title="Important questions" body="Key questions worth revisiting will be collected here as you chat." />
+
+            {/* View 4: Important Questions View */}
+            <div className="w-1/7 h-full">
+              <QuestionsPanel
+                topic={currentTopic}
+                questions={
+                  currentTopic
+                    ? topicQuestions[currentTopic.toLowerCase().trim()] || []
+                    : []
+                }
+                generating={generatingQuestions}
+                onGenerate={handleGenerateQuestions}
+                onGoToChat={() => setActiveTab('chats')}
+                onAskQuestion={(q) => {
+                  setActiveTab('chats');
+                  handleSend(`Explain this high-yield concept from first principles: ${q}`);
+                }}
+              />
             </div>
-            <div className="w-1/7 h-full px-4 sm:px-6 py-6 sm:py-10">
+
+            {/* View 5: All Chats Overview */}
+            <div className="w-1/7 h-full">
               <ListPanel
                 title="All Chats"
                 items={chats}
@@ -2139,7 +2782,9 @@ const Workspace = () => {
                 emptyLabel="No chats yet — start a new one."
               />
             </div>
-            <div className="w-1/7 h-full px-4 sm:px-6 py-6 sm:py-10">
+
+            {/* View 6: All Roadmaps Overview */}
+            <div className="w-1/7 h-full">
               <ListPanel
                 title="All Roadmaps"
                 items={roadmaps}
@@ -2147,241 +2792,144 @@ const Workspace = () => {
                 emptyLabel="No roadmaps yet."
               />
             </div>
-            <div className="w-1/7 h-full px-4 sm:px-6 py-6 sm:py-10 overflow-y-auto no-scrollbar bg-white rounded-3xl">
+
+            {/* View 7: Project Hub Workspace */}
+            <div className="w-1/7 h-full p-6 sm:p-8 overflow-y-auto no-scrollbar">
               {activeProjectId ? (
                 (() => {
-                  const activeProj = projects.find(p => p.id === activeProjectId);
-                  if (!activeProj) return <p>Loading project details...</p>;
+                  const activeProj = projects.find(
+                    (p) => p.id === activeProjectId
+                  );
+                  if (!activeProj)
+                    return (
+                      <p className="text-zinc-600">
+                        Loading project details...
+                      </p>
+                    );
                   return (
-                    <div className="flex h-full flex-col gap-6">
-                      {/* Back button and title */}
+                    <div className="flex h-full flex-col gap-6 max-w-5xl mx-auto bg-white rounded-3xl p-6 sm:p-8 shadow-xs border border-black/5">
                       <div>
                         <button
                           onClick={() => {
                             setActiveProjectId(null);
                             setActiveTab('projects');
                           }}
-                          className="flex items-center gap-1.5 text-xs text-black/50 hover:text-black mb-3 font-semibold transition-colors cursor-pointer"
+                          className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-950 mb-3 font-semibold transition-colors cursor-pointer"
                         >
                           &larr; Back to All Projects
                         </button>
                         <div className="flex items-center justify-between gap-4">
-                          <h2 className="text-[26px] font-bold text-[#1E1E1E] tracking-tight">{activeProj.title}</h2>
+                          <h2 className="text-2xl sm:text-3xl font-bold text-zinc-950 tracking-tight">
+                            {activeProj.title}
+                          </h2>
                           <div className="flex gap-2">
                             <button
-                              onClick={() => handleRenameProject(activeProj.id, activeProj.title)}
-                              className="p-2 rounded-xl bg-black/[0.03] border border-black/5 text-black/60 hover:text-black hover:bg-black/[0.06] shadow-sm transition-all cursor-pointer"
+                              onClick={() =>
+                                handleRenameProject(
+                                  activeProj.id,
+                                  activeProj.title
+                                )
+                              }
+                              className="p-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-700 transition-colors cursor-pointer"
                               title="Rename Project"
                             >
                               <Pencil size={15} />
                             </button>
                             <button
-                              onClick={() => handleDeleteProject(activeProj.id)}
-                              className="p-2 rounded-xl bg-black/[0.03] border border-black/5 text-red-500/80 hover:text-red-600 hover:bg-red-500/5 shadow-sm transition-all cursor-pointer"
+                              onClick={() =>
+                                handleDeleteProject(activeProj.id)
+                              }
+                              className="p-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 transition-colors cursor-pointer"
                               title="Delete Project"
                             >
                               <Trash2 size={15} />
                             </button>
                           </div>
                         </div>
-                        <p className="text-xs text-black/55 mt-1 leading-relaxed">
-                          Topic: <strong className="font-semibold text-black/85">{activeProj.topic}</strong>
-                          {activeProj.description && ` • ${activeProj.description}`}
+                        <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
+                          Topic:{' '}
+                          <strong className="font-semibold text-zinc-900">
+                            {activeProj.topic}
+                          </strong>
                         </p>
                       </div>
 
-                      {/* Main card - Start New Chat */}
-                      <div className="bg-black/[0.015] border border-black/5 rounded-3xl p-6 text-center flex flex-col items-center justify-center shadow-sm">
-                        <div className="h-11 w-11 rounded-2xl bg-[#A8F35A]/15 border border-[#A8F35A]/30 flex items-center justify-center text-[#5b9610] mb-3">
-                          <MessagesSquare size={22} />
-                        </div>
-                        <h3 className="text-base font-bold text-[#1E1E1E] mb-0.5">New chat in {activeProj.title}</h3>
-                        <p className="text-[11px] text-black/45 max-w-sm mb-4 leading-normal">
-                          Ask questions about your documents, review your custom roadmap, or learn concepts using first-principles.
+                      <div className="bg-[#E5ECC9]/40 border border-black/5 rounded-3xl p-6 text-center flex flex-col items-center justify-center">
+                        <h3 className="text-base font-bold text-zinc-950 mb-1">
+                          New chat in {activeProj.title}
+                        </h3>
+                        <p className="text-xs text-zinc-500 max-w-sm mb-4">
+                          Ask questions about your documents, review your custom
+                          roadmap, or learn concepts.
                         </p>
                         <button
                           onClick={handleStartNewProjectChat}
-                          className="bg-black hover:bg-black/80 text-white font-semibold text-xs px-5 py-2.5 rounded-2xl transition-all shadow-md active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                          className="bg-zinc-950 hover:bg-black text-white font-medium text-xs px-5 py-2.5 rounded-2xl transition-all shadow-sm active:scale-95 flex items-center gap-2 cursor-pointer"
                         >
                           <Plus size={14} /> Start Chat
                         </button>
                       </div>
 
-                      {/* Sub-tab pills */}
                       <div className="flex items-center gap-2 border-b border-black/5 pb-3">
                         <button
                           onClick={() => setProjectSubTab('chats')}
-                          className={`px-4 py-2 rounded-full text-xs font-semibold transition-all cursor-pointer
-                            ${projectSubTab === 'chats' ? 'bg-black text-white shadow-sm' : 'bg-black/[0.04] text-black/60 hover:bg-black/[0.08]'}`}
+                          className={`px-4 py-2 rounded-2xl text-xs font-semibold transition-all cursor-pointer
+                            ${
+                              projectSubTab === 'chats'
+                                ? 'bg-zinc-950 text-white shadow-xs'
+                                : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                            }`}
                         >
                           Chats ({activeProj.chats?.length || 0})
                         </button>
                         <button
                           onClick={() => setProjectSubTab('sources')}
-                          className={`px-4 py-2 rounded-full text-xs font-semibold transition-all cursor-pointer
-                            ${projectSubTab === 'sources' ? 'bg-black text-white shadow-sm' : 'bg-black/[0.04] text-black/60 hover:bg-black/[0.08]'}`}
+                          className={`px-4 py-2 rounded-2xl text-xs font-semibold transition-all cursor-pointer
+                            ${
+                              projectSubTab === 'sources'
+                                ? 'bg-zinc-950 text-white shadow-xs'
+                                : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                            }`}
                         >
                           Sources ({documents.length})
                         </button>
                         <button
                           onClick={() => setProjectSubTab('roadmap')}
-                          className={`px-4 py-2 rounded-full text-xs font-semibold transition-all cursor-pointer
-                            ${projectSubTab === 'roadmap' ? 'bg-black text-white shadow-sm' : 'bg-black/[0.04] text-black/60 hover:bg-black/[0.08]'}`}
+                          className={`px-4 py-2 rounded-2xl text-xs font-semibold transition-all cursor-pointer
+                            ${
+                              projectSubTab === 'roadmap'
+                                ? 'bg-zinc-950 text-white shadow-xs'
+                                : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                            }`}
                         >
                           Roadmap
                         </button>
                       </div>
 
-                      {/* Sub-tab content */}
                       <div className="flex-1 min-h-0">
                         {projectSubTab === 'chats' && (
-                          (!activeProj.chats || activeProj.chats.length === 0) ? (
-                            <div className="flex flex-col items-center justify-center text-center py-10 px-6 border-2 border-dashed border-black/5 rounded-3xl bg-black/[0.005]">
-                              <MessagesSquare size={26} className="text-black/25 mb-1.5" />
-                              <h4 className="text-xs font-bold text-[#1E1E1E] mb-0.5">No chats yet</h4>
-                              <p className="text-[11px] text-black/40">Chats in {activeProj.title} will live here.</p>
-                            </div>
-                          ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-8">
-                              {activeProj.chats.map((c) => (
-                                <div
-                                  key={c.id}
-                                  className="group relative bg-white border border-black/10 rounded-2xl p-4 hover:border-black/20 hover:shadow-sm transition-all flex flex-col justify-between"
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-8">
+                            {activeProj.chats?.map((c) => (
+                              <div
+                                key={c.id}
+                                className="group relative bg-white border border-black/10 rounded-2xl p-4 hover:border-black/20 shadow-xs transition-all flex flex-col justify-between"
+                              >
+                                <button
+                                  onClick={() => {
+                                    setActiveChatId(c.id);
+                                    setActiveTab('chats');
+                                  }}
+                                  className="text-left flex-1 min-w-0 cursor-pointer"
                                 >
-                                  <button
-                                    onClick={() => {
-                                      setActiveChatId(c.id);
-                                      setActiveTab('chats');
-                                    }}
-                                    className="text-left flex-1 min-w-0 cursor-pointer"
-                                  >
-                                    <h4 className="font-bold text-[14px] text-[#1E1E1E] group-hover:text-[#5b9610] transition-colors truncate pr-14" title={c.title}>
-                                      💬 {c.title}
-                                    </h4>
-                                    <p className="text-[11px] text-black/40 mt-1">
-                                      {c.messages?.length || 0} messages
-                                    </p>
-                                  </button>
-                                  <div className="absolute right-3 top-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button
-                                      onClick={() => handleRenameChat(c.id, c.title)}
-                                      className="p-1 rounded-lg bg-black/[0.03] hover:bg-black/[0.08] text-black/60 hover:text-black transition-colors cursor-pointer"
-                                      title="Rename Chat"
-                                    >
-                                      <Pencil size={11} />
-                                    </button>
-                                    <button
-                                      onClick={() => handleDeleteProjectChat(activeProj.id, c.id)}
-                                      className="p-1 rounded-lg bg-black/[0.03] hover:bg-red-500/10 text-black/60 hover:text-red-600 transition-colors cursor-pointer"
-                                      title="Delete Chat"
-                                    >
-                                      <Trash2 size={11} />
-                                    </button>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )
-                        )}
-
-                        {projectSubTab === 'sources' && (
-                          /* Sources list with upload options */
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pb-8">
-                            <div className="md:col-span-1 flex flex-col gap-4">
-                              {/* PDF Uploader Card */}
-                              <div className="border border-black/10 rounded-2xl p-4 bg-black/[0.01] hover:bg-black/[0.02] transition-colors relative flex flex-col items-center justify-center text-center group cursor-pointer min-h-[120px]">
-                                <input
-                                  type="file"
-                                  accept="application/pdf"
-                                  onChange={handlePdfUpload}
-                                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                  disabled={uploading}
-                                />
-                                <FileText size={24} className="text-[#1E1E1E]/60 mb-1.5 group-hover:scale-110 transition-transform" />
-                                <p className="font-semibold text-xs text-[#1E1E1E]">{uploading ? 'Processing...' : 'Upload PDF'}</p>
-                                <p className="text-[9px] text-black/45 mt-0.5">Click to browse (Max 20MB)</p>
+                                  <h4 className="font-bold text-sm text-zinc-900 truncate">
+                                    💬 {c.title}
+                                  </h4>
+                                  <p className="text-xs text-zinc-400 mt-1">
+                                    {c.messages?.length || 0} messages
+                                  </p>
+                                </button>
                               </div>
-
-                              {/* URL Input Card */}
-                              <form onSubmit={handleUrlAdd} className="border border-black/10 rounded-2xl p-4 bg-white flex flex-col gap-2.5">
-                                <h3 className="font-semibold text-xs text-[#1E1E1E]">Add Webpage</h3>
-                                <input
-                                  type="text"
-                                  placeholder="Optional Title"
-                                  value={urlTitleInput}
-                                  onChange={(e) => setUrlTitleInput(e.target.value)}
-                                  className="w-full bg-black/[0.02] border border-black/10 rounded-xl px-3 py-1.5 text-xs text-[#1E1E1E] outline-none focus:border-black/20"
-                                />
-                                <div className="flex gap-2">
-                                  <input
-                                    type="url"
-                                    required
-                                    placeholder="https://example.com"
-                                    value={urlInput}
-                                    onChange={(e) => setUrlInput(e.target.value)}
-                                    className="flex-1 bg-black/[0.02] border border-black/10 rounded-xl px-3 py-1.5 text-xs text-[#1E1E1E] outline-none focus:border-black/20"
-                                  />
-                                  <button
-                                    type="submit"
-                                    disabled={uploading || !urlInput.trim()}
-                                    className="bg-[#A8F35A] hover:bg-[#97db51] text-[#1E1E1E] font-semibold text-[11px] px-3 py-1.5 rounded-xl transition-colors cursor-pointer disabled:opacity-40"
-                                  >
-                                    Add
-                                  </button>
-                                </div>
-                              </form>
-                            </div>
-
-                            <div className="md:col-span-2 flex flex-col min-h-0 bg-black/[0.01] border border-black/5 rounded-2xl p-4">
-                              <h3 className="font-semibold text-xs text-[#1E1E1E] uppercase tracking-wider mb-3">Project Library ({documents.length})</h3>
-                              {documents.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center flex-1 py-6 text-center text-black/35">
-                                  <FileText size={18} className="mb-1 opacity-50" />
-                                  <p className="text-[11px] italic">No sources added yet</p>
-                                </div>
-                              ) : (
-                                <div className="flex flex-col gap-2">
-                                  {documents.map((doc) => (
-                                    <div key={doc._id} className="flex items-center justify-between gap-3 bg-white border border-black/10 rounded-xl p-2.5 shadow-sm hover:border-black/15 transition-all">
-                                      <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-1.5 min-w-0">
-                                          <span className={`h-1.5 w-1.5 rounded-full shrink-0
-                                            ${doc.status === 'completed' ? 'bg-green-500' : ''}
-                                            ${doc.status === 'failed' ? 'bg-red-500' : ''}
-                                            ${['queued', 'pending', 'processing'].includes(doc.status) ? 'bg-blue-500 animate-pulse' : ''}
-                                          `} />
-                                          <p className="font-semibold text-xs text-[#1E1E1E] truncate" title={doc.title}>{doc.title}</p>
-                                        </div>
-                                        <div className="flex items-center gap-2 mt-0.5 text-[9px] text-black/45 font-medium">
-                                          <span className="uppercase font-semibold tracking-wider px-1 bg-black/[0.04] rounded">{doc.sourceType}</span>
-                                          {doc.fileSize && <span>{(doc.fileSize / 1024 / 1024).toFixed(2)} MB</span>}
-                                        </div>
-                                      </div>
-                                      <button
-                                        type="button"
-                                        onClick={() => handleDocDelete(doc._id)}
-                                        className="text-black/30 hover:text-red-500 hover:bg-red-500/10 p-1.5 rounded-lg transition-colors cursor-pointer shrink-0"
-                                        title="Delete source"
-                                      >
-                                        <Trash2 size={13} />
-                                      </button>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-                        {projectSubTab === 'roadmap' && (
-                          <div className="bg-[#EAF2CF]/10 border border-black/5 rounded-3xl p-4 md:p-6 shadow-sm overflow-y-auto max-h-[600px] no-scrollbar">
-                            {activeRoadmap ? (
-                              <RoadmapPanel roadmap={activeRoadmap} onToggleTopic={handleToggleTopic} onTopicClick={handleStartTopicLesson} />
-                            ) : (
-                              <div className="text-center py-10 text-black/35 italic">
-                                No roadmap generated for this project yet.
-                              </div>
-                            )}
+                            ))}
                           </div>
                         )}
                       </div>
@@ -2397,45 +2945,19 @@ const Workspace = () => {
                   action={
                     <button
                       onClick={handleCreateProjectDirectly}
-                      className="bg-black hover:bg-black/80 text-white rounded-xl px-4 py-2 text-sm font-semibold transition-all shadow-sm flex items-center gap-1 shrink-0 cursor-pointer"
+                      className="bg-zinc-950 hover:bg-black text-white rounded-2xl px-5 py-2.5 text-xs font-semibold transition-all shadow-xs flex items-center gap-1.5 shrink-0 cursor-pointer active:scale-95"
                     >
-                      <Plus size={16} /> New Project
+                      <Plus size={15} /> New Project
                     </button>
                   }
                 />
               )}
             </div>
           </div>
-        </div>
+        </main>
       </div>
 
-      {modalData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 animate-fade-in">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl border border-black/5 animate-scale-in">
-            <h3 className="text-[18px] font-semibold text-[#1E1E1E] mb-2">Create Learning Workspace?</h3>
-            <p className="text-[14px] text-black/60 mb-6 leading-relaxed">
-              We generated your roadmap for <strong>{modalData.topic}</strong>. Do you want to create a local workspace folder containing <code>roadmap.md</code> and <code>queries.md</code> files?
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setModalData(null)}
-                className="rounded-xl bg-black/[0.05] hover:bg-black/[0.1] px-4 py-2.5 text-[14px] font-semibold text-black/70 cursor-pointer transition-colors"
-              >
-                No, Skip
-              </button>
-              <button
-                type="button"
-                onClick={handleCreateProject}
-                className="rounded-xl bg-[#A8F35A] hover:bg-[#97db51] px-4 py-2.5 text-[14px] font-semibold text-[#1E1E1E] cursor-pointer transition-colors shadow-sm"
-              >
-                Yes, Create Folder
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
+      {/* Embedded Styles */}
       <style>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -2465,7 +2987,7 @@ const Workspace = () => {
           width: 6px;
           height: 6px;
           border-radius: 999px;
-          background: #1E1E1E;
+          background: #18181b;
           opacity: 0.35;
           animation: thinkingBounce 1s ease-in-out infinite;
         }
@@ -2478,20 +3000,12 @@ const Workspace = () => {
           .msg-in, .typing-caret, .thinking-dot { animation: none; }
         }
 
-        .user-message-bubble p { color: rgba(255, 255, 255, 0.9) !important; }
-        .user-message-bubble li { color: rgba(255, 255, 255, 0.85) !important; }
-        .user-message-bubble li span { color: rgba(255, 255, 255, 0.85) !important; }
-        .user-message-bubble li span.line-through { color: rgba(255, 255, 255, 0.45) !important; }
-        .user-message-bubble a { color: #A8F35A !important; }
-        .user-message-bubble em { color: rgba(255, 255, 255, 0.85) !important; }
+        .user-message-bubble p { color: rgba(255, 255, 255, 0.95) !important; }
+        .user-message-bubble li { color: rgba(255, 255, 255, 0.9) !important; }
+        .user-message-bubble a { color: #60a5fa !important; }
+        .user-message-bubble em { color: rgba(255, 255, 255, 0.9) !important; }
         .user-message-bubble strong { color: #ffffff !important; }
-        .user-message-bubble code { color: #f87171 !important; background-color: rgba(255, 255, 255, 0.1) !important; }
-        .user-message-bubble h1,
-        .user-message-bubble h2,
-        .user-message-bubble h3,
-        .user-message-bubble h4,
-        .user-message-bubble h5,
-        .user-message-bubble h6 { color: #ffffff !important; }
+        .user-message-bubble code { color: #f87171 !important; background-color: rgba(255, 255, 255, 0.12) !important; }
       `}</style>
     </div>
   );
