@@ -10,6 +10,7 @@ import {
     explainTopic,
     listRoadmaps,
     renameRoadmap,
+    deleteRoadmap,
     renameProject,
     deleteProject,
     deleteProjectChat
@@ -27,6 +28,7 @@ router.post("/projects/:id/chats", saveProjectChat);
 router.post("/explain-topic", explainTopic);
 router.get("/roadmaps", listRoadmaps);
 router.patch("/roadmap/:id", renameRoadmap);
+router.delete("/roadmap/:id", deleteRoadmap);
 router.patch("/projects/:id", renameProject);
 router.delete("/projects/:id", deleteProject);
 router.delete("/projects/:id/chats/:chatId", deleteProjectChat);

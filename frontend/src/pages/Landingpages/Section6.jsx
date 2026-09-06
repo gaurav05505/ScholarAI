@@ -57,7 +57,7 @@ const Section6 = () => {
     <section className="relative w-full bg-black py-20 sm:py-28 lg:py-32 px-6 sm:px-12 lg:px-20 overflow-hidden">
       {/* soft radial glow background */}
       <div className="pointer-events-none absolute inset-0 flex justify-center">
-        <div className="h-[500px] w-[800px] rounded-full bg-white/[0.02] blur-3xl" />
+        <div className="h-125 w-200 rounded-full bg-white/2 blur-3xl" />
       </div>
 
       <div className="relative mx-auto max-w-6xl">
@@ -86,7 +86,7 @@ const Section6 = () => {
               scale={plan.recommended}
               className={
                 plan.recommended
-                  ? 'relative flex flex-col rounded-2xl border border-indigo-400/20 bg-gradient-to-b from-neutral-900/90 via-neutral-950 to-indigo-950/40 p-8 sm:p-9 shadow-[0_0_16px_rgba(79,70,229,0.18)] z-10'
+                  ? 'relative flex flex-col rounded-2xl border border-indigo-400/20 bg-linear-to-b from-neutral-900/90 via-neutral-950 to-indigo-950/40 p-8 sm:p-9 shadow-[0_0_16px_rgba(79,70,229,0.18)] z-10'
                   : 'relative flex flex-col rounded-2xl border border-white/10 bg-neutral-950 p-7 sm:p-8 md:mt-8'
               }
             >

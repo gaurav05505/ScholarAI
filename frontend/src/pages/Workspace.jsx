@@ -53,6 +53,7 @@ import {
   Search,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useTheme } from '../context/ThemeContext.jsx';
 
 const API_URL = 'http://localhost:5000/api/chat';
 
@@ -83,7 +84,7 @@ function renderInline(text, keyBase) {
           src={match[3]}
           alt={match[2] || ''}
           loading="lazy"
-          className="my-3 max-w-full rounded-2xl border border-black/10 shadow-sm"
+          className="my-3 max-w-full rounded-2xl border border-black/10 dark:border-[#25282D] shadow-sm"
         />
       );
     } else if (match[4] !== undefined) {
@@ -93,7 +94,7 @@ function renderInline(text, keyBase) {
           href={match[6]}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-[#2563eb] hover:underline font-medium inline-flex items-center gap-1"
+          className="text-[#2563eb] dark:text-[#60a5fa] hover:underline font-medium inline-flex items-center gap-1"
         >
           {match[5]}
           <ExternalLink size={12} className="inline opacity-70" />
@@ -101,19 +102,19 @@ function renderInline(text, keyBase) {
       );
     } else if (match[7] !== undefined) {
       nodes.push(
-        <strong key={key} className="font-semibold text-zinc-950">
+        <strong key={key} className="font-semibold text-zinc-950 dark:text-[#E5E7EB]">
           <em>{match[8]}</em>
         </strong>
       );
     } else if (match[9] !== undefined) {
       nodes.push(
-        <strong key={key} className="font-semibold text-zinc-950">
+        <strong key={key} className="font-semibold text-zinc-950 dark:text-[#E5E7EB]">
           {match[10]}
         </strong>
       );
     } else if (match[11] !== undefined) {
       nodes.push(
-        <em key={key} className="italic text-zinc-800">
+        <em key={key} className="italic text-zinc-800 dark:text-[#8B9099]">
           {match[12]}
         </em>
       );
@@ -121,7 +122,7 @@ function renderInline(text, keyBase) {
       nodes.push(
         <code
           key={key}
-          className="rounded-lg bg-black/[0.06] px-1.5 py-0.5 text-[0.875em] font-mono font-medium text-red-600"
+          className="rounded-lg bg-black/[0.06] dark:bg-white/10 px-1.5 py-0.5 text-[0.875em] font-mono font-medium text-red-600 dark:text-red-400"
         >
           {match[14]}
         </code>
@@ -151,13 +152,13 @@ const CodeBlock = memo(({ language, code }) => {
   }, [code]);
 
   return (
-    <div className="my-4 overflow-hidden rounded-2xl border border-zinc-800 bg-[#121316] shadow-md text-left">
-      <div className="flex items-center justify-between border-b border-zinc-800 bg-zinc-900/90 px-4 py-2 text-[11px] font-mono text-zinc-400 tracking-wider">
+    <div className="my-4 overflow-hidden rounded-2xl border border-zinc-800 dark:border-[#25282D] bg-[#121316] dark:bg-[#0B0D10] shadow-md text-left">
+      <div className="flex items-center justify-between border-b border-zinc-800 dark:border-[#25282D] bg-zinc-900/90 dark:bg-[#111316] px-4 py-2 text-[11px] font-mono text-zinc-400 dark:text-[#8B9099] tracking-wider">
         <span>{language ? language.toUpperCase() : 'CODE'}</span>
         <button
           type="button"
           onClick={handleCopy}
-          className="flex items-center gap-1.5 rounded-lg bg-white/10 px-2.5 py-1 text-[11px] font-medium text-zinc-200 transition-colors hover:bg-white/20 active:scale-95 cursor-pointer"
+          className="flex items-center gap-1.5 rounded-lg bg-white/10 dark:bg-white/5 px-2.5 py-1 text-[11px] font-medium text-zinc-200 dark:text-[#E5E7EB] transition-colors hover:bg-white/20 dark:hover:bg-white/10 active:scale-95 cursor-pointer"
         >
           {copied ? (
             <>
@@ -172,7 +173,7 @@ const CodeBlock = memo(({ language, code }) => {
           )}
         </button>
       </div>
-      <pre className="overflow-x-auto p-4 text-[13.5px] leading-relaxed text-emerald-300 font-mono whitespace-pre">
+      <pre className="overflow-x-auto p-4 text-[13.5px] leading-relaxed text-emerald-300 dark:text-[#6EE7B7] font-mono whitespace-pre">
         <code>{code}</code>
       </pre>
     </div>
@@ -200,12 +201,12 @@ function renderMarkdownBlocks(text, segmentIdx) {
         const level = match[1].length;
         const textContent = match[2];
         const headingClasses = {
-          1: 'text-2xl font-bold mt-6 mb-3 text-zinc-950 border-b border-black/10 pb-2 tracking-tight',
-          2: 'text-xl font-semibold mt-5 mb-2.5 text-zinc-950 tracking-tight',
-          3: 'text-lg font-semibold mt-4.5 mb-2 text-zinc-900',
-          4: 'text-base font-medium mt-4 mb-2 text-zinc-800',
-          5: 'text-sm font-medium mt-3.5 mb-1.5 text-zinc-700',
-          6: 'text-xs font-medium mt-3 mb-1.5 text-zinc-600 uppercase tracking-wider',
+          1: 'text-2xl font-bold mt-6 mb-3 text-zinc-950 dark:text-[#E5E7EB] border-b border-black/10 dark:border-[#25282D] pb-2 tracking-tight',
+          2: 'text-xl font-semibold mt-5 mb-2.5 text-zinc-950 dark:text-[#E5E7EB] tracking-tight',
+          3: 'text-lg font-semibold mt-4.5 mb-2 text-zinc-900 dark:text-[#E5E7EB]',
+          4: 'text-base font-medium mt-4 mb-2 text-zinc-800 dark:text-[#D1D5DB]',
+          5: 'text-sm font-medium mt-3.5 mb-1.5 text-zinc-700 dark:text-[#9CA3AF]',
+          6: 'text-xs font-medium mt-3 mb-1.5 text-zinc-600 dark:text-[#8B9099] uppercase tracking-wider',
         };
         const Tag = `h${level}`;
         blocks.push(
@@ -216,14 +217,14 @@ function renderMarkdownBlocks(text, segmentIdx) {
       }
     } else if (currentBlockType === 'hr') {
       blocks.push(
-        <hr key={key} className="my-6 border-0 border-t border-black/10" />
+        <hr key={key} className="my-6 border-0 border-t border-black/10 dark:border-[#25282D]" />
       );
     } else if (currentBlockType === 'blockquote') {
       const content = accumulatedLines.join('\n');
       blocks.push(
         <blockquote
           key={key}
-          className="my-4 border-l-4 border-zinc-900 bg-black/[0.03] px-4 py-2.5 text-[14.5px] italic text-zinc-700 rounded-r-xl"
+          className="my-4 border-l-4 border-zinc-900 dark:border-[#3B82F6] bg-black/[0.03] dark:bg-white/[0.03] px-4 py-2.5 text-[14.5px] italic text-zinc-700 dark:text-[#8B9099] rounded-r-xl"
         >
           {renderMarkdownBlocks(content, `${segmentIdx}-quote`)}
         </blockquote>
@@ -250,31 +251,31 @@ function renderMarkdownBlocks(text, segmentIdx) {
         blocks.push(
           <div
             key={key}
-            className="my-4 w-full overflow-x-auto rounded-2xl border border-black/10 bg-white shadow-xs"
+            className="my-4 w-full overflow-x-auto rounded-2xl border border-black/10 dark:border-[#25282D] bg-white dark:bg-[#111316] shadow-xs"
           >
-            <table className="w-full border-collapse text-left text-sm text-zinc-900">
+            <table className="w-full border-collapse text-left text-sm text-zinc-900 dark:text-[#E5E7EB]">
               <thead>
-                <tr className="border-b border-black/10 bg-black/[0.02] font-semibold text-zinc-950">
+                <tr className="border-b border-black/10 dark:border-[#25282D] bg-black/[0.02] dark:bg-white/[0.02] font-semibold text-zinc-950 dark:text-[#E5E7EB]">
                   {headers.map((h, i) => (
                     <th
                       key={`th-${i}`}
-                      className="px-4 py-3 font-semibold border-r last:border-r-0 border-black/5"
+                      className="px-4 py-3 font-semibold border-r last:border-r-0 border-black/5 dark:border-[#25282D]"
                     >
                       {renderInline(h, `${key}-h-${i}`)}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-black/5">
+              <tbody className="divide-y divide-black/5 dark:divide-[#25282D]">
                 {rows.map((row, rIdx) => (
                   <tr
                     key={`tr-${rIdx}`}
-                    className="hover:bg-black/[0.01] transition-colors odd:bg-white even:bg-black/[0.01]"
+                    className="hover:bg-black/[0.01] dark:hover:bg-white/[0.02] transition-colors odd:bg-white dark:odd:bg-[#111316] even:bg-black/[0.01] dark:even:bg-white/[0.02]"
                   >
                     {row.map((cell, cIdx) => (
                       <td
                         key={`td-${rIdx}-${cIdx}`}
-                        className="px-4 py-2.5 text-zinc-700 border-r last:border-r-0 border-black/5"
+                        className="px-4 py-2.5 text-zinc-700 dark:text-[#D1D5DB] border-r last:border-r-0 border-black/5 dark:border-[#25282D]"
                       >
                         {renderInline(cell, `${key}-r-${rIdx}-c-${cIdx}`)}
                       </td>
@@ -304,19 +305,19 @@ function renderMarkdownBlocks(text, segmentIdx) {
             <li
               key={itemKey}
               style={{ paddingLeft: `${indentSpaces * 4}px` }}
-              className="flex items-start gap-2.5 my-1 text-zinc-800 list-none"
+              className="flex items-start gap-2.5 my-1 text-zinc-800 dark:text-[#D1D5DB] list-none"
             >
               <input
                 type="checkbox"
                 checked={checked}
                 readOnly
-                className="mt-1 h-4 w-4 rounded-md border-black/20 text-zinc-950 focus:ring-0 cursor-default accent-zinc-950"
+                className="mt-1 h-4 w-4 rounded-md border-black/20 dark:border-[#25282D] text-zinc-950 dark:text-[#3B82F6] focus:ring-0 cursor-default accent-zinc-950 dark:accent-[#3B82F6]"
               />
               <span
                 className={
                   checked
-                    ? 'line-through text-zinc-400'
-                    : 'text-zinc-800'
+                    ? 'line-through text-zinc-400 dark:text-zinc-600'
+                    : 'text-zinc-800 dark:text-[#D1D5DB]'
                 }
               >
                 {renderInline(taskContent, itemKey)}
@@ -329,7 +330,7 @@ function renderMarkdownBlocks(text, segmentIdx) {
           <li
             key={itemKey}
             style={{ paddingLeft: `${indentSpaces * 4}px` }}
-            className="my-0.5 leading-relaxed text-zinc-800"
+            className="my-0.5 leading-relaxed text-zinc-800 dark:text-[#D1D5DB]"
           >
             {renderInline(textContent, itemKey)}
           </li>
@@ -340,7 +341,7 @@ function renderMarkdownBlocks(text, segmentIdx) {
         blocks.push(
           <ol
             key={key}
-            className="my-3 list-decimal space-y-1.5 pl-6 text-[14.5px]"
+            className="my-3 list-decimal space-y-1.5 pl-6 text-[14.5px] text-zinc-800 dark:text-[#D1D5DB]"
           >
             {items}
           </ol>
@@ -352,7 +353,7 @@ function renderMarkdownBlocks(text, segmentIdx) {
         blocks.push(
           <ul
             key={key}
-            className={`my-3 space-y-1.5 text-[14.5px] ${
+            className={`my-3 space-y-1.5 text-[14.5px] text-zinc-800 dark:text-[#D1D5DB] ${
               containsTasks ? 'pl-1.5' : 'list-disc pl-6'
             }`}
           >
@@ -365,7 +366,7 @@ function renderMarkdownBlocks(text, segmentIdx) {
       blocks.push(
         <p
           key={key}
-          className="my-2.5 leading-relaxed text-[14.5px] text-zinc-850 whitespace-pre-line"
+          className="my-2.5 leading-relaxed text-[14.5px] text-zinc-850 dark:text-[#D1D5DB] whitespace-pre-line"
         >
           {renderInline(pText, key)}
         </p>
@@ -469,17 +470,17 @@ const NavItem = memo(({ text, icon: Icon, active, onClick, collapsed, badge }) =
     className={`flex w-full items-center justify-between rounded-2xl px-3.5 py-2.5 text-sm font-medium transition-colors cursor-pointer select-none group
       ${
         active
-          ? 'bg-white text-zinc-950 font-semibold shadow-xs'
-          : 'text-zinc-750 hover:text-zinc-950 hover:bg-white/40'
+          ? 'bg-white text-zinc-950 font-semibold shadow-xs dark:bg-[#1A1D21] dark:text-[#E5E7EB] dark:border dark:border-[#25282D]'
+          : 'text-zinc-750 hover:text-zinc-950 hover:bg-white/40 dark:text-[#8B9099] dark:hover:text-[#E5E7EB] dark:hover:bg-[#1A1D21]/60'
       }
       ${collapsed ? 'justify-center px-0' : ''}`}
   >
     <div className="flex items-center gap-3.5 min-w-0">
-      <Icon size={18} className="shrink-0 text-zinc-800 group-hover:scale-105 transition-transform" strokeWidth={1.8} />
+      <Icon size={18} className="shrink-0 text-zinc-800 dark:text-[#8B9099] group-hover:scale-105 group-hover:text-black dark:group-hover:text-[#E5E7EB] transition-transform" strokeWidth={1.8} />
       {!collapsed && <span className="truncate">{text}</span>}
     </div>
     {!collapsed && badge !== undefined && (
-      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-black/5 text-zinc-700">
+      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-black/5 text-zinc-700 dark:bg-white/10 dark:text-[#E5E7EB]">
         {badge}
       </span>
     )}
@@ -505,13 +506,13 @@ const VIEWS = [
 
 const InfoPanel = memo(({ title, body, icon: Icon = Sparkles, action }) => (
   <div className="flex h-full flex-col items-center justify-center text-center px-6">
-    <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/80 border border-black/5 text-zinc-800 shadow-xs">
+    <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/80 dark:bg-[#16191D] border border-black/5 dark:border-[#25282D] text-zinc-800 dark:text-[#E5E7EB] shadow-xs">
       <Icon size={26} strokeWidth={1.75} />
     </div>
-    <h2 className="text-xl sm:text-2xl font-bold text-zinc-900 tracking-tight">
+    <h2 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-[#E5E7EB] tracking-tight">
       {title}
     </h2>
-    <p className="mt-2 max-w-sm text-sm text-zinc-600 leading-relaxed">
+    <p className="mt-2 max-w-sm text-sm text-zinc-600 dark:text-[#8B9099] leading-relaxed">
       {body}
     </p>
     {action && <div className="mt-5">{action}</div>}
@@ -521,14 +522,14 @@ const InfoPanel = memo(({ title, body, icon: Icon = Sparkles, action }) => (
 const ListPanel = memo(({ title, items, onOpen, emptyLabel, action }) => (
   <div className="flex h-full flex-col p-6 sm:p-8">
     <div className="flex items-center justify-between mb-6">
-      <h2 className="text-xl sm:text-2xl font-bold text-zinc-900 tracking-tight">
+      <h2 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-[#E5E7EB] tracking-tight">
         {title}
       </h2>
       {action}
     </div>
     {items.length === 0 ? (
-      <div className="flex-1 flex flex-col items-center justify-center text-center p-8 border-2 border-dashed border-black/10 rounded-3xl bg-white/40">
-        <p className="text-sm text-zinc-500 mb-4">{emptyLabel}</p>
+      <div className="flex-1 flex flex-col items-center justify-center text-center p-8 border-2 border-dashed border-black/10 dark:border-[#25282D] rounded-3xl bg-white/40 dark:bg-[#16191D]/50">
+        <p className="text-sm text-zinc-500 dark:text-[#8B9099] mb-4">{emptyLabel}</p>
         {action}
       </div>
     ) : (
@@ -539,13 +540,13 @@ const ListPanel = memo(({ title, items, onOpen, emptyLabel, action }) => (
               key={item.id}
               type="button"
               onClick={() => onOpen(item.id)}
-              className="text-left rounded-2xl bg-white p-5 transition-all hover:shadow-sm cursor-pointer group border border-black/5"
+              className="text-left rounded-2xl bg-white dark:bg-[#16191D] dark:hover:bg-[#1A1D21] p-5 transition-all hover:shadow-sm cursor-pointer group border border-black/5 dark:border-[#25282D]"
             >
-              <p className="text-base font-semibold text-zinc-900 group-hover:text-black truncate">
+              <p className="text-base font-semibold text-zinc-900 dark:text-[#E5E7EB] group-hover:text-black dark:group-hover:text-white truncate">
                 {item.title}
               </p>
               {'messages' in item && (
-                <p className="mt-1 text-xs text-zinc-400">
+                <p className="mt-1 text-xs text-zinc-400 dark:text-[#8B9099]">
                   {item.messages.length === 0
                     ? 'No messages yet'
                     : `${item.messages.length} messages`}
@@ -561,127 +562,333 @@ const ListPanel = memo(({ title, items, onOpen, emptyLabel, action }) => (
 
 /* ---------- Roadmap Tree Component ---------- */
 
-const RoadmapPanel = memo(({ roadmap, onToggleTopic, onTopicClick }) => {
-  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
-
-  if (!roadmap) {
-    return (
-      <InfoPanel
-        title="Learning Roadmap"
-        body="Your personalized, first-principles learning path will appear here as soon as you generate one in the AI Chat."
-        icon={Map}
-      />
-    );
-  }
-
-  if (!roadmap.phases || roadmap.phases.length === 0) {
-    return (
-      <div className="flex h-full flex-col items-center justify-center text-center px-6">
-        <h2 className="text-xl sm:text-2xl font-semibold text-zinc-900">
-          {roadmap.title}
-        </h2>
-        <p className="mt-2 max-w-sm text-sm text-zinc-500">
-          Loading your custom learning roadmap...
-        </p>
-      </div>
-    );
-  }
-
-  let totalTopics = 0;
-  let completedTopics = 0;
-  roadmap.phases.forEach((phase) => {
-    phase.modules.forEach((mod) => {
-      mod.topics.forEach((topic) => {
-        totalTopics++;
-        if (topic.completed) {
-          completedTopics++;
-        }
+const getRoadmapProgress = (rm) => {
+  if (!rm || !rm.phases || rm.phases.length === 0) return 0;
+  let total = 0;
+  let completed = 0;
+  rm.phases.forEach((p) => {
+    p.modules?.forEach((m) => {
+      m.topics?.forEach((t) => {
+        total++;
+        if (t.completed) completed++;
       });
     });
   });
+  return total > 0 ? Math.round((completed / total) * 100) : 0;
+};
 
-  const progressPercent =
-    totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
+const RoadmapPanel = memo(
+  ({
+    roadmaps = [],
+    activeRoadmapId,
+    onSelectRoadmap,
+    onRenameRoadmap,
+    onDeleteRoadmap,
+    roadmap,
+    onToggleTopic,
+    onTopicClick,
+  }) => {
+    const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const dropdownRef = useRef(null);
 
-  return (
-    <div className="flex h-full flex-col overflow-hidden px-4 sm:px-6 py-6 sm:py-8 bg-transparent">
-      {/* Title block */}
-      <div className="mb-6 rounded-3xl bg-white p-5 sm:p-6 border border-black/5 shadow-xs shrink-0 transition-all duration-300 relative overflow-hidden">
-        {/* Toggle Collapse/Expand Button */}
-        <button
-          type="button"
-          onClick={() => setIsHeaderCollapsed((prev) => !prev)}
-          className="absolute right-4 top-4 rounded-xl p-1.5 bg-black/[0.04] hover:bg-black/[0.08] text-zinc-600 transition-colors cursor-pointer"
-          title={isHeaderCollapsed ? 'Expand Info' : 'Minimize Info'}
-        >
-          {isHeaderCollapsed ? (
-            <ChevronDown size={18} />
-          ) : (
-            <ChevronDown size={18} className="rotate-180" />
+    useEffect(() => {
+      function handleClickOutside(event) {
+        if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+          setIsDropdownOpen(false);
+        }
+      }
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    if (!roadmap && (!roadmaps || roadmaps.length === 0)) {
+      return (
+        <InfoPanel
+          title="Learning Roadmap"
+          body="Your personalized, first-principles learning path will appear here as soon as you generate one in the AI Chat."
+          icon={Map}
+        />
+      );
+    }
+
+    if (!roadmap || !roadmap.phases || roadmap.phases.length === 0) {
+      return (
+        <div className="flex h-full flex-col overflow-hidden px-4 sm:px-6 py-6 sm:py-8 bg-transparent">
+          {roadmaps.length > 1 && (
+            <div className="mb-4 flex items-center gap-2 overflow-x-auto no-scrollbar shrink-0">
+              {roadmaps.map((r, idx) => {
+                const isCurrent = r.id === (roadmap?.id || activeRoadmapId);
+                return (
+                  <button
+                    key={r.id || idx}
+                    type="button"
+                    onClick={() => onSelectRoadmap && onSelectRoadmap(r.id)}
+                    className={`whitespace-nowrap rounded-xl px-3 py-1.5 text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5
+                      ${
+                        isCurrent
+                          ? 'bg-zinc-950 text-white shadow-xs dark:bg-[#1E3A8A] font-semibold'
+                          : 'bg-white dark:bg-[#16191D] text-zinc-600 dark:text-[#8B9099] hover:text-zinc-950 dark:hover:text-[#E5E7EB] border border-black/5 dark:border-[#25282D]'
+                      }`}
+                  >
+                    <Map size={11} className="shrink-0" />
+                    <span className="max-w-[140px] truncate">
+                      {r.title || `Roadmap ${idx + 1}`}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           )}
-        </button>
-
-        {isHeaderCollapsed ? (
-          <div className="flex flex-row items-center justify-between pr-8 gap-4">
-            <div className="flex items-center gap-3 truncate">
-              <span className="rounded-full bg-[#E5ECC9] text-zinc-900 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider shrink-0">
-                {roadmap.topic || 'Path'}
-              </span>
-              <h2 className="text-base font-bold text-zinc-950 truncate leading-none">
-                {roadmap.title}
-              </h2>
-            </div>
-
-            <div className="flex items-center gap-3 shrink-0">
-              <span className="text-xs font-bold text-zinc-900">
-                {progressPercent}%
-              </span>
-              <div className="h-2 w-20 sm:w-28 rounded-full bg-black/10 overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-zinc-950 transition-all duration-500 ease-out"
-                  style={{ width: `${progressPercent}%` }}
-                />
-              </div>
-            </div>
+          <div className="flex-1 flex flex-col items-center justify-center text-center px-6">
+            <h2 className="text-xl sm:text-2xl font-semibold text-zinc-900 dark:text-[#E5E7EB]">
+              {roadmap?.title || 'Learning Roadmap'}
+            </h2>
+            <p className="mt-2 max-w-sm text-sm text-zinc-500 dark:text-[#8B9099]">
+              Loading your custom learning roadmap...
+            </p>
           </div>
-        ) : (
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pr-6">
-            <div>
-              <span className="rounded-full bg-[#E5ECC9] px-3 py-1 text-xs font-semibold uppercase text-zinc-800 tracking-wider">
-                {roadmap.topic || 'Learning Path'}
-              </span>
-              <h2 className="mt-3 text-2xl font-bold text-zinc-950 leading-snug">
-                {roadmap.title}
-              </h2>
-              <p className="mt-2 text-sm text-zinc-600 leading-relaxed max-w-2xl font-normal">
-                {roadmap.description}
-              </p>
-            </div>
-            <div className="flex flex-col items-end justify-center shrink-0 min-w-[120px] self-start sm:self-center">
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-3xl font-bold text-zinc-950">
-                  {progressPercent}%
+        </div>
+      );
+    }
+
+    const progressPercent = getRoadmapProgress(roadmap);
+
+    return (
+      <div className="flex h-full flex-col overflow-hidden px-4 sm:px-6 py-6 sm:py-8 bg-transparent">
+        {/* Top Switcher Bar */}
+        {roadmaps && roadmaps.length > 0 && (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2.5 shrink-0">
+            {/* Roadmap Selector Dropdown */}
+            <div className="relative" ref={dropdownRef}>
+              <button
+                type="button"
+                onClick={() => setIsDropdownOpen((prev) => !prev)}
+                className="flex items-center gap-2 rounded-2xl bg-white dark:bg-[#16191D] hover:bg-zinc-50 dark:hover:bg-[#1A1D21] border border-black/10 dark:border-[#25282D] px-3.5 py-2 text-xs font-semibold text-zinc-900 dark:text-[#E5E7EB] shadow-2xs transition-all cursor-pointer group"
+                title="Switch between your learning roadmaps"
+              >
+                <Compass size={14} className="text-zinc-700 dark:text-[#3B82F6] shrink-0" />
+                <span className="max-w-[170px] sm:max-w-[240px] truncate">
+                  {roadmap?.title || 'Select Roadmap'}
                 </span>
-                <span className="text-xs text-zinc-500 uppercase font-semibold">
-                  Completed
+                <span className="rounded-full bg-zinc-100 dark:bg-[#22252A] text-zinc-600 dark:text-[#8B9099] px-2 py-0.5 text-[10px] font-bold shrink-0">
+                  {roadmaps.findIndex((r) => r.id === roadmap.id) + 1} / {roadmaps.length}
                 </span>
-              </div>
-              <div className="mt-2.5 h-2.5 w-full rounded-full bg-black/10 overflow-hidden min-w-[120px]">
-                <div
-                  className="h-full rounded-full bg-zinc-950 transition-all duration-500 ease-out"
-                  style={{ width: `${progressPercent}%` }}
+                <ChevronDown
+                  size={13}
+                  className={`text-zinc-500 dark:text-[#8B9099] transition-transform duration-200 shrink-0 ${
+                    isDropdownOpen ? 'rotate-180' : ''
+                  }`}
                 />
+              </button>
+
+              {/* Dropdown Menu */}
+              {isDropdownOpen && (
+                <div className="absolute left-0 top-full mt-2 w-72 sm:w-80 max-h-80 overflow-y-auto rounded-2xl bg-white dark:bg-[#16191D] border border-black/10 dark:border-[#25282D] shadow-xl z-50 p-2 no-scrollbar">
+                  <div className="px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-[#8B9099] border-b border-black/5 dark:border-[#25282D] flex items-center justify-between">
+                    <span>Switch Roadmap</span>
+                    <span>{roadmaps.length} Total</span>
+                  </div>
+                  <div className="flex flex-col gap-1 mt-1">
+                    {roadmaps.map((r, idx) => {
+                      const isCurrent = r.id === roadmap.id;
+                      const progress = getRoadmapProgress(r);
+                      return (
+                        <div
+                          key={r.id || idx}
+                          onClick={() => {
+                            onSelectRoadmap && onSelectRoadmap(r.id);
+                            setIsDropdownOpen(false);
+                          }}
+                          className={`group flex items-center justify-between rounded-xl px-3 py-2 text-xs transition-all cursor-pointer
+                            ${
+                              isCurrent
+                                ? 'bg-[#E5ECC9] text-zinc-950 font-bold dark:bg-[#1E3A8A] dark:text-white shadow-xs'
+                                : 'text-zinc-700 dark:text-[#E5E7EB] hover:bg-black/[0.04] dark:hover:bg-[#22252A]'
+                            }`}
+                        >
+                          <div className="flex-1 min-w-0 pr-2">
+                            <div className="flex items-center gap-1.5 truncate">
+                              {isCurrent && (
+                                <Check size={13} className="shrink-0 text-zinc-900 dark:text-white" />
+                              )}
+                              <span className="truncate">{r.title || 'Untitled Roadmap'}</span>
+                            </div>
+                            <p
+                              className={`text-[10px] mt-0.5 truncate ${
+                                isCurrent
+                                  ? 'text-zinc-700 dark:text-blue-200'
+                                  : 'text-zinc-400 dark:text-[#8B9099]'
+                              }`}
+                            >
+                              {r.topic ? `Topic: ${r.topic} • ` : ''}{progress}% completed
+                            </p>
+                          </div>
+                          <div
+                            className="flex items-center gap-1 shrink-0"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {onRenameRoadmap && (
+                              <button
+                                type="button"
+                                onClick={() => onRenameRoadmap(r.id, r.title)}
+                                className="p-1 rounded-md text-zinc-400 hover:text-zinc-900 dark:text-[#8B9099] dark:hover:text-white transition-colors cursor-pointer"
+                                title="Rename"
+                              >
+                                <Pencil size={11} />
+                              </button>
+                            )}
+                            {onDeleteRoadmap && (
+                              <button
+                                type="button"
+                                onClick={() => onDeleteRoadmap(r.id)}
+                                className="p-1 rounded-md text-zinc-400 hover:text-red-600 dark:text-[#8B9099] dark:hover:text-red-400 transition-colors cursor-pointer"
+                                title="Delete"
+                              >
+                                <Trash2 size={11} />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Quick Pills for Multiple Roadmaps */}
+            {roadmaps.length > 1 && (
+              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar max-w-[calc(100%-120px)]">
+                {roadmaps.map((r, idx) => {
+                  const isCurrent = r.id === roadmap.id;
+                  return (
+                    <button
+                      key={r.id || idx}
+                      type="button"
+                      onClick={() => onSelectRoadmap && onSelectRoadmap(r.id)}
+                      className={`whitespace-nowrap rounded-xl px-3 py-1.5 text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 shrink-0
+                        ${
+                          isCurrent
+                            ? 'bg-zinc-950 text-white shadow-xs dark:bg-[#1E3A8A] font-semibold'
+                            : 'bg-white dark:bg-[#16191D] text-zinc-600 dark:text-[#8B9099] hover:text-zinc-950 dark:hover:text-[#E5E7EB] border border-black/5 dark:border-[#25282D]'
+                        }`}
+                    >
+                      <Map size={11} className="shrink-0" />
+                      <span className="max-w-[130px] truncate">
+                        {r.title || `Roadmap ${idx + 1}`}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
+            )}
+
+            {/* Actions for current roadmap */}
+            <div className="flex items-center gap-1.5 ml-auto">
+              {onRenameRoadmap && (
+                <button
+                  type="button"
+                  onClick={() => onRenameRoadmap(roadmap.id, roadmap.title)}
+                  className="flex items-center gap-1.5 rounded-xl bg-white dark:bg-[#16191D] hover:bg-zinc-50 dark:hover:bg-[#1A1D21] border border-black/5 dark:border-[#25282D] px-2.5 py-1.5 text-xs font-medium text-zinc-700 dark:text-[#8B9099] dark:hover:text-[#E5E7EB] transition-colors cursor-pointer"
+                  title="Rename roadmap"
+                >
+                  <Pencil size={12} />
+                  <span className="hidden sm:inline">Rename</span>
+                </button>
+              )}
+              {onDeleteRoadmap && (
+                <button
+                  type="button"
+                  onClick={() => onDeleteRoadmap(roadmap.id)}
+                  className="flex items-center gap-1.5 rounded-xl bg-white dark:bg-[#16191D] hover:bg-red-50 dark:hover:bg-red-950/40 border border-black/5 dark:border-[#25282D] px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:text-red-600 dark:text-[#8B9099] dark:hover:text-red-400 transition-colors cursor-pointer"
+                  title="Delete roadmap"
+                >
+                  <Trash2 size={12} />
+                  <span className="hidden sm:inline">Delete</span>
+                </button>
+              )}
             </div>
           </div>
         )}
-      </div>
+
+        {/* Title block */}
+        <div className="mb-6 rounded-3xl bg-white dark:bg-[#16191D] p-5 sm:p-6 border border-black/5 dark:border-[#25282D] shadow-xs shrink-0 transition-all duration-300 relative overflow-hidden">
+          {/* Toggle Collapse/Expand Button */}
+          <button
+            type="button"
+            onClick={() => setIsHeaderCollapsed((prev) => !prev)}
+            className="absolute right-4 top-4 rounded-xl p-1.5 bg-black/[0.04] dark:bg-white/[0.06] hover:bg-black/[0.08] dark:hover:bg-white/[0.1] text-zinc-600 dark:text-[#8B9099] transition-colors cursor-pointer"
+            title={isHeaderCollapsed ? 'Expand Info' : 'Minimize Info'}
+          >
+            {isHeaderCollapsed ? (
+              <ChevronDown size={18} />
+            ) : (
+              <ChevronDown size={18} className="rotate-180" />
+            )}
+          </button>
+
+          {isHeaderCollapsed ? (
+            <div className="flex flex-row items-center justify-between pr-8 gap-4">
+              <div className="flex items-center gap-3 truncate">
+                <span className="rounded-full bg-[#E5ECC9] dark:bg-[#1A1D21] text-zinc-900 dark:text-[#93C5FD] dark:border dark:border-[#25282D] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider shrink-0">
+                  {roadmap.topic || 'Path'}
+                </span>
+                <h2 className="text-base font-bold text-zinc-950 dark:text-[#E5E7EB] truncate leading-none">
+                  {roadmap.title}
+                </h2>
+              </div>
+
+              <div className="flex items-center gap-3 shrink-0">
+                <span className="text-xs font-bold text-zinc-900 dark:text-[#E5E7EB]">
+                  {progressPercent}%
+                </span>
+                <div className="h-2 w-20 sm:w-28 rounded-full bg-black/10 dark:bg-[#22252A] overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-zinc-950 dark:bg-[#3B82F6] transition-all duration-500 ease-out"
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pr-6">
+              <div>
+                <span className="rounded-full bg-[#E5ECC9] dark:bg-[#1A1D21] px-3 py-1 text-xs font-semibold uppercase text-zinc-800 dark:text-[#93C5FD] dark:border dark:border-[#25282D] tracking-wider">
+                  {roadmap.topic || 'Learning Path'}
+                </span>
+                <h2 className="mt-3 text-2xl font-bold text-zinc-950 dark:text-[#E5E7EB] leading-snug">
+                  {roadmap.title}
+                </h2>
+                <p className="mt-2 text-sm text-zinc-600 dark:text-[#8B9099] leading-relaxed max-w-2xl font-normal">
+                  {roadmap.description}
+                </p>
+              </div>
+              <div className="flex flex-col items-end justify-center shrink-0 min-w-[120px] self-start sm:self-center">
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-3xl font-bold text-zinc-950 dark:text-[#E5E7EB]">
+                    {progressPercent}%
+                  </span>
+                  <span className="text-xs text-zinc-500 dark:text-[#8B9099] uppercase font-semibold">
+                    Completed
+                  </span>
+                </div>
+                <div className="mt-2.5 h-2.5 w-full rounded-full bg-black/10 dark:bg-[#22252A] overflow-hidden min-w-[120px]">
+                  <div
+                    className="h-full rounded-full bg-zinc-950 dark:bg-[#3B82F6] transition-all duration-500 ease-out"
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
 
       {/* Phases Tree */}
       <div className="flex-1 overflow-y-auto pr-2 no-scrollbar pb-10">
         <div className="relative py-6 pl-8 md:pl-0 md:flex md:flex-col md:items-center">
-          <div className="absolute left-4 md:left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-zinc-900 via-zinc-400 to-zinc-900 -translate-x-1/2 z-0 hidden md:block" />
-          <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-zinc-900 via-zinc-400 to-zinc-900 z-0 block md:hidden" />
+          <div className="absolute left-4 md:left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-zinc-900 via-zinc-400 to-zinc-900 dark:from-zinc-700 dark:via-zinc-500 dark:to-zinc-700 -translate-x-1/2 z-0 hidden md:block" />
+          <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-zinc-900 via-zinc-400 to-zinc-900 dark:from-zinc-700 dark:via-zinc-500 dark:to-zinc-700 z-0 block md:hidden" />
 
           {roadmap.phases.map((phase, phaseIdx) => (
             <div
@@ -689,8 +896,8 @@ const RoadmapPanel = memo(({ roadmap, onToggleTopic, onTopicClick }) => {
               className="w-full relative z-10 flex flex-col items-center"
             >
               <div className="relative z-20 mb-8 mt-6 w-full flex items-center md:justify-center">
-                <div className="flex items-center gap-2.5 bg-white text-zinc-900 font-bold px-6 py-2.5 rounded-full border border-black/10 shadow-sm text-sm">
-                  <Map size={16} className="shrink-0" />
+                <div className="flex items-center gap-2.5 bg-white dark:bg-[#1A1D21] text-zinc-900 dark:text-[#E5E7EB] font-bold px-6 py-2.5 rounded-full border border-black/10 dark:border-[#25282D] shadow-sm text-sm">
+                  <Map size={16} className="shrink-0 text-zinc-800 dark:text-[#8B9099]" />
                   <span>{phase.name}</span>
                 </div>
               </div>
@@ -704,33 +911,33 @@ const RoadmapPanel = memo(({ roadmap, onToggleTopic, onTopicClick }) => {
                       className="relative flex items-start w-full mb-8 last:mb-0 md:justify-center"
                     >
                       <div
-                        className={`absolute top-8 w-[calc(50%-1.5rem)] h-0.5 border-t border-dashed border-black/20 z-0 hidden md:block
+                        className={`absolute top-8 w-[calc(50%-1.5rem)] h-0.5 border-t border-dashed border-black/20 dark:border-white/20 z-0 hidden md:block
                         ${isLeft ? 'right-1/2' : 'left-1/2'}`}
                       />
-                      <div className="absolute left-4 md:left-1/2 top-8 h-4 w-4 -translate-x-1/2 rounded-full border-2 border-zinc-900 bg-white z-20 shadow-xs" />
-                      <div className="absolute left-4 top-8 h-3.5 w-3.5 -translate-x-1/2 rounded-full border-2 border-zinc-900 bg-white z-20 shadow-xs md:hidden" />
+                      <div className="absolute left-4 md:left-1/2 top-8 h-4 w-4 -translate-x-1/2 rounded-full border-2 border-zinc-900 dark:border-[#3B82F6] bg-white dark:bg-[#111316] z-20 shadow-xs" />
+                      <div className="absolute left-4 top-8 h-3.5 w-3.5 -translate-x-1/2 rounded-full border-2 border-zinc-900 dark:border-[#3B82F6] bg-white dark:bg-[#111316] z-20 shadow-xs md:hidden" />
 
                       <div
                         className={`w-full max-w-md pl-8 md:pl-0 z-10
                         ${isLeft ? 'md:mr-auto md:pr-10' : 'md:ml-auto md:pl-10'}`}
                       >
-                        <div className="bg-white rounded-3xl border border-black/5 p-5 shadow-xs hover:shadow-sm transition-all duration-300 relative group">
+                        <div className="bg-white dark:bg-[#16191D] rounded-3xl border border-black/5 dark:border-[#25282D] p-5 shadow-xs hover:shadow-sm dark:hover:border-[#3B82F6]/30 transition-all duration-300 relative group">
                           <div className="flex items-start justify-between gap-3 mb-2">
                             <div>
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-[#8B9099]">
                                 Module {phaseIdx + 1}.{modIdx + 1}
                               </span>
-                              <h4 className="font-semibold text-[15px] sm:text-[16px] text-zinc-900 group-hover:text-black transition-colors">
+                              <h4 className="font-semibold text-[15px] sm:text-[16px] text-zinc-900 dark:text-[#E5E7EB] group-hover:text-black dark:group-hover:text-white transition-colors">
                                 {mod.name}
                               </h4>
                             </div>
-                            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-black/[0.04] text-zinc-700 tracking-wide shrink-0">
+                            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-black/[0.04] dark:bg-white/[0.06] text-zinc-700 dark:text-[#8B9099] tracking-wide shrink-0">
                               {mod.topics.filter((t) => t.completed).length}/
                               {mod.topics.length}
                             </span>
                           </div>
 
-                          <p className="text-xs text-zinc-500 leading-relaxed mb-4">
+                          <p className="text-xs text-zinc-500 dark:text-[#8B9099] leading-relaxed mb-4">
                             {mod.description}
                           </p>
 
@@ -741,8 +948,8 @@ const RoadmapPanel = memo(({ roadmap, onToggleTopic, onTopicClick }) => {
                                 className={`flex items-center gap-2 px-3.5 py-1.5 rounded-2xl border transition-all text-xs font-medium cursor-pointer select-none
                                   ${
                                     topic.completed
-                                      ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
-                                      : 'bg-black/[0.02] border-black/5 text-zinc-800 hover:bg-black/[0.05] hover:scale-[1.02] active:scale-[0.98]'
+                                      ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-700 text-emerald-900 dark:text-emerald-300'
+                                      : 'bg-black/[0.02] dark:bg-[#111316] border-black/5 dark:border-[#25282D] text-zinc-800 dark:text-[#D1D5DB] hover:bg-black/[0.05] dark:hover:bg-[#22252A] hover:scale-[1.02] active:scale-[0.98]'
                                   }`}
                                 onClick={() =>
                                   onTopicClick &&
@@ -765,7 +972,7 @@ const RoadmapPanel = memo(({ roadmap, onToggleTopic, onTopicClick }) => {
                                     ${
                                       topic.completed
                                         ? 'bg-emerald-600 border-emerald-600 text-white'
-                                        : 'border-zinc-300 bg-white'
+                                        : 'border-zinc-300 dark:border-zinc-600 bg-white dark:bg-[#111316]'
                                     }`}
                                 >
                                   {topic.completed && (
@@ -831,19 +1038,19 @@ const QuestionsPanel = memo(
     if (!topic) {
       return (
         <div className="flex h-full flex-col items-center justify-center text-center px-6">
-          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-white border border-black/5 text-zinc-800 shadow-xs">
+          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-white dark:bg-[#16191D] border border-black/5 dark:border-[#25282D] text-zinc-800 dark:text-[#E5E7EB] shadow-xs">
             <ListChecks size={26} strokeWidth={1.75} />
           </div>
-          <h2 className="text-xl sm:text-2xl font-bold text-zinc-900 tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-[#E5E7EB] tracking-tight">
             Important Questions
           </h2>
-          <p className="mt-2 max-w-sm text-sm text-zinc-600 leading-relaxed">
+          <p className="mt-2 max-w-sm text-sm text-zinc-600 dark:text-[#8B9099] leading-relaxed">
             Important questions will be created by Avora AI specifically for the topic you are learning. Ask a question or start a topic in the AI Chat first.
           </p>
           <button
             type="button"
             onClick={onGoToChat}
-            className="mt-5 bg-zinc-950 hover:bg-black text-white px-5 py-2.5 rounded-2xl text-xs font-semibold transition-all shadow-xs flex items-center gap-2 cursor-pointer active:scale-95"
+            className="mt-5 bg-zinc-950 hover:bg-black dark:bg-[#1D4ED8] dark:hover:bg-[#2563EB] text-white px-5 py-2.5 rounded-2xl text-xs font-semibold transition-all shadow-xs flex items-center gap-2 cursor-pointer active:scale-95"
           >
             <MessageSquare size={14} />
             <span>Go to AI Chat</span>
@@ -855,23 +1062,23 @@ const QuestionsPanel = memo(
     if (questions.length === 0) {
       return (
         <div className="flex h-full flex-col items-center justify-center text-center px-6">
-          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-white border border-black/5 text-zinc-800 shadow-xs">
+          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-white dark:bg-[#16191D] border border-black/5 dark:border-[#25282D] text-zinc-800 dark:text-[#E5E7EB] shadow-xs">
             <Sparkles size={26} strokeWidth={1.75} />
           </div>
-          <span className="rounded-full bg-[#E5ECC9] px-3 py-1 text-xs font-semibold uppercase text-zinc-800 tracking-wider mb-2">
+          <span className="rounded-full bg-[#E5ECC9] dark:bg-[#1A1D21] px-3 py-1 text-xs font-semibold uppercase text-zinc-800 dark:text-[#93C5FD] dark:border dark:border-[#25282D] tracking-wider mb-2">
             Topic: {topic}
           </span>
-          <h2 className="text-xl sm:text-2xl font-bold text-zinc-900 tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-[#E5E7EB] tracking-tight">
             Curate Important Questions
           </h2>
-          <p className="mt-2 max-w-md text-sm text-zinc-600 leading-relaxed">
-            Generate high-yield conceptual mastery and interview-level questions created by AI specifically for <strong className="font-semibold text-zinc-900">{topic}</strong>.
+          <p className="mt-2 max-w-md text-sm text-zinc-600 dark:text-[#8B9099] leading-relaxed">
+            Generate high-yield conceptual mastery and interview-level questions created by AI specifically for <strong className="font-semibold text-zinc-900 dark:text-[#E5E7EB]">{topic}</strong>.
           </p>
           <button
             type="button"
             disabled={generating}
             onClick={() => onGenerate(topic)}
-            className="mt-6 bg-zinc-950 hover:bg-black text-white px-6 py-3 rounded-2xl text-xs font-semibold transition-all shadow-xs flex items-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50"
+            className="mt-6 bg-zinc-950 hover:bg-black dark:bg-[#1D4ED8] dark:hover:bg-[#2563EB] text-white px-6 py-3 rounded-2xl text-xs font-semibold transition-all shadow-xs flex items-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50"
           >
             <Sparkles size={15} className={generating ? 'animate-spin' : ''} />
             <span>{generating ? 'Generating Questions with AI...' : `Generate Questions for ${topic}`}</span>
@@ -883,21 +1090,21 @@ const QuestionsPanel = memo(
     return (
       <div className="flex h-full flex-col p-6 sm:p-8 overflow-y-auto no-scrollbar">
         <div className="max-w-4xl mx-auto w-full flex flex-col gap-6">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-black/5 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="bg-white dark:bg-[#16191D] rounded-3xl p-6 sm:p-8 border border-black/5 dark:border-[#25282D] shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">
-              <span className="p-2.5 rounded-2xl bg-[#E5ECC9] text-zinc-900">
+              <span className="p-2.5 rounded-2xl bg-[#E5ECC9] dark:bg-[#1A1D21] text-zinc-900 dark:text-[#93C5FD] dark:border dark:border-[#25282D]">
                 <ListChecks size={22} />
               </span>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="rounded-full bg-[#E5ECC9] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-zinc-800">
+                  <span className="rounded-full bg-[#E5ECC9] dark:bg-[#1A1D21] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-zinc-800 dark:text-[#93C5FD] dark:border dark:border-[#25282D]">
                     {topic}
                   </span>
-                  <span className="text-xs text-zinc-400 font-medium">
+                  <span className="text-xs text-zinc-400 dark:text-[#8B9099] font-medium">
                     {questions.length} AI-curated questions
                   </span>
                 </div>
-                <h2 className="text-xl sm:text-2xl font-bold text-zinc-950 tracking-tight mt-1">
+                <h2 className="text-xl sm:text-2xl font-bold text-zinc-950 dark:text-[#E5E7EB] tracking-tight mt-1">
                   Important Topic Questions
                 </h2>
               </div>
@@ -907,7 +1114,7 @@ const QuestionsPanel = memo(
               type="button"
               disabled={generating}
               onClick={() => onGenerate(topic)}
-              className="bg-zinc-100 hover:bg-zinc-200 text-zinc-900 px-4 py-2 rounded-2xl text-xs font-semibold transition-all flex items-center gap-1.5 self-start sm:self-center cursor-pointer active:scale-95 disabled:opacity-50"
+              className="bg-zinc-100 hover:bg-zinc-200 dark:bg-[#22252A] dark:hover:bg-[#2E333B] text-zinc-900 dark:text-[#E5E7EB] px-4 py-2 rounded-2xl text-xs font-semibold transition-all flex items-center gap-1.5 self-start sm:self-center cursor-pointer active:scale-95 disabled:opacity-50"
             >
               <RotateCcw size={13} className={generating ? 'animate-spin' : ''} />
               <span>{generating ? 'Regenerating...' : 'Regenerate'}</span>
@@ -921,34 +1128,34 @@ const QuestionsPanel = memo(
               return (
                 <div
                   key={qKey}
-                  className="bg-white rounded-3xl p-5 sm:p-6 border border-black/5 shadow-xs hover:shadow-sm transition-all"
+                  className="bg-white dark:bg-[#16191D] rounded-3xl p-5 sm:p-6 border border-black/5 dark:border-[#25282D] shadow-xs hover:shadow-sm dark:hover:border-[#3B82F6]/40 transition-all"
                 >
                   <div className="flex items-center justify-between gap-3 mb-3">
                     <div className="flex items-center gap-2">
-                      <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#E5ECC9] text-zinc-800">
+                      <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#E5ECC9] dark:bg-[#1A1D21] text-zinc-800 dark:text-[#93C5FD] dark:border dark:border-[#25282D]">
                         {q.tag || topic}
                       </span>
-                      <span className="text-[11px] font-semibold text-zinc-500">
+                      <span className="text-[11px] font-semibold text-zinc-500 dark:text-[#8B9099]">
                         {q.difficulty || 'Core Principle'}
                       </span>
                     </div>
                     <button
                       type="button"
                       onClick={() => onAskQuestion && onAskQuestion(q.question)}
-                      className="flex items-center gap-1.5 text-xs font-semibold text-zinc-800 hover:text-black bg-zinc-100 hover:bg-zinc-200 px-3 py-1.5 rounded-xl transition-colors cursor-pointer"
+                      className="flex items-center gap-1.5 text-xs font-semibold text-zinc-800 hover:text-black dark:text-[#E5E7EB] dark:hover:text-white bg-zinc-100 hover:bg-zinc-200 dark:bg-[#22252A] dark:hover:bg-[#2E333B] px-3 py-1.5 rounded-xl transition-colors cursor-pointer"
                     >
                       <Sparkles size={13} />
                       <span>Practice in Chat</span>
                     </button>
                   </div>
 
-                  <h3 className="text-base font-bold text-zinc-900 leading-snug">
+                  <h3 className="text-base font-bold text-zinc-900 dark:text-[#E5E7EB] leading-snug">
                     {q.question}
                   </h3>
 
                   {isRevealed && (
-                    <div className="mt-4 pt-4 border-t border-black/5 bg-[#E5ECC9]/25 rounded-2xl p-4 text-xs sm:text-sm text-zinc-800 leading-relaxed msg-in">
-                      <p className="font-semibold text-zinc-900 mb-1">First-Principles Explanation:</p>
+                    <div className="mt-4 pt-4 border-t border-black/5 dark:border-[#25282D] bg-[#E5ECC9]/25 dark:bg-[#111316] rounded-2xl p-4 text-xs sm:text-sm text-zinc-800 dark:text-[#D1D5DB] leading-relaxed msg-in">
+                      <p className="font-semibold text-zinc-900 dark:text-[#E5E7EB] mb-1">First-Principles Explanation:</p>
                       <p>{q.explanation}</p>
                     </div>
                   )}
@@ -957,7 +1164,7 @@ const QuestionsPanel = memo(
                     <button
                       type="button"
                       onClick={() => toggleReveal(qKey)}
-                      className="text-xs font-semibold text-zinc-600 hover:text-zinc-950 transition-colors cursor-pointer flex items-center gap-1"
+                      className="text-xs font-semibold text-zinc-600 hover:text-zinc-950 dark:text-[#8B9099] dark:hover:text-[#E5E7EB] transition-colors cursor-pointer flex items-center gap-1"
                     >
                       {isRevealed ? 'Hide Explanation' : 'Reveal Core Principle'}
                       <ChevronDown size={14} className={isRevealed ? 'rotate-180' : ''} />
@@ -977,7 +1184,7 @@ const QuestionsPanel = memo(
 
 const ThinkingIndicator = memo(() => (
   <div
-    className="flex items-center gap-2 py-1 px-1 text-xs text-zinc-500 font-medium"
+    className="flex items-center gap-2 py-1 px-1 text-xs text-zinc-500 dark:text-[#8B9099] font-medium"
     aria-label="Avora is formulating first-principles response"
   >
     <div className="flex items-center gap-1">
@@ -1035,12 +1242,12 @@ const MessageBubble = memo(({ message, onOptionClick }) => {
     >
       {/* Sender Header for Assistant */}
       {!isUser && (
-        <div className="flex items-center gap-2 px-1 mb-0.5 text-xs text-zinc-500 font-medium">
-          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-zinc-950 text-[10px] font-bold text-white shadow-2xs">
+        <div className="flex items-center gap-2 px-1 mb-0.5 text-xs text-zinc-500 dark:text-[#8B9099] font-medium">
+          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-zinc-950 dark:bg-[#22252A] text-[10px] font-bold text-white dark:text-[#E5E7EB] shadow-2xs">
             A
           </div>
-          <span className="font-semibold text-zinc-900">Avora</span>
-          <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/5 text-zinc-600 font-mono">
+          <span className="font-semibold text-zinc-900 dark:text-[#E5E7EB]">Avora</span>
+          <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/5 dark:bg-white/10 text-zinc-600 dark:text-[#8B9099] font-mono">
             First Principles
           </span>
         </div>
@@ -1050,8 +1257,8 @@ const MessageBubble = memo(({ message, onOptionClick }) => {
         className={`group relative max-w-[88%] sm:max-w-[80%] rounded-[26px] px-5 py-4 text-[14.5px] leading-relaxed shadow-xs
           ${
             isUser
-              ? 'bg-zinc-950 text-white rounded-br-xs user-message-bubble'
-              : 'bg-white text-zinc-900 border border-black/5 rounded-tl-xs'
+              ? 'bg-zinc-950 text-white rounded-br-xs user-message-bubble dark:bg-[#1E3A8A] dark:text-white'
+              : 'bg-white text-zinc-900 border border-black/5 rounded-tl-xs dark:bg-[#16191D] dark:text-[#E5E7EB] dark:border-[#25282D]'
           }`}
       >
         {isThinking ? (
@@ -1067,13 +1274,13 @@ const MessageBubble = memo(({ message, onOptionClick }) => {
             {!message.typing &&
               message.options &&
               message.options.length > 0 && (
-                <div className="mt-4 flex flex-wrap gap-2 pt-2 border-t border-black/5">
+                <div className="mt-4 flex flex-wrap gap-2 pt-2 border-t border-black/5 dark:border-[#25282D]">
                   {message.options.map((opt) => (
                     <button
                       key={opt}
                       type="button"
                       onClick={() => onOptionClick && onOptionClick(opt)}
-                      className="rounded-2xl bg-[#E5ECC9] hover:bg-[#dbe4ba] text-zinc-900 px-4 py-2 text-xs font-semibold cursor-pointer transition-all shadow-xs active:scale-95"
+                      className="rounded-2xl bg-[#E5ECC9] hover:bg-[#dbe4ba] dark:bg-[#1A1D21] dark:hover:bg-[#22252A] text-zinc-900 dark:text-[#E5E7EB] dark:border dark:border-[#25282D] px-4 py-2 text-xs font-semibold cursor-pointer transition-all shadow-xs active:scale-95"
                     >
                       {opt}
                     </button>
@@ -1085,10 +1292,10 @@ const MessageBubble = memo(({ message, onOptionClick }) => {
             {!message.typing &&
               message.sources &&
               message.sources.length > 0 && (
-                <div className="mt-4 border-t border-black/5 pt-3">
+                <div className="mt-4 border-t border-black/5 dark:border-[#25282D] pt-3">
                   <div className="flex items-center gap-2 mb-2">
-                    <BrainCircuit size={13} className="text-zinc-600" />
-                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                    <BrainCircuit size={13} className="text-zinc-600 dark:text-[#8B9099]" />
+                    <p className="text-[10px] font-bold text-zinc-500 dark:text-[#8B9099] uppercase tracking-widest">
                       Semantic Citations ({message.sources.length}):
                     </p>
                   </div>
@@ -1101,10 +1308,10 @@ const MessageBubble = memo(({ message, onOptionClick }) => {
                       return (
                         <div
                           key={sIdx}
-                          className="text-xs text-zinc-700 bg-black/[0.02] hover:bg-black/[0.04] border border-black/5 rounded-2xl p-3 leading-snug transition-colors"
+                          className="text-xs text-zinc-700 dark:text-[#D1D5DB] bg-black/[0.02] hover:bg-black/[0.04] dark:bg-[#111316] dark:hover:bg-[#16191D] border border-black/5 dark:border-[#25282D] rounded-2xl p-3 leading-snug transition-colors"
                         >
                           <div className="flex items-center justify-between gap-2">
-                            <p className="font-semibold text-zinc-900 truncate">
+                            <p className="font-semibold text-zinc-900 dark:text-[#E5E7EB] truncate">
                               📄 {src.title}
                             </p>
                             {viewUrl && (
@@ -1112,14 +1319,14 @@ const MessageBubble = memo(({ message, onOptionClick }) => {
                                 href={viewUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-[10px] font-semibold text-white bg-zinc-900 hover:bg-black px-2.5 py-1 rounded-xl transition-colors cursor-pointer shrink-0 inline-flex items-center gap-1"
+                                className="text-[10px] font-semibold text-white bg-zinc-900 hover:bg-black dark:bg-[#22252A] dark:hover:bg-[#2E333B] dark:text-[#E5E7EB] px-2.5 py-1 rounded-xl transition-colors cursor-pointer shrink-0 inline-flex items-center gap-1"
                               >
                                 <span>Source</span>
                                 <ArrowUpRight size={11} />
                               </a>
                             )}
                           </div>
-                          <p className="mt-1.5 text-zinc-500 italic line-clamp-2">
+                          <p className="mt-1.5 text-zinc-500 dark:text-[#8B9099] italic line-clamp-2">
                             "{src.text}"
                           </p>
                         </div>
@@ -1131,21 +1338,21 @@ const MessageBubble = memo(({ message, onOptionClick }) => {
 
             {/* Modern Action Bar on AI Responses */}
             {!isUser && !message.typing && (
-              <div className="mt-3 flex items-center justify-between pt-2 border-t border-black/5 text-zinc-400">
+              <div className="mt-3 flex items-center justify-between pt-2 border-t border-black/5 dark:border-[#25282D] text-zinc-400 dark:text-[#8B9099]">
                 <div className="flex items-center gap-1">
                   <button
                     type="button"
                     onClick={handleCopyMessage}
-                    className="p-1.5 rounded-lg hover:bg-black/5 hover:text-zinc-800 transition-colors cursor-pointer"
+                    className="p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 hover:text-zinc-800 dark:hover:text-[#E5E7EB] transition-colors cursor-pointer"
                     title="Copy response"
                   >
-                    {copied ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
+                    {copied ? <Check size={14} className="text-emerald-600 dark:text-emerald-400" /> : <Copy size={14} />}
                   </button>
                   <button
                     type="button"
                     onClick={handleToggleSpeak}
-                    className={`p-1.5 rounded-lg hover:bg-black/5 hover:text-zinc-800 transition-colors cursor-pointer ${
-                      speaking ? 'text-indigo-600 bg-indigo-50' : ''
+                    className={`p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 hover:text-zinc-800 dark:hover:text-[#E5E7EB] transition-colors cursor-pointer ${
+                      speaking ? 'text-indigo-600 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-950/40' : ''
                     }`}
                     title={speaking ? 'Stop audio' : 'Read aloud'}
                   >
@@ -1154,8 +1361,8 @@ const MessageBubble = memo(({ message, onOptionClick }) => {
                   <button
                     type="button"
                     onClick={() => setLiked((v) => (v === 'up' ? null : 'up'))}
-                    className={`p-1.5 rounded-lg hover:bg-black/5 hover:text-zinc-800 transition-colors cursor-pointer ${
-                      liked === 'up' ? 'text-emerald-600' : ''
+                    className={`p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 hover:text-zinc-800 dark:hover:text-[#E5E7EB] transition-colors cursor-pointer ${
+                      liked === 'up' ? 'text-emerald-600 dark:text-emerald-400' : ''
                     }`}
                     title="Helpful"
                   >
@@ -1164,8 +1371,8 @@ const MessageBubble = memo(({ message, onOptionClick }) => {
                   <button
                     type="button"
                     onClick={() => setLiked((v) => (v === 'down' ? null : 'down'))}
-                    className={`p-1.5 rounded-lg hover:bg-black/5 hover:text-zinc-800 transition-colors cursor-pointer ${
-                      liked === 'down' ? 'text-red-500' : ''
+                    className={`p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 hover:text-zinc-800 dark:hover:text-[#E5E7EB] transition-colors cursor-pointer ${
+                      liked === 'down' ? 'text-red-500 dark:text-red-400' : ''
                     }`}
                     title="Not helpful"
                   >
@@ -1277,19 +1484,20 @@ const ChatPanel = ({
                 height="54"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="#18181b"
+                stroke="currentColor"
                 strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
+                className="text-[#18181b] dark:text-[#8B9099]/70"
               >
                 <path d="M12 3c.8 0 1.5.4 1.9 1.1l7.5 13c.8 1.4-.2 3.1-1.8 3.1H4.4c-1.6 0-2.6-1.7-1.8-3.1l7.5-13c.4-.7 1.1-1.1 1.9-1.1z" />
               </svg>
             </div>
 
-            <h1 className="text-3xl sm:text-4xl font-bold text-zinc-950 tracking-tight">
+            <h1 className="text-3xl sm:text-4xl font-bold text-zinc-950 dark:text-[#E5E7EB] tracking-tight">
               Welcome {userName}
             </h1>
-            <p className="mt-2.5 text-sm sm:text-base text-zinc-600 font-normal">
+            <p className="mt-2.5 text-sm sm:text-base text-zinc-600 dark:text-[#8B9099] font-normal">
               what do you want to learn or research today?
             </p>
 
@@ -1305,16 +1513,16 @@ const ChatPanel = ({
                       setValue(p.desc);
                       onSend(p.desc);
                     }}
-                    className="p-4 rounded-3xl bg-white/90 hover:bg-white border border-black/5 hover:border-black/10 shadow-xs hover:shadow-sm transition-all duration-200 flex items-start gap-3.5 group cursor-pointer active:scale-98"
+                    className="p-4 rounded-3xl bg-white/90 hover:bg-white dark:bg-[#16191D] dark:hover:bg-[#1A1D21] border border-black/5 hover:border-black/10 dark:border-[#25282D] dark:hover:border-[#3B82F6]/40 shadow-xs hover:shadow-sm transition-all duration-200 flex items-start gap-3.5 group cursor-pointer active:scale-98"
                   >
-                    <div className="p-2.5 rounded-2xl bg-[#E5ECC9] group-hover:bg-[#dbe4ba] text-zinc-900 shrink-0 transition-colors">
+                    <div className="p-2.5 rounded-2xl bg-[#E5ECC9] group-hover:bg-[#dbe4ba] dark:bg-[#22252A] dark:group-hover:bg-[#2A2E35] text-zinc-900 dark:text-[#E5E7EB] shrink-0 transition-colors">
                       <Icon size={16} />
                     </div>
                     <div className="min-w-0">
-                      <h4 className="text-xs font-bold text-zinc-900 group-hover:text-black">
+                      <h4 className="text-xs font-bold text-zinc-900 group-hover:text-black dark:text-[#E5E7EB] dark:group-hover:text-white">
                         {p.title}
                       </h4>
-                      <p className="text-[11px] text-zinc-500 mt-1 line-clamp-2 leading-relaxed">
+                      <p className="text-[11px] text-zinc-500 dark:text-[#8B9099] mt-1 line-clamp-2 leading-relaxed">
                         {p.desc}
                       </p>
                     </div>
@@ -1326,52 +1534,52 @@ const ChatPanel = ({
         </div>
       )}
 
-      {/* Floating Bottom Prompt Box matching user uploaded screenshot media_1788621041830.png */}
+      {/* Floating Bottom Prompt Box matching user uploaded screenshot */}
       <div className="w-full px-4 sm:px-8 pb-5 sm:pb-7 pt-2 shrink-0">
-        <div className="max-w-2xl mx-auto bg-white rounded-[32px] sm:rounded-[36px] p-4 sm:p-5 shadow-[0_12px_40px_rgba(0,0,0,0.06)] border border-white/80 flex flex-col gap-3.5">
+        <div className="max-w-2xl mx-auto bg-white dark:bg-[#16191D] rounded-[32px] sm:rounded-[36px] p-4 sm:p-5 shadow-[0_12px_40px_rgba(0,0,0,0.06)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.6)] border border-white/80 dark:border-[#25282D] flex flex-col gap-3.5">
           {/* Top Pill Controls Row */}
           <div className="flex items-center flex-wrap gap-2.5">
-            {/* Semantic Search Toggle Pill (1:1 with screenshot) */}
+            {/* Semantic Search Toggle Pill */}
             <button
               type="button"
               onClick={onToggleSemanticSearch}
               className={`flex items-center gap-2.5 px-4 py-2 rounded-full text-xs font-semibold cursor-pointer transition-all duration-200 select-none active:scale-95
                 ${
                   semanticSearchEnabled
-                    ? 'bg-[#DCE6C6] text-zinc-900 shadow-2xs hover:bg-[#d2dda9]'
-                    : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200'
+                    ? 'bg-[#DCE6C6] text-zinc-900 dark:bg-[#1E3A8A] dark:text-white shadow-2xs hover:bg-[#d2dda9] dark:hover:bg-[#2563EB]'
+                    : 'bg-zinc-100 text-zinc-500 dark:bg-[#111316] dark:text-[#8B9099] hover:bg-zinc-200 dark:hover:bg-[#22252A]'
                 }`}
               title="Toggle Semantic Knowledge Retrieval"
             >
-              {/* iOS-style toggle slider switch from screenshot */}
+              {/* iOS-style toggle slider switch */}
               <span
-                className={`relative inline-flex h-4 w-7 shrink-0 rounded-full border border-black/10 bg-black/15 transition-colors duration-200 ease-in-out`}
+                className={`relative inline-flex h-4 w-7 shrink-0 rounded-full border border-black/10 dark:border-white/10 bg-black/15 dark:bg-white/15 transition-colors duration-200 ease-in-out`}
               >
                 <span
                   className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-zinc-950 shadow-xs transition duration-200 ease-in-out mt-0.5 ml-0.5
                     ${
                       semanticSearchEnabled
-                        ? 'translate-x-3 bg-zinc-950'
-                        : 'translate-x-0 bg-zinc-500'
+                        ? 'translate-x-3 bg-zinc-950 dark:bg-white'
+                        : 'translate-x-0 bg-zinc-500 dark:bg-zinc-400'
                     }`}
                 />
               </span>
               <span>Semantic search</span>
             </button>
 
-            {/* Study Mode Pill (1:1 with screenshot) */}
+            {/* Study Mode Pill */}
             <button
               type="button"
               onClick={onToggleStudyMode}
               className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold cursor-pointer transition-all duration-200 select-none active:scale-95
                 ${
                   studyModeEnabled
-                    ? 'bg-[#DCE6C6] text-zinc-900 shadow-2xs hover:bg-[#d2dda9]'
-                    : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200'
+                    ? 'bg-[#DCE6C6] text-zinc-900 dark:bg-[#1E3A8A] dark:text-white shadow-2xs hover:bg-[#d2dda9] dark:hover:bg-[#2563EB]'
+                    : 'bg-zinc-100 text-zinc-500 dark:bg-[#111316] dark:text-[#8B9099] hover:bg-zinc-200 dark:hover:bg-[#22252A]'
                 }`}
               title="Toggle First-Principles Study Mode"
             >
-              {/* Node Network 3-circle branching icon from screenshot */}
+              {/* Node Network 3-circle branching icon */}
               <svg
                 width="14"
                 height="14"
@@ -1397,7 +1605,7 @@ const ChatPanel = ({
               <button
                 type="button"
                 onClick={onTriggerUpload}
-                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-zinc-600 hover:text-zinc-950 hover:bg-black/5 transition-colors cursor-pointer"
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-zinc-600 hover:text-zinc-950 hover:bg-black/5 dark:text-[#8B9099] dark:hover:text-[#E5E7EB] dark:hover:bg-white/5 transition-colors cursor-pointer"
                 title="Attach PDF or Document"
               >
                 <Paperclip size={13} />
@@ -1406,10 +1614,10 @@ const ChatPanel = ({
             )}
           </div>
 
-          {/* Inner Input Capsule with Node Graph icon and Pastel Coral Send Button (1:1 with screenshot) */}
-          <div className="flex items-center gap-3 border border-zinc-200/90 rounded-full px-4 sm:px-5 py-2 sm:py-2.5 bg-white focus-within:border-zinc-400 focus-within:ring-2 focus-within:ring-black/5 transition-all shadow-2xs">
+          {/* Inner Input Capsule with Node Graph icon and Send Button */}
+          <div className="flex items-center gap-3 border border-zinc-200/90 dark:border-[#25282D] rounded-full px-4 sm:px-5 py-2 sm:py-2.5 bg-white dark:bg-[#111316] focus-within:border-zinc-400 dark:focus-within:border-[#3B82F6] focus-within:ring-2 focus-within:ring-black/5 dark:focus-within:ring-[#3B82F6]/20 transition-all shadow-2xs">
             {/* Left Node Graph icon */}
-            <Share2 size={18} className="text-zinc-400 shrink-0" />
+            <Share2 size={18} className="text-zinc-400 dark:text-[#8B9099] shrink-0" />
 
             <input
               ref={inputRef}
@@ -1422,10 +1630,10 @@ const ChatPanel = ({
                   ? 'Avora is thinking...'
                   : 'i want to learn about web dev |'
               }
-              className="flex-1 bg-transparent text-sm sm:text-base text-zinc-900 outline-none placeholder:text-zinc-400 font-sans"
+              className="flex-1 bg-transparent text-sm sm:text-base text-zinc-900 dark:text-[#E5E7EB] outline-none placeholder:text-zinc-400 dark:placeholder:text-[#5A5F67] font-sans"
             />
 
-            {/* Pastel Coral / Peach Circular Send Button matching uploaded screenshot */}
+            {/* Circular Send Button */}
             <button
               type="button"
               onClick={submit}
@@ -1450,6 +1658,7 @@ const nextId = () => idCounter++;
 
 const Workspace = () => {
   const { user } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('chats');
@@ -1911,6 +2120,33 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
     [updateTypingMessage]
   );
 
+  const handleDeleteRoadmap = useCallback(
+    async (roadmapId) => {
+      if (!window.confirm('Are you sure you want to delete this roadmap?')) return;
+
+      setRoadmaps((prev) => {
+        const nextRoadmaps = prev.filter((r) => r.id !== roadmapId);
+        setActiveRoadmapId((current) =>
+          current === roadmapId
+            ? nextRoadmaps.length > 0
+              ? nextRoadmaps[0].id
+              : null
+            : current
+        );
+        return nextRoadmaps;
+      });
+
+      try {
+        await axios.delete(
+          `http://localhost:5000/api/learning/roadmap/${roadmapId}`
+        );
+      } catch (err) {
+        console.error('Failed to delete roadmap from DB:', err);
+      }
+    },
+    []
+  );
+
   const loadRoadmaps = useCallback(async () => {
     try {
       const res = await axios.get(
@@ -1926,7 +2162,12 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
         }));
         setRoadmaps(formattedRoadmaps);
         if (formattedRoadmaps.length > 0) {
-          setActiveRoadmapId(formattedRoadmaps[0].id);
+          setActiveRoadmapId((prev) => {
+            if (prev && formattedRoadmaps.some((r) => r.id === prev)) {
+              return prev;
+            }
+            return formattedRoadmaps[0].id;
+          });
         }
       }
     } catch (err) {
@@ -2314,7 +2555,7 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
   const sidebarWidthClass = collapsed ? 'lg:w-[84px]' : 'lg:w-[270px]';
 
   return (
-    <div className="flex h-screen w-full flex-col bg-white p-3 sm:p-4 text-zinc-900 font-sans overflow-hidden">
+    <div className="flex h-screen w-full flex-col bg-white dark:bg-[#0B0D10] p-3 sm:p-4 text-zinc-900 dark:text-[#E5E7EB] font-sans overflow-hidden transition-colors duration-200">
       {/* Hidden File Input for PDF Upload */}
       <input
         ref={fileInputRef}
@@ -2330,7 +2571,7 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
         <div className="flex items-center gap-4 sm:gap-6">
           <a
             href="/"
-            className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-950 font-sans flex items-center gap-2"
+            className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-950 dark:text-[#E5E7EB] font-sans flex items-center gap-2"
           >
             <span>Avora</span>
           </a>
@@ -2339,7 +2580,7 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
           <button
             type="button"
             onClick={() => setCollapsed((v) => !v)}
-            className="hidden lg:flex items-center justify-center p-1 text-zinc-700 hover:text-black cursor-pointer"
+            className="hidden lg:flex items-center justify-center p-1 text-zinc-700 hover:text-black dark:text-[#8B9099] dark:hover:text-[#E5E7EB] cursor-pointer transition-colors"
             aria-label="Toggle sidebar collapse"
             title="Toggle sidebar"
           >
@@ -2355,16 +2596,16 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
-            className="lg:hidden flex h-8 w-8 items-center justify-center rounded-xl bg-[#E5ECC9] text-zinc-800 cursor-pointer"
+            className="lg:hidden flex h-8 w-8 items-center justify-center rounded-xl bg-[#E5ECC9] text-zinc-800 dark:bg-[#111316] dark:text-[#E5E7EB] dark:border dark:border-[#25282D] cursor-pointer"
             aria-label="Open sidebar menu"
           >
             <Menu size={18} />
           </button>
         </div>
 
-        {/* Center: Matcha Green Pill Navigation Tabs */}
+        {/* Center: Pill Navigation Tabs */}
         <div className="hidden md:block overflow-x-auto no-scrollbar">
-          <ul className="flex w-fit items-center gap-1 rounded-full bg-[#E5ECC9] p-1 shadow-xs">
+          <ul className="flex w-fit items-center gap-1 rounded-full bg-[#E5ECC9] dark:bg-[#111316] dark:border dark:border-[#25282D] p-1 shadow-xs">
             {TABS.map((t) => (
               <li key={t.key}>
                 <button
@@ -2373,8 +2614,8 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
                   className={`whitespace-nowrap rounded-full px-5 py-2 text-xs font-semibold transition-all cursor-pointer flex items-center gap-2
                     ${
                       activeTab === t.key
-                        ? 'bg-white text-zinc-950 shadow-xs'
-                        : 'text-zinc-700 hover:text-zinc-950'
+                        ? 'bg-white text-zinc-950 shadow-xs dark:bg-[#1E3A8A] dark:text-white dark:shadow-none'
+                        : 'text-zinc-700 hover:text-zinc-950 dark:text-[#8B9099] dark:hover:text-[#E5E7EB]'
                     }`}
                 >
                   <t.icon size={14} />
@@ -2386,18 +2627,20 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
         </div>
 
         {/* Right: Pill Group with Theme, Maximize, and User Avatar */}
-        <div className="flex items-center gap-2 rounded-full bg-[#E5ECC9] px-2 py-1.5 shrink-0 shadow-xs">
+        <div className="flex items-center gap-2 rounded-full bg-[#E5ECC9] dark:bg-[#111316] dark:border dark:border-[#25282D] px-2 py-1.5 shrink-0 shadow-xs">
           <button
             type="button"
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-zinc-800 hover:text-black shadow-xs cursor-pointer"
-            title="Theme Toggle"
+            onClick={toggleTheme}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-zinc-800 hover:text-black dark:bg-[#1A1D21] dark:text-[#E5E7EB] dark:hover:text-white dark:border dark:border-[#25282D] shadow-xs cursor-pointer transition-colors"
+            title={`Switch to ${isDark ? 'Light' : 'Dark'} Mode`}
+            aria-label="Toggle Theme"
           >
             <Eclipse size={15} />
           </button>
 
           <button
             type="button"
-            className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-black/5 text-zinc-800 hover:text-black cursor-pointer"
+            className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/5 text-zinc-800 hover:text-black dark:text-[#8B9099] dark:hover:text-[#E5E7EB] cursor-pointer transition-colors"
             title="Full Screen View"
           >
             <Maximize2 size={15} />
@@ -2414,7 +2657,7 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
 
       {/* Mobile Tab Bar (Center Tabs on Mobile) */}
       <div className="md:hidden mb-2.5 overflow-x-auto no-scrollbar">
-        <ul className="flex w-max items-center gap-1 rounded-full bg-[#E5ECC9] p-1 shadow-xs">
+        <ul className="flex w-max items-center gap-1 rounded-full bg-[#E5ECC9] dark:bg-[#111316] dark:border dark:border-[#25282D] p-1 shadow-xs">
           {TABS.map((t) => (
             <li key={t.key}>
               <button
@@ -2423,8 +2666,8 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
                 className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5
                   ${
                     activeTab === t.key
-                      ? 'bg-white text-zinc-950 shadow-xs'
-                      : 'text-zinc-700'
+                      ? 'bg-white text-zinc-950 shadow-xs dark:bg-[#1E3A8A] dark:text-white'
+                      : 'text-zinc-700 dark:text-[#8B9099]'
                   }`}
               >
                 <t.icon size={13} />
@@ -2448,7 +2691,7 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
         {/* ================= LEFT SIDEBAR (Matcha Green Container) ================= */}
         <aside
           className={`
-            bg-[#E5ECC9] text-zinc-900 overflow-hidden rounded-[28px]
+            bg-[#E5ECC9] text-zinc-900 dark:bg-[#111316] dark:text-[#E5E7EB] dark:border dark:border-[#25282D] overflow-hidden rounded-[28px]
             transition-all duration-300 ease-in-out
             fixed lg:static inset-y-3 left-3 z-50 lg:z-auto
             w-[270px] ${sidebarWidthClass}
@@ -2463,13 +2706,13 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
           <div className="flex-1 flex flex-col min-h-0 overflow-y-auto no-scrollbar">
             {/* Mobile Close Button in Drawer */}
             <div className="flex items-center justify-between gap-2 mb-3 lg:hidden">
-              <span className="text-xs font-bold text-zinc-900 uppercase tracking-wider px-1">
+              <span className="text-xs font-bold text-zinc-900 dark:text-[#E5E7EB] uppercase tracking-wider px-1">
                 Menu
               </span>
               <button
                 type="button"
                 onClick={() => setMobileOpen(false)}
-                className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-zinc-700 hover:text-black cursor-pointer"
+                className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-zinc-700 hover:text-black dark:bg-[#1A1D21] dark:text-[#E5E7EB] dark:border dark:border-[#25282D] cursor-pointer"
               >
                 <X size={15} />
               </button>
@@ -2480,17 +2723,17 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
               type="button"
               onClick={handleNewChat}
               title={collapsed ? 'New Chats' : undefined}
-              className={`flex w-full items-center gap-3 rounded-2xl bg-white text-zinc-900 px-4 py-3.5 text-sm font-semibold transition-all hover:bg-white/90 hover:shadow-xs cursor-pointer active:scale-98
+              className={`flex w-full items-center gap-3 rounded-2xl bg-white text-zinc-900 dark:bg-[#1A1D21] dark:text-[#E5E7EB] dark:hover:bg-[#22252A] dark:border dark:border-[#25282D] px-4 py-3.5 text-sm font-semibold transition-all hover:bg-white/90 hover:shadow-xs cursor-pointer active:scale-98
                 ${collapsed ? 'justify-center px-0' : ''}`}
             >
-              <MessagesSquare size={18} className="shrink-0 text-zinc-800" />
+              <MessagesSquare size={18} className="shrink-0 text-zinc-800 dark:text-[#E5E7EB]" />
               {!collapsed && <span>New Chats</span>}
             </button>
 
             {/* Features Section */}
             <div className="mt-6 flex flex-col gap-1">
               {!collapsed && (
-                <p className="mb-2 text-xs font-semibold text-zinc-600 px-2">
+                <p className="mb-2 text-xs font-semibold text-zinc-600 dark:text-[#8B9099] px-2">
                   Features
                 </p>
               )}
@@ -2530,12 +2773,12 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
 
             {/* History Section */}
             {!collapsed && chats.length > 0 && (
-              <div className="mt-6 flex flex-col min-h-0">
-                <p className="mb-2 text-xs font-semibold text-zinc-600 px-2 flex items-center justify-between">
-                  <span>History</span>
-                  <span className="text-[10px] text-zinc-500 font-normal">Recent</span>
+              <div className="mt-5 flex flex-col min-h-0">
+                <p className="mb-2 text-xs font-semibold text-zinc-600 dark:text-[#8B9099] px-2 flex items-center justify-between">
+                  <span>Chat History</span>
+                  <span className="text-[10px] text-zinc-500 dark:text-[#8B9099] font-normal">Recent</span>
                 </p>
-                <div className="relative pl-3 border-l-2 border-zinc-800/15 flex flex-col gap-1 overflow-y-auto max-h-[180px] no-scrollbar">
+                <div className="relative pl-3 border-l-2 border-zinc-800/15 dark:border-[#25282D] flex flex-col gap-1 overflow-y-auto max-h-[160px] no-scrollbar">
                   {chats.map((c) => {
                     const isActive = c.id === activeChatId && activeTab === 'chats';
                     return (
@@ -2544,8 +2787,8 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
                         className={`group relative flex items-center justify-between rounded-xl px-2.5 py-1.5 text-xs font-medium transition-colors cursor-pointer
                           ${
                             isActive
-                              ? 'bg-white text-zinc-950 font-semibold shadow-2xs'
-                              : 'text-zinc-700 hover:text-zinc-950 hover:bg-white/40'
+                              ? 'bg-white text-zinc-950 font-semibold shadow-2xs dark:bg-[#1A1D21] dark:text-[#E5E7EB] dark:border dark:border-[#25282D]'
+                              : 'text-zinc-700 hover:text-zinc-950 hover:bg-white/40 dark:text-[#8B9099] dark:hover:text-[#E5E7EB] dark:hover:bg-[#1A1D21]/60'
                           }`}
                         onClick={() => handleChatHistoryClick(c.id)}
                       >
@@ -2557,7 +2800,7 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
                               e.stopPropagation();
                               handleRenameChat(c.id, c.title);
                             }}
-                            className="text-zinc-500 hover:text-zinc-900 p-0.5"
+                            className="text-zinc-500 hover:text-zinc-900 dark:text-[#8B9099] dark:hover:text-[#E5E7EB] p-0.5 cursor-pointer"
                             title="Rename"
                           >
                             <Pencil size={11} />
@@ -2568,7 +2811,66 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
                               e.stopPropagation();
                               handleDeleteChat(c.id);
                             }}
-                            className="text-zinc-500 hover:text-red-600 p-0.5"
+                            className="text-zinc-500 hover:text-red-600 dark:text-[#8B9099] dark:hover:text-red-400 p-0.5 cursor-pointer"
+                            title="Delete"
+                          >
+                            <Trash2 size={11} />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Roadmaps in Sidebar */}
+            {!collapsed && roadmaps.length > 0 && (
+              <div className="mt-5 flex flex-col min-h-0">
+                <p className="mb-2 text-xs font-semibold text-zinc-600 dark:text-[#8B9099] px-2 flex items-center justify-between">
+                  <span>My Roadmaps</span>
+                  <span className="text-[10px] text-zinc-500 dark:text-[#8B9099] font-normal">
+                    {roadmaps.length} Total
+                  </span>
+                </p>
+                <div className="relative pl-3 border-l-2 border-zinc-800/15 dark:border-[#25282D] flex flex-col gap-1 overflow-y-auto max-h-[160px] no-scrollbar">
+                  {roadmaps.map((r) => {
+                    const isActive = r.id === activeRoadmapId && activeTab === 'roadmap';
+                    return (
+                      <div
+                        key={r.id}
+                        className={`group relative flex items-center justify-between rounded-xl px-2.5 py-1.5 text-xs font-medium transition-colors cursor-pointer
+                          ${
+                            isActive
+                              ? 'bg-white text-zinc-950 font-semibold shadow-2xs dark:bg-[#1A1D21] dark:text-[#E5E7EB] dark:border dark:border-[#25282D]'
+                              : 'text-zinc-700 hover:text-zinc-950 hover:bg-white/40 dark:text-[#8B9099] dark:hover:text-[#E5E7EB] dark:hover:bg-[#1A1D21]/60'
+                          }`}
+                        onClick={() => {
+                          setActiveRoadmapId(r.id);
+                          setActiveTab('roadmap');
+                          setMobileOpen(false);
+                        }}
+                      >
+                        <span className="truncate pr-2">{r.title || 'Untitled Roadmap'}</span>
+                        <div className="hidden group-hover:flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRenameRoadmap(r.id, r.title);
+                            }}
+                            className="text-zinc-500 hover:text-zinc-900 dark:text-[#8B9099] dark:hover:text-[#E5E7EB] p-0.5 cursor-pointer"
+                            title="Rename"
+                          >
+                            <Pencil size={11} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteRoadmap(r.id);
+                            }}
+                            className="text-zinc-500 hover:text-red-600 dark:text-[#8B9099] dark:hover:text-red-400 p-0.5 cursor-pointer"
                             title="Delete"
                           >
                             <Trash2 size={11} />
@@ -2583,9 +2885,9 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
           </div>
 
           {/* Setting and Help Section at bottom */}
-          <div className="pt-4 flex flex-col gap-1 border-t border-black/5">
+          <div className="pt-4 flex flex-col gap-1 border-t border-black/5 dark:border-[#25282D]">
             {!collapsed && (
-              <p className="mb-2 text-xs font-semibold text-zinc-600 px-2">
+              <p className="mb-2 text-xs font-semibold text-zinc-600 dark:text-[#8B9099] px-2">
                 Setting and Help
               </p>
             )}
@@ -2606,8 +2908,8 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
           </div>
         </aside>
 
-        {/* ================= RIGHT MAIN VIEWPORT (Matcha Green Container) ================= */}
-        <main className="flex flex-1 min-w-0 flex-col rounded-[28px] bg-[#E5ECC9] overflow-hidden shadow-xs relative">
+        {/* ================= RIGHT MAIN VIEWPORT (Container) ================= */}
+        <main className="flex flex-1 min-w-0 flex-col rounded-[28px] bg-[#E5ECC9] dark:bg-[#0E1013] dark:border dark:border-[#25282D] overflow-hidden shadow-xs relative">
           <div
             className="flex h-full w-[700%] transition-transform duration-300 ease-in-out"
             style={{
@@ -2618,12 +2920,12 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
           >
             {/* View 1: Knowledge Sources (RAG Library) */}
             <div className="w-1/7 h-full p-6 sm:p-8 overflow-y-auto no-scrollbar">
-              <div className="flex h-full flex-col gap-6 max-w-5xl mx-auto bg-white rounded-3xl p-6 sm:p-8 shadow-xs border border-black/5">
+              <div className="flex h-full flex-col gap-6 max-w-5xl mx-auto bg-white dark:bg-[#16191D] rounded-3xl p-6 sm:p-8 shadow-xs border border-black/5 dark:border-[#25282D]">
                 <div>
-                  <h2 className="text-2xl font-bold text-zinc-950 tracking-tight">
+                  <h2 className="text-2xl font-bold text-zinc-950 dark:text-[#E5E7EB] tracking-tight">
                     Knowledge Sources
                   </h2>
-                  <p className="text-sm text-zinc-500 mt-1 font-normal leading-relaxed">
+                  <p className="text-sm text-zinc-500 dark:text-[#8B9099] mt-1 font-normal leading-relaxed">
                     Upload research papers (PDF) or add webpage URLs to customize
                     Avora's first-principles knowledge base.
                   </p>
@@ -2633,23 +2935,23 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
                   <div className="lg:col-span-5 flex flex-col gap-5">
                     <div
                       onClick={() => fileInputRef.current?.click()}
-                      className="border-2 border-dashed border-zinc-300 hover:border-zinc-500 rounded-2xl p-6 bg-zinc-50 hover:bg-zinc-100/70 transition-all relative flex flex-col items-center justify-center text-center group cursor-pointer min-h-[170px]"
+                      className="border-2 border-dashed border-zinc-300 hover:border-zinc-500 dark:border-[#25282D] dark:hover:border-[#3B82F6]/50 rounded-2xl p-6 bg-zinc-50 hover:bg-zinc-100/70 dark:bg-[#111316] dark:hover:bg-[#1A1D21] transition-all relative flex flex-col items-center justify-center text-center group cursor-pointer min-h-[170px]"
                     >
                       <Upload
                         size={30}
-                        className="text-zinc-400 mb-2 group-hover:scale-110 group-hover:text-zinc-900 transition-all"
+                        className="text-zinc-400 dark:text-[#8B9099] mb-2 group-hover:scale-110 group-hover:text-zinc-900 dark:group-hover:text-[#E5E7EB] transition-all"
                       />
-                      <p className="font-semibold text-sm text-zinc-900">
+                      <p className="font-semibold text-sm text-zinc-900 dark:text-[#E5E7EB]">
                         {uploading ? 'Processing & Vectorizing...' : 'Upload PDF Document'}
                       </p>
-                      <p className="text-xs text-zinc-500 mt-1">Supports Papers, Books, Codebases (Max 20MB)</p>
+                      <p className="text-xs text-zinc-500 dark:text-[#8B9099] mt-1">Supports Papers, Books, Codebases (Max 20MB)</p>
                     </div>
 
                     <form
                       onSubmit={handleUrlAdd}
-                      className="border border-zinc-200 rounded-2xl p-5 bg-white shadow-xs flex flex-col gap-3.5"
+                      className="border border-zinc-200 dark:border-[#25282D] rounded-2xl p-5 bg-white dark:bg-[#111316] shadow-xs flex flex-col gap-3.5"
                     >
-                      <h3 className="font-semibold text-xs text-zinc-900">
+                      <h3 className="font-semibold text-xs text-zinc-900 dark:text-[#E5E7EB]">
                         Add Web Documentation
                       </h3>
                       <input
@@ -2657,7 +2959,7 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
                         placeholder="Optional Title (e.g. React Docs)"
                         value={urlTitleInput}
                         onChange={(e) => setUrlTitleInput(e.target.value)}
-                        className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-2 text-xs text-zinc-900 outline-none focus:border-zinc-400"
+                        className="w-full bg-zinc-50 dark:bg-[#16191D] border border-zinc-200 dark:border-[#25282D] rounded-xl px-4 py-2 text-xs text-zinc-900 dark:text-[#E5E7EB] placeholder:text-zinc-400 dark:placeholder:text-[#5A5F67] outline-none focus:border-zinc-400 dark:focus:border-[#3B82F6]"
                       />
                       <div className="flex gap-2">
                         <input
@@ -2666,12 +2968,12 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
                           placeholder="https://example.com/docs"
                           value={urlInput}
                           onChange={(e) => setUrlInput(e.target.value)}
-                          className="flex-1 bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-2 text-xs text-zinc-900 outline-none focus:border-zinc-400"
+                          className="flex-1 bg-zinc-50 dark:bg-[#16191D] border border-zinc-200 dark:border-[#25282D] rounded-xl px-4 py-2 text-xs text-zinc-900 dark:text-[#E5E7EB] placeholder:text-zinc-400 dark:placeholder:text-[#5A5F67] outline-none focus:border-zinc-400 dark:focus:border-[#3B82F6]"
                         />
                         <button
                           type="submit"
                           disabled={uploading || !urlInput.trim()}
-                          className="bg-zinc-950 hover:bg-black text-white font-medium text-xs px-4 py-2 rounded-xl transition-colors cursor-pointer disabled:opacity-40"
+                          className="bg-zinc-950 hover:bg-black dark:bg-[#1D4ED8] dark:hover:bg-[#2563EB] text-white font-medium text-xs px-4 py-2 rounded-xl transition-colors cursor-pointer disabled:opacity-40"
                         >
                           Add
                         </button>
@@ -2679,12 +2981,12 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
                     </form>
                   </div>
 
-                  <div className="lg:col-span-7 flex flex-col min-h-0 bg-zinc-50 border border-zinc-200 rounded-2xl p-5 overflow-y-auto no-scrollbar">
-                    <h3 className="font-semibold text-sm text-zinc-900 mb-4">
+                  <div className="lg:col-span-7 flex flex-col min-h-0 bg-zinc-50 dark:bg-[#111316] border border-zinc-200 dark:border-[#25282D] rounded-2xl p-5 overflow-y-auto no-scrollbar">
+                    <h3 className="font-semibold text-sm text-zinc-900 dark:text-[#E5E7EB] mb-4">
                       Document Library ({documents.length})
                     </h3>
                     {documents.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center flex-1 py-12 text-center text-zinc-400">
+                      <div className="flex flex-col items-center justify-center flex-1 py-12 text-center text-zinc-400 dark:text-[#8B9099]">
                         <FileText size={28} className="mb-2 opacity-50" />
                         <p className="text-xs">No sources added yet</p>
                       </div>
@@ -2693,14 +2995,14 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
                         {documents.map((doc) => (
                           <div
                             key={doc._id}
-                            className="flex items-center justify-between gap-3 bg-white border border-zinc-200 rounded-2xl p-3.5 shadow-xs"
+                            className="flex items-center justify-between gap-3 bg-white dark:bg-[#16191D] border border-zinc-200 dark:border-[#25282D] rounded-2xl p-3.5 shadow-xs"
                           >
                             <div className="flex-1 min-w-0">
-                              <p className="font-semibold text-xs text-zinc-900 truncate">
+                              <p className="font-semibold text-xs text-zinc-900 dark:text-[#E5E7EB] truncate">
                                 📄 {doc.title}
                               </p>
-                              <div className="flex items-center gap-2 mt-1 text-[10px] text-zinc-500 font-medium">
-                                <span className="uppercase px-1.5 py-0.5 bg-zinc-100 rounded">
+                              <div className="flex items-center gap-2 mt-1 text-[10px] text-zinc-500 dark:text-[#8B9099] font-medium">
+                                <span className="uppercase px-1.5 py-0.5 bg-zinc-100 dark:bg-[#22252A] rounded">
                                   {doc.sourceType}
                                 </span>
                                 {doc.fileSize && (
@@ -2713,7 +3015,7 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
                             <button
                               type="button"
                               onClick={() => handleDocDelete(doc._id)}
-                              className="text-zinc-400 hover:text-red-600 p-1.5 rounded-lg cursor-pointer"
+                              className="text-zinc-400 hover:text-red-600 dark:text-[#8B9099] dark:hover:text-red-400 p-1.5 rounded-lg cursor-pointer transition-colors"
                             >
                               <Trash2 size={14} />
                             </button>
@@ -2748,6 +3050,11 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
             {/* View 3: Roadmap Interactive Tree View */}
             <div className="w-1/7 h-full">
               <RoadmapPanel
+                roadmaps={roadmaps}
+                activeRoadmapId={activeRoadmapId}
+                onSelectRoadmap={(id) => setActiveRoadmapId(id)}
+                onRenameRoadmap={handleRenameRoadmap}
+                onDeleteRoadmap={handleDeleteRoadmap}
                 roadmap={activeRoadmap}
                 onToggleTopic={handleToggleTopic}
                 onTopicClick={handleStartTopicLesson}
@@ -2802,24 +3109,24 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
                   );
                   if (!activeProj)
                     return (
-                      <p className="text-zinc-600">
+                      <p className="text-zinc-600 dark:text-[#8B9099]">
                         Loading project details...
                       </p>
                     );
                   return (
-                    <div className="flex h-full flex-col gap-6 max-w-5xl mx-auto bg-white rounded-3xl p-6 sm:p-8 shadow-xs border border-black/5">
+                    <div className="flex h-full flex-col gap-6 max-w-5xl mx-auto bg-white dark:bg-[#16191D] rounded-3xl p-6 sm:p-8 shadow-xs border border-black/5 dark:border-[#25282D]">
                       <div>
                         <button
                           onClick={() => {
                             setActiveProjectId(null);
                             setActiveTab('projects');
                           }}
-                          className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-950 mb-3 font-semibold transition-colors cursor-pointer"
+                          className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-950 dark:text-[#8B9099] dark:hover:text-[#E5E7EB] mb-3 font-semibold transition-colors cursor-pointer"
                         >
                           &larr; Back to All Projects
                         </button>
                         <div className="flex items-center justify-between gap-4">
-                          <h2 className="text-2xl sm:text-3xl font-bold text-zinc-950 tracking-tight">
+                          <h2 className="text-2xl sm:text-3xl font-bold text-zinc-950 dark:text-[#E5E7EB] tracking-tight">
                             {activeProj.title}
                           </h2>
                           <div className="flex gap-2">
@@ -2830,7 +3137,7 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
                                   activeProj.title
                                 )
                               }
-                              className="p-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-700 transition-colors cursor-pointer"
+                              className="p-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-[#22252A] dark:hover:bg-[#2E333B] text-zinc-700 dark:text-[#E5E7EB] transition-colors cursor-pointer"
                               title="Rename Project"
                             >
                               <Pencil size={15} />
@@ -2839,45 +3146,45 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
                               onClick={() =>
                                 handleDeleteProject(activeProj.id)
                               }
-                              className="p-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 transition-colors cursor-pointer"
+                              className="p-2 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 transition-colors cursor-pointer"
                               title="Delete Project"
                             >
                               <Trash2 size={15} />
                             </button>
                           </div>
                         </div>
-                        <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
+                        <p className="text-xs text-zinc-500 dark:text-[#8B9099] mt-1 leading-relaxed">
                           Topic:{' '}
-                          <strong className="font-semibold text-zinc-900">
+                          <strong className="font-semibold text-zinc-900 dark:text-[#E5E7EB]">
                             {activeProj.topic}
                           </strong>
                         </p>
                       </div>
 
-                      <div className="bg-[#E5ECC9]/40 border border-black/5 rounded-3xl p-6 text-center flex flex-col items-center justify-center">
-                        <h3 className="text-base font-bold text-zinc-950 mb-1">
+                      <div className="bg-[#E5ECC9]/40 dark:bg-[#111316] border border-black/5 dark:border-[#25282D] rounded-3xl p-6 text-center flex flex-col items-center justify-center">
+                        <h3 className="text-base font-bold text-zinc-950 dark:text-[#E5E7EB] mb-1">
                           New chat in {activeProj.title}
                         </h3>
-                        <p className="text-xs text-zinc-500 max-w-sm mb-4">
+                        <p className="text-xs text-zinc-500 dark:text-[#8B9099] max-w-sm mb-4">
                           Ask questions about your documents, review your custom
                           roadmap, or learn concepts.
                         </p>
                         <button
                           onClick={handleStartNewProjectChat}
-                          className="bg-zinc-950 hover:bg-black text-white font-medium text-xs px-5 py-2.5 rounded-2xl transition-all shadow-sm active:scale-95 flex items-center gap-2 cursor-pointer"
+                          className="bg-zinc-950 hover:bg-black dark:bg-[#1D4ED8] dark:hover:bg-[#2563EB] text-white font-medium text-xs px-5 py-2.5 rounded-2xl transition-all shadow-sm active:scale-95 flex items-center gap-2 cursor-pointer"
                         >
                           <Plus size={14} /> Start Chat
                         </button>
                       </div>
 
-                      <div className="flex items-center gap-2 border-b border-black/5 pb-3">
+                      <div className="flex items-center gap-2 border-b border-black/5 dark:border-[#25282D] pb-3">
                         <button
                           onClick={() => setProjectSubTab('chats')}
                           className={`px-4 py-2 rounded-2xl text-xs font-semibold transition-all cursor-pointer
                             ${
                               projectSubTab === 'chats'
-                                ? 'bg-zinc-950 text-white shadow-xs'
-                                : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                                ? 'bg-zinc-950 text-white shadow-xs dark:bg-[#1E3A8A]'
+                                : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-[#22252A] dark:text-[#8B9099] dark:hover:bg-[#2E333B] dark:hover:text-[#E5E7EB]'
                             }`}
                         >
                           Chats ({activeProj.chats?.length || 0})
@@ -2887,8 +3194,8 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
                           className={`px-4 py-2 rounded-2xl text-xs font-semibold transition-all cursor-pointer
                             ${
                               projectSubTab === 'sources'
-                                ? 'bg-zinc-950 text-white shadow-xs'
-                                : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                                ? 'bg-zinc-950 text-white shadow-xs dark:bg-[#1E3A8A]'
+                                : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-[#22252A] dark:text-[#8B9099] dark:hover:bg-[#2E333B] dark:hover:text-[#E5E7EB]'
                             }`}
                         >
                           Sources ({documents.length})
@@ -2898,8 +3205,8 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
                           className={`px-4 py-2 rounded-2xl text-xs font-semibold transition-all cursor-pointer
                             ${
                               projectSubTab === 'roadmap'
-                                ? 'bg-zinc-950 text-white shadow-xs'
-                                : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                                ? 'bg-zinc-950 text-white shadow-xs dark:bg-[#1E3A8A]'
+                                : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-[#22252A] dark:text-[#8B9099] dark:hover:bg-[#2E333B] dark:hover:text-[#E5E7EB]'
                             }`}
                         >
                           Roadmap
@@ -2912,7 +3219,7 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
                             {activeProj.chats?.map((c) => (
                               <div
                                 key={c.id}
-                                className="group relative bg-white border border-black/10 rounded-2xl p-4 hover:border-black/20 shadow-xs transition-all flex flex-col justify-between"
+                                className="group relative bg-white dark:bg-[#111316] border border-black/10 dark:border-[#25282D] rounded-2xl p-4 hover:border-black/20 dark:hover:border-[#3B82F6]/40 shadow-xs transition-all flex flex-col justify-between"
                               >
                                 <button
                                   onClick={() => {
@@ -2921,10 +3228,10 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
                                   }}
                                   className="text-left flex-1 min-w-0 cursor-pointer"
                                 >
-                                  <h4 className="font-bold text-sm text-zinc-900 truncate">
+                                  <h4 className="font-bold text-sm text-zinc-900 dark:text-[#E5E7EB] truncate">
                                     💬 {c.title}
                                   </h4>
-                                  <p className="text-xs text-zinc-400 mt-1">
+                                  <p className="text-xs text-zinc-400 dark:text-[#8B9099] mt-1">
                                     {c.messages?.length || 0} messages
                                   </p>
                                 </button>
@@ -2945,7 +3252,7 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
                   action={
                     <button
                       onClick={handleCreateProjectDirectly}
-                      className="bg-zinc-950 hover:bg-black text-white rounded-2xl px-5 py-2.5 text-xs font-semibold transition-all shadow-xs flex items-center gap-1.5 shrink-0 cursor-pointer active:scale-95"
+                      className="bg-zinc-950 hover:bg-black dark:bg-[#1D4ED8] dark:hover:bg-[#2563EB] text-white rounded-2xl px-5 py-2.5 text-xs font-semibold transition-all shadow-xs flex items-center gap-1.5 shrink-0 cursor-pointer active:scale-95"
                     >
                       <Plus size={15} /> New Project
                     </button>
@@ -2990,6 +3297,10 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
           background: #18181b;
           opacity: 0.35;
           animation: thinkingBounce 1s ease-in-out infinite;
+        }
+        .dark .thinking-dot {
+          background: #E5E7EB;
+          opacity: 0.6;
         }
         @keyframes thinkingBounce {
           0%, 60%, 100% { transform: translateY(0); opacity: 0.35; }

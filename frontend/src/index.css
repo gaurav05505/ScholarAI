@@ -1,10 +1,26 @@
 @import url("https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800&display=swap");
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
   --font-body: "Rubik", sans-serif;
   --font-heading: "Rubik Mono One", monospace;
+
+  /* Workspace Dark Mode Design Tokens */
+  --color-workspace-bg-dark: #0B0D10;
+  --color-workspace-sidebar-dark: #111316;
+  --color-workspace-content-dark: #0E1013;
+  --color-workspace-surface-dark: #1A1D21;
+  --color-workspace-surface-card-dark: #16191D;
+  --color-workspace-surface-hover-dark: #22252A;
+  --color-workspace-border-dark: #25282D;
+  --color-workspace-text-primary-dark: #E5E7EB;
+  --color-workspace-text-secondary-dark: #8B9099;
+  --color-workspace-text-muted-dark: #5A5F67;
+  --color-workspace-accent-blue: #1D4ED8;
+  --color-workspace-accent-blue-hover: #2563EB;
+  --color-workspace-accent-tab-dark: #1E3A8A;
 }
 
 @layer utilities {

@@ -383,6 +383,29 @@ export const renameRoadmap = async (req, res) => {
     }
 }
 
+export const deleteRoadmap = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const roadmap = await Roadmap.findByIdAndDelete(id);
+        if (!roadmap) {
+            return res.status(404).json({
+                success: false,
+                message: "Roadmap not found."
+            });
+        }
+        return res.status(200).json({
+            success: true,
+            message: "Roadmap deleted successfully!"
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+}
+
 export const renameProject = async (req, res) => {
     try {
         const { id } = req.params;
