@@ -54,6 +54,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useTheme } from '../context/ThemeContext.jsx';
+import { SettingsPanel } from '../components/SettingsPanel.jsx';
 
 const API_URL = 'http://localhost:5000/api/chat';
 
@@ -502,6 +503,7 @@ const VIEWS = [
   'allChats',
   'allRoadmaps',
   'projects',
+  'settings',
 ];
 
 const InfoPanel = memo(({ title, body, icon: Icon = Sparkles, action }) => (
@@ -2894,8 +2896,11 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
             <NavItem
               text="Setting"
               icon={Settings}
-              active={false}
-              onClick={() => {}}
+              active={activeTab === 'settings'}
+              onClick={() => {
+                setActiveTab('settings');
+                setMobileOpen(false);
+              }}
               collapsed={collapsed}
             />
             <NavItem
@@ -2911,15 +2916,19 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
         {/* ================= RIGHT MAIN VIEWPORT (Container) ================= */}
         <main className="flex flex-1 min-w-0 flex-col rounded-[28px] bg-[#E5ECC9] dark:bg-[#0E1013] dark:border dark:border-[#25282D] overflow-hidden shadow-xs relative">
           <div
-            className="flex h-full w-[700%] transition-transform duration-300 ease-in-out"
+            className="flex h-full transition-transform duration-300 ease-in-out"
             style={{
+              width: `${VIEWS.length * 100}%`,
               transform: `translateX(-${
                 activeIndex * (100 / VIEWS.length)
               }%)`,
             }}
           >
             {/* View 1: Knowledge Sources (RAG Library) */}
-            <div className="w-1/7 h-full p-6 sm:p-8 overflow-y-auto no-scrollbar">
+            <div
+              className="h-full p-6 sm:p-8 overflow-y-auto no-scrollbar"
+              style={{ width: `${100 / VIEWS.length}%` }}
+            >
               <div className="flex h-full flex-col gap-6 max-w-5xl mx-auto bg-white dark:bg-[#16191D] rounded-3xl p-6 sm:p-8 shadow-xs border border-black/5 dark:border-[#25282D]">
                 <div>
                   <h2 className="text-2xl font-bold text-zinc-950 dark:text-[#E5E7EB] tracking-tight">
@@ -3029,7 +3038,7 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
             </div>
 
             {/* View 2: Main AI Chat Panel matching reference screenshot */}
-            <div className="w-1/7 h-full">
+            <div className="h-full" style={{ width: `${100 / VIEWS.length}%` }}>
               <ChatPanel
                 chat={activeChat}
                 onSend={handleSend}
@@ -3048,7 +3057,7 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
             </div>
 
             {/* View 3: Roadmap Interactive Tree View */}
-            <div className="w-1/7 h-full">
+            <div className="h-full" style={{ width: `${100 / VIEWS.length}%` }}>
               <RoadmapPanel
                 roadmaps={roadmaps}
                 activeRoadmapId={activeRoadmapId}
@@ -3062,7 +3071,7 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
             </div>
 
             {/* View 4: Important Questions View */}
-            <div className="w-1/7 h-full">
+            <div className="h-full" style={{ width: `${100 / VIEWS.length}%` }}>
               <QuestionsPanel
                 topic={currentTopic}
                 questions={
@@ -3081,7 +3090,7 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
             </div>
 
             {/* View 5: All Chats Overview */}
-            <div className="w-1/7 h-full">
+            <div className="h-full" style={{ width: `${100 / VIEWS.length}%` }}>
               <ListPanel
                 title="All Chats"
                 items={chats}
@@ -3091,7 +3100,7 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
             </div>
 
             {/* View 6: All Roadmaps Overview */}
-            <div className="w-1/7 h-full">
+            <div className="h-full" style={{ width: `${100 / VIEWS.length}%` }}>
               <ListPanel
                 title="All Roadmaps"
                 items={roadmaps}
@@ -3101,7 +3110,10 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
             </div>
 
             {/* View 7: Project Hub Workspace */}
-            <div className="w-1/7 h-full p-6 sm:p-8 overflow-y-auto no-scrollbar">
+            <div
+              className="h-full p-6 sm:p-8 overflow-y-auto no-scrollbar"
+              style={{ width: `${100 / VIEWS.length}%` }}
+            >
               {activeProjectId ? (
                 (() => {
                   const activeProj = projects.find(
@@ -3259,6 +3271,14 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
                   }
                 />
               )}
+            </div>
+
+            {/* View 8: Workspace Settings */}
+            <div
+              className="h-full overflow-hidden"
+              style={{ width: `${100 / VIEWS.length}%` }}
+            >
+              <SettingsPanel />
             </div>
           </div>
         </main>

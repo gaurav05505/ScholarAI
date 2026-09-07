@@ -122,6 +122,14 @@ export const AuthProvider = ({ children }) => {
     setUser(null)
   }
 
+  const updateUser = (updatedData) => {
+    setUser((prev) => {
+      const next = { ...(prev || {}), ...updatedData }
+      localStorage.setItem('user', JSON.stringify(next))
+      return next
+    })
+  }
+
   const value = {
     user,
     token,
@@ -130,6 +138,7 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
+    updateUser,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
