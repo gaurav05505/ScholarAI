@@ -55,6 +55,7 @@ import {
 import { useAuth } from '../context/AuthContext.jsx';
 import { useTheme } from '../context/ThemeContext.jsx';
 import { SettingsPanel } from '../components/SettingsPanel.jsx';
+import { ContactPanel } from '../components/ContactPanel.jsx';
 
 const API_URL = 'http://localhost:5000/api/chat';
 
@@ -504,6 +505,7 @@ const VIEWS = [
   'allRoadmaps',
   'projects',
   'settings',
+  'contact',
 ];
 
 const InfoPanel = memo(({ title, body, icon: Icon = Sparkles, action }) => (
@@ -2906,8 +2908,11 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
             <NavItem
               text="Contact Us"
               icon={UserRound}
-              active={false}
-              onClick={() => {}}
+              active={activeTab === 'contact'}
+              onClick={() => {
+                setActiveTab('contact');
+                setMobileOpen(false);
+              }}
               collapsed={collapsed}
             />
           </div>
@@ -3279,6 +3284,14 @@ Do not wrap in markdown quotes if possible, output pure JSON.`;
               style={{ width: `${100 / VIEWS.length}%` }}
             >
               <SettingsPanel />
+            </div>
+
+            {/* View 9: Workspace Contact Us */}
+            <div
+              className="h-full overflow-hidden"
+              style={{ width: `${100 / VIEWS.length}%` }}
+            >
+              <ContactPanel />
             </div>
           </div>
         </main>

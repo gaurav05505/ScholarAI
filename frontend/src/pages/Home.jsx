@@ -1,13 +1,13 @@
 import React from 'react'
-import Navbar from '../components/Navbar'
-import Section1 from './Landingpages/Section1'
-import Section2 from './Landingpages/Section2'
-import Section3 from './Landingpages/Section3'
-import Section4 from './Landingpages/Section4'
-import Section5 from './Landingpages/Section5'
-import Section6 from './Landingpages/Section6'
-import Section7 from './Landingpages/Section7'
-import Footer from './Landingpages/Footer'
+import Navbar from '../components/Navbar.jsx'
+import Section1 from './Landingpages/Section1.jsx'
+import Section2 from './Landingpages/Section2.jsx'
+import Section3 from './Landingpages/Section3.jsx'
+import Section4 from './Landingpages/Section4.jsx'
+import Section5 from './Landingpages/Section5.jsx'
+import Section6 from './Landingpages/Section6.jsx'
+import Section7 from './Landingpages/Section7.jsx'
+import Footer from './Landingpages/Footer.jsx'
 
 const Home = () => {
   return (
