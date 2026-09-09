@@ -112,19 +112,18 @@ export const About = () => {
 
   return (
     <div className="relative min-h-screen bg-[#050505] text-[#ffffff] font-body selection:bg-[#4D74FF] selection:text-white overflow-x-hidden">
-      {/* Top Main Navigation */}
+      {/* Subtle Atmospheric Blue Radial Vignette & Grid spanning full top behind Navbar */}
+      <div className="pointer-events-none absolute top-0 inset-x-0 h-[100vh] bg-[radial-gradient(ellipse_80%_60%_at_50%_25%,rgba(77,116,255,0.08),rgba(0,0,0,0))] z-0" />
+      <div className="pointer-events-none absolute top-0 inset-x-0 h-[100vh] bg-[radial-gradient(circle_at_20%_15%,rgba(255,255,255,0.03)_0%,transparent_50%)] z-0" />
+      <div className="pointer-events-none absolute top-0 inset-x-0 h-[100vh] bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_70%_at_50%_30%,#000_70%,transparent_100%)] z-0" />
+
+      {/* Top Main Navigation - Identical placement & padding to Home page */}
       <Navbar />
 
       {/* =========================================================================
-          HERO SECTION (Matching Reference Design with Electric Blue Signature Theme)
+          HERO SECTION (Matching Home Page Section 1 Margins: mx-4 sm:mx-6 lg:mx-8)
           ========================================================================= */}
-      <section className="relative min-h-[92vh] flex flex-col justify-between px-4 sm:px-8 lg:px-14 pt-8 pb-16 overflow-hidden">
-        {/* Subtle Atmospheric Blue Radial Vignette */}
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_35%,rgba(77,116,255,0.08),rgba(0,0,0,0))]" />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.03)_0%,transparent_50%)]" />
-
-        {/* Ambient Grid Pattern */}
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_40%,#000_70%,transparent_100%)]" />
+      <section className="relative z-10 mx-4 sm:mx-6 lg:mx-8 my-4 mt-2 sm:mt-4 min-h-[calc(100dvh-5.5rem)] sm:min-h-[calc(100dvh-6.5rem)] flex flex-col justify-between pb-16 overflow-hidden">
 
         {/* TOP BRAND BADGE WITH POWER PLUG CONNECTOR (Matching reference) */}
         <div className={`relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all duration-700 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
@@ -206,7 +205,7 @@ export const About = () => {
             </div>
 
             {/* Callout 2 & 3 with blueprint corner frame */}
-            <div className="relative p-6 border border-white/10 rounded-2xl bg-zinc-950/60 backdrop-blur-md">
+            <div className="relative p-6 rounded-2xl bg-[#0a0a0a]">
               <div className="text-xs font-semibold text-[#4D74FF] uppercase tracking-wider mb-2">
                 [ Axiomatic Protocol ]
               </div>
@@ -221,7 +220,7 @@ export const About = () => {
 
           {/* Right Column: Quick Launch Action */}
           <div className="lg:col-span-4 flex flex-col items-start lg:items-end justify-end">
-            <div className="flex flex-col gap-3.5 p-6 rounded-2xl bg-gradient-to-br from-zinc-900/90 to-black border border-white/10 shadow-2xl w-full max-w-xs">
+            <div className="flex flex-col gap-3.5 p-6 rounded-2xl bg-[#0a0a0a] shadow-2xl w-full max-w-xs">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold uppercase tracking-widest text-[#4D74FF]">
                   Cognitive Platform
@@ -271,7 +270,7 @@ export const About = () => {
       {/* =========================================================================
           SECTION 2: LIVE FIRST-PRINCIPLES DECONSTRUCTION DEMO WIDGET
           ========================================================================= */}
-      <section className="relative py-20 px-4 sm:px-8 lg:px-14 border-t border-white/10 bg-gradient-to-b from-[#050505] to-[#0a0c10]">
+      <section className="relative py-20 px-4 sm:px-8 lg:px-14 bg-[#050505] w-full max-w-full overflow-hidden">
         <div className="max-w-6xl mx-auto">
           <ScrollReveal delay={0} duration={700}>
             <div className="flex flex-col items-center text-center mb-12">
@@ -295,10 +294,10 @@ export const About = () => {
                 <button
                   key={item.id}
                   onClick={() => setSelectedExample(item)}
-                  className={`px-5 py-2.5 rounded-full text-xs sm:text-sm font-medium transition-all cursor-pointer flex items-center gap-2 border ${
+                  className={`px-5 py-2.5 rounded-full text-xs sm:text-sm font-medium transition-all cursor-pointer flex items-center gap-2 ${
                     active
-                      ? 'bg-white text-black border-white shadow-[0_0_15px_rgba(255,255,255,0.3)] font-semibold'
-                      : 'bg-zinc-900/80 text-zinc-400 border-white/10 hover:border-white/30 hover:text-white'
+                      ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.3)] font-semibold'
+                      : 'bg-zinc-900/80 text-zinc-400 hover:text-white'
                   }`}
                 >
                   <span className={`w-2 h-2 rounded-full ${active ? 'bg-[#4D74FF]' : 'bg-zinc-600'}`} />
@@ -309,43 +308,43 @@ export const About = () => {
           </div>
 
           {/* Interactive Split Comparison Card */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 bg-[#0E1013] border border-white/10 rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 bg-[#0a0a0a] rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden">
             {/* Ambient blue glow light */}
             <div className="absolute top-0 right-0 w-80 h-80 bg-[#4D74FF]/5 rounded-full blur-3xl pointer-events-none" />
 
             {/* Left Col: The Superficial AI Answer */}
-            <div className="lg:col-span-5 flex flex-col justify-between p-6 sm:p-7 rounded-2xl bg-zinc-950/80 border border-white/5">
+            <div className="lg:col-span-5 flex flex-col justify-between p-6 sm:p-7 rounded-2xl bg-[#050505]">
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
                     [ Standard AI Chatbot Response ]
                   </span>
-                  <span className="text-xs px-2.5 py-1 rounded bg-red-950/40 text-red-400 border border-red-900/30 font-medium">
+                  <span className="text-xs px-2.5 py-1 rounded bg-red-950/40 text-red-400 font-medium">
                     High Fluff / Low Retention
                   </span>
                 </div>
                 <h4 className="text-base font-bold text-zinc-200 mb-2">
                   {selectedExample.topic}
                 </h4>
-                <p className="text-sm text-zinc-400 leading-relaxed italic bg-black/40 p-4 rounded-xl border border-white/5">
+                <p className="text-sm text-zinc-400 leading-relaxed italic bg-black/40 p-4 rounded-xl">
                   "{selectedExample.fluff}"
                 </p>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-white/5 text-xs text-zinc-500 flex items-center gap-2">
+              <div className="mt-6 pt-4 text-xs text-zinc-500 flex items-center gap-2">
                 <span>Result:</span>
                 <span className="text-zinc-400 font-medium">Surface understanding evaporates in 48 hours.</span>
               </div>
             </div>
 
             {/* Right Col: Avora First-Principles Breakdown */}
-            <div className="lg:col-span-7 flex flex-col justify-between p-6 sm:p-7 rounded-2xl bg-gradient-to-br from-[#16191D] to-[#111316] border border-white/10 shadow-lg">
+            <div className="lg:col-span-7 flex flex-col justify-between p-6 sm:p-7 rounded-2xl bg-[#111316] shadow-lg">
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-xs font-semibold text-[#4D74FF] uppercase tracking-wider">
                     [ Avora First-Principles Derivation ]
                   </span>
-                  <span className="text-xs px-2.5 py-1 rounded bg-blue-950/50 text-[#60A5FA] border border-blue-800/40 font-semibold">
+                  <span className="text-xs px-2.5 py-1 rounded bg-blue-950/50 text-[#60A5FA] font-semibold">
                     100% Axiomatic Clarity
                   </span>
                 </div>
@@ -354,7 +353,7 @@ export const About = () => {
                   {selectedExample.firstPrinciples.map((step, idx) => (
                     <div
                       key={idx}
-                      className="p-4 rounded-xl bg-black/50 border border-white/10 flex items-start gap-3.5 hover:border-white/25 transition-colors"
+                      className="p-4 rounded-xl bg-[#050505] flex items-start gap-3.5 transition-colors"
                     >
                       <div className="p-1.5 rounded-lg bg-[#4D74FF]/15 text-[#4D74FF] shrink-0 mt-0.5 shadow-[0_0_8px_rgba(77,116,255,0.3)]">
                         <CheckCircle2 size={16} />
@@ -372,7 +371,7 @@ export const About = () => {
                 </div>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between">
+              <div className="mt-6 pt-4 flex items-center justify-between">
                 <span className="text-xs sm:text-sm text-zinc-400">
                   Ready to test your comprehension?
                 </span>
@@ -392,7 +391,7 @@ export const About = () => {
       {/* =========================================================================
           SECTION 3: THE 4 ARCHITECTURAL PILLARS
           ========================================================================= */}
-      <section className="relative py-24 px-4 sm:px-8 lg:px-14 border-t border-white/10 bg-[#050505]">
+      <section className="relative py-24 px-4 sm:px-8 lg:px-14 bg-[#050505] w-full max-w-full overflow-hidden">
         <div className="max-w-6xl mx-auto">
           <ScrollReveal delay={0} duration={700}>
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
@@ -416,10 +415,10 @@ export const About = () => {
               const Icon = pillar.icon;
               return (
                 <ScrollReveal key={pillar.num} delay={idx * 100} duration={650}>
-                  <div className="group relative p-8 sm:p-10 rounded-3xl bg-[#0E1013] border border-white/10 hover:border-white/25 transition-all duration-300 shadow-xl flex flex-col justify-between min-h-[260px] overflow-hidden">
+                  <div className="group relative p-8 sm:p-10 rounded-3xl bg-[#0a0a0a] hover:bg-[#111316] transition-all duration-300 shadow-xl flex flex-col justify-between min-h-[260px] overflow-hidden">
                     {/* Corner Number */}
                     <div className="flex items-center justify-between mb-6">
-                      <div className="p-3.5 rounded-2xl bg-zinc-900 border border-white/10 text-white group-hover:scale-105 transition-transform">
+                      <div className="p-3.5 rounded-2xl bg-zinc-900 text-white group-hover:scale-105 transition-transform">
                         <Icon size={22} style={{ color: pillar.accent }} />
                       </div>
                       <span className="font-heading font-black text-2xl text-zinc-600 group-hover:text-zinc-400 transition-colors">
@@ -453,14 +452,14 @@ export const About = () => {
       </section>
 
       {/* =========================================================================
-          SECTION 4: IMPACT METRICS & BENCHMARKS
+          SECTION 4: KEY IMPACT METRICS
           ========================================================================= */}
-      <section className="relative py-20 px-4 sm:px-8 lg:px-14 border-t border-white/10 bg-gradient-to-b from-[#0a0c10] to-[#050505]">
+      <section className="relative py-20 px-4 sm:px-8 lg:px-14 bg-[#050505] w-full max-w-full overflow-hidden">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {METRICS.map((metric, idx) => (
               <ScrollReveal key={idx} delay={idx * 80} duration={600}>
-                <div className="p-7 rounded-3xl bg-[#0E1013]/60 border border-white/10 text-center flex flex-col items-center justify-center">
+                <div className="p-7 rounded-3xl bg-[#0a0a0a] text-center flex flex-col items-center justify-center">
                   <span className="text-4xl sm:text-5xl font-black font-body text-white tracking-tight">
                     {metric.value}
                   </span>
@@ -478,9 +477,9 @@ export const About = () => {
       </section>
 
       {/* =========================================================================
-          SECTION 5: OUR MANIFESTO & PHILOSOPHY
+          SECTION 5: THE MANIFESTO & CLOSING CTA
           ========================================================================= */}
-      <section className="relative py-24 px-4 sm:px-8 lg:px-14 border-t border-white/10 bg-[#050505]">
+      <section className="relative py-24 px-4 sm:px-8 lg:px-14 bg-[#050505] w-full max-w-full overflow-hidden">
         <div className="max-w-4xl mx-auto text-center flex flex-col items-center">
           <ScrollReveal delay={0} duration={700}>
             <span className="text-xs font-semibold text-[#4D74FF] uppercase tracking-widest px-4 py-1.5 rounded-full border border-[#4D74FF]/30 bg-[#4D74FF]/10 mb-6 inline-block">
@@ -510,7 +509,7 @@ export const About = () => {
               </button>
               <button
                 onClick={() => navigate('/register')}
-                className="bg-white/10 hover:bg-white/20 text-white font-semibold text-sm px-8 py-4 rounded-2xl border border-white/15 transition-all cursor-pointer active:scale-95"
+                className="bg-white/10 hover:bg-white/20 text-white font-semibold text-sm px-8 py-4 rounded-2xl transition-all cursor-pointer active:scale-95"
               >
                 Create Free Account
               </button>

@@ -56,16 +56,15 @@ const CommunityHubIcon = ({ size = 18, className = '' }) => (
 const Footer = () => {
   const navigate = useNavigate()
   return (
-    <footer className="relative w-full bg-black text-white font-sans overflow-hidden border-white/10">
+    <footer className="relative w-full max-w-full bg-black text-white font-sans overflow-hidden border-white/10">
       {/* ================= TOP GIANT BRAND HEADER ================= */}
       <ScrollReveal
         delay={0}
         duration={850}
         scale={true}
-        className="w-full py-16 sm:py-24 lg:py-32 flex items-center justify-center border-b border-white/10 select-none"
+        className="w-full max-w-full py-16 sm:py-24 lg:py-32 flex items-center justify-center border-b border-white/10 select-none overflow-hidden"
       >
-        <h1 className="text-6xl sm:text-8xl md:text-9xl lg:text-[150px] font-body
-        r font-black tracking-widest text-white uppercase text-center leading-none">
+        <h1 className="text-6xl sm:text-8xl md:text-9xl lg:text-[150px] font-body font-black tracking-widest text-white uppercase text-center leading-none max-w-full break-words">
           AVORA
         </h1>
       </ScrollReveal>

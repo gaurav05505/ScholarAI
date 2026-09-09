@@ -88,10 +88,8 @@ const Navbar = () => {
 
   return (
     <nav
-      className={`sticky top-0 z-50 w-full transition-all duration-300 ease-out ${
-        scrolled
-          ? 'py-6 px-2 '
-          : 'bg-transparent rounded-2xl py-4 px-2'
+      className={`sticky top-0 z-50 w-full transition-all duration-300 ease-out bg-transparent ${
+        scrolled ? 'py-4 px-2' : 'py-5 px-2'
       }`}
     >
       <div className="flex w-full justify-between items-center px-4 sm:px-6 lg:px-8">
@@ -190,7 +188,7 @@ const Navbar = () => {
         {/* Panel */}
         <div
           id="mobile-menu"
-          className={`absolute top-0 right-0 h-full w-[80%] max-w-xs bg-neutral-950/95 backdrop-blur-xl border-l border-white/10 shadow-2xl flex flex-col justify-between pt-24 pb-8 px-8 transition-transform duration-300 ease-out ${
+          className={`absolute top-0 right-0 h-full w-[80%] max-w-xs bg-[#050505]/95 backdrop-blur-xl border-l border-white/10 shadow-2xl flex flex-col justify-between pt-24 pb-8 px-8 transition-transform duration-300 ease-out ${
             menuOpen ? 'translate-x-0' : 'translate-x-full'
           }`}
         >

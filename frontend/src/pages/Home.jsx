@@ -11,7 +11,7 @@ import Footer from './Landingpages/Footer.jsx'
 
 const Home = () => {
   return (
-    <div className='relative flex flex-col'>
+    <div className='relative flex flex-col w-full max-w-full overflow-x-hidden'>
       <Navbar />
       <Section1 />
       <Section2 /> 
