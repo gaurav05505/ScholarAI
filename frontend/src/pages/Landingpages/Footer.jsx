@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import ScrollReveal from '../../components/ScrollReveal'
 
 // Custom LinkedIn SVG icon
@@ -53,6 +54,7 @@ const CommunityHubIcon = ({ size = 18, className = '' }) => (
 )
 
 const Footer = () => {
+  const navigate = useNavigate()
   return (
     <footer className="relative w-full bg-black text-white font-sans overflow-hidden border-white/10">
       {/* ================= TOP GIANT BRAND HEADER ================= */}
@@ -83,6 +85,7 @@ const Footer = () => {
           <div>
             <button
               type="button"
+              onClick={() => navigate('/workspace')}
               className="get-started cursor-pointer text-xs sm:text-sm font-semibold !py-3 !px-7"
             >
               Get started
@@ -102,16 +105,16 @@ const Footer = () => {
 
           <ul className="space-y-4">
             <li>
-              <a
-                href="#"
+              <Link
+                to="/"
                 className="text-xs sm:text-sm text-zinc-300 hover:text-white transition-colors cursor-pointer"
               >
                 Home
-              </a>
+              </Link>
             </li>
             <li>
               <a
-                href="#workflow"
+                href="/#workflow"
                 className="text-xs sm:text-sm text-zinc-300 hover:text-white transition-colors cursor-pointer"
               >
                 WorkFlow
@@ -119,7 +122,7 @@ const Footer = () => {
             </li>
             <li>
               <a
-                href="#pricing"
+                href="/#pricing"
                 className="text-xs sm:text-sm text-zinc-300 hover:text-white transition-colors cursor-pointer"
               >
                 Pricing
@@ -140,16 +143,16 @@ const Footer = () => {
 
           <ul className="space-y-4">
             <li>
-              <a
-                href="#about"
+              <Link
+                to="/about"
                 className="text-xs sm:text-sm text-zinc-300 hover:text-white transition-colors cursor-pointer"
               >
                 About Us
-              </a>
+              </Link>
             </li>
             <li>
               <a
-                href="#contact"
+                href="/#contact"
                 className="text-xs sm:text-sm text-zinc-300 hover:text-white transition-colors cursor-pointer"
               >
                 Contact Us
@@ -157,7 +160,7 @@ const Footer = () => {
             </li>
             <li>
               <a
-                href="#book-call"
+                href="/#book-call"
                 className="text-xs sm:text-sm text-zinc-300 hover:text-white transition-colors cursor-pointer"
               >
                 Book A Call

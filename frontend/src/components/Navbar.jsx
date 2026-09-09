@@ -1,17 +1,40 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { X } from 'lucide-react'
 
 const NAV_LINKS = [
-  { label: 'Home', href: '#' },
-  { label: 'About', href: '#' },
-  { label: 'How to use', href: '#' },
+  { label: 'Home', href: '/' },
+  { label: 'About', href: '/about' },
+  { label: 'How to use', href: '/#workflow' },
 ]
 
 const Navbar = () => {
+  const navigate = useNavigate()
+  const location = useLocation()
   const [scrolled, setScrolled] = useState(false)
   const [isLightSection, setIsLightSection] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const tickingRef = useRef(false)
+
+  const isLinkActive = useCallback(
+    (href) => {
+      if (href === '/') {
+        return (
+          location.pathname === '/' &&
+          (!location.hash || location.hash === '#' || location.hash === '')
+        )
+      }
+      if (href === '/about') {
+        return location.pathname === '/about'
+      }
+      if (href.startsWith('/#') || href.startsWith('#')) {
+        const targetHash = href.replace(/^\//, '')
+        return location.pathname === '/' && location.hash === targetHash
+      }
+      return location.pathname === href
+    },
+    [location.pathname, location.hash]
+  )
 
   // Scroll listener: detects scrolled state and light/dark section background
   useEffect(() => {
@@ -73,13 +96,14 @@ const Navbar = () => {
     >
       <div className="flex w-full justify-between items-center px-4 sm:px-6 lg:px-8">
         {/* Logo */}
-        <p
-          className={`text-[20px] sm:text-[24px] font-heading font-black tracking-wider uppercase transition-colors duration-300 ${
+        <Link
+          to="/"
+          className={`text-[20px] sm:text-[24px] font-heading font-black tracking-wider uppercase transition-colors duration-300 cursor-pointer ${
             isLightSection ? 'text-black' : 'text-white'
           }`}
         >
           Avora
-        </p>
+        </Link>
 
         {/* Full navigation - shown on desktop only while not scrolled */}
         <div
@@ -88,19 +112,38 @@ const Navbar = () => {
           }`}
         >
           <div className="flex gap-6 lg:gap-8 items-center">
-            {NAV_LINKS.map((link) => (
-              <a
-                key={link.label}
-                href={link.href}
-                className={`nav-link transition-colors duration-300 ${
-                  isLightSection ? '!text-black/70 hover:!text-black' : ''
-                }`}
-              >
-                {link.label}
-              </a>
-            ))}
+            {NAV_LINKS.map((link) => {
+              const active = isLinkActive(link.href)
+              const isInternal = link.href.startsWith('/') && !link.href.includes('#')
+              const linkClasses = `nav-link transition-colors duration-300 ${
+                active ? 'active' : ''
+              } ${isLightSection ? (active ? '!text-black font-semibold' : '!text-black/70 hover:!text-black') : ''}`
+
+              return isInternal ? (
+                <Link
+                  key={link.label}
+                  to={link.href}
+                  className={linkClasses}
+                >
+                  {link.label}
+                </Link>
+              ) : (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  className={linkClasses}
+                >
+                  {link.label}
+                </a>
+              )
+            })}
           </div>
-          <button className="get-started">Get Started</button>
+          <button
+            onClick={() => navigate('/workspace')}
+            className="get-started cursor-pointer"
+          >
+            Get Started
+          </button>
         </div>
 
         {/* Menu toggle - always shown on mobile, shown on desktop once scrolled */}
@@ -151,24 +194,59 @@ const Navbar = () => {
             menuOpen ? 'translate-x-0' : 'translate-x-full'
           }`}
         >
-          {/* Menu Links with hover states and animation */}
+          {/* Menu Links with active states and animation */}
           <div className="flex flex-col">
-            {NAV_LINKS.map((link, i) => (
-              <a
-                key={link.label}
-                href={link.href}
-                onClick={closeMenu}
-                className="group flex items-center justify-between py-4 text-lg text-zinc-300 hover:text-white hover:translate-x-1.5 border-b border-white/10 transition-all duration-200"
-                style={{
-                  transitionDelay: menuOpen ? `${i * 60 + 100}ms` : '0ms',
-                  opacity: menuOpen ? 1 : 0,
-                  transform: menuOpen ? 'translateY(0)' : 'translateY(-8px)',
-                }}
-              >
-                <span className="group-hover:text-white transition-colors">{link.label}</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-[#4D74FF] opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-[0_0_8px_#4D74FF]" />
-              </a>
-            ))}
+            {NAV_LINKS.map((link, i) => {
+              const active = isLinkActive(link.href)
+              const isInternal = link.href.startsWith('/') && !link.href.includes('#')
+              const itemContent = (
+                <>
+                  <span className={`transition-colors ${active ? 'text-white font-bold' : 'text-zinc-300 group-hover:text-white'}`}>
+                    {link.label}
+                  </span>
+                  <span
+                    className={`w-2 h-2 rounded-full bg-[#4D74FF] transition-all duration-200 ${
+                      active
+                        ? 'opacity-100 scale-100 shadow-[0_0_10px_#4D74FF]'
+                        : 'opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 shadow-[0_0_8px_#4D74FF]'
+                    }`}
+                  />
+                </>
+              )
+              const itemClasses = `group flex items-center justify-between py-4 text-lg border-b border-white/10 transition-all duration-200 ${
+                active ? 'bg-white/5 px-3 rounded-xl border-transparent' : 'hover:translate-x-1.5'
+              }`
+
+              return isInternal ? (
+                <Link
+                  key={link.label}
+                  to={link.href}
+                  onClick={closeMenu}
+                  className={itemClasses}
+                  style={{
+                    transitionDelay: menuOpen ? `${i * 60 + 100}ms` : '0ms',
+                    opacity: menuOpen ? 1 : 0,
+                    transform: menuOpen ? 'translateY(0)' : 'translateY(-8px)',
+                  }}
+                >
+                  {itemContent}
+                </Link>
+              ) : (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  onClick={closeMenu}
+                  className={itemClasses}
+                  style={{
+                    transitionDelay: menuOpen ? `${i * 60 + 100}ms` : '0ms',
+                    opacity: menuOpen ? 1 : 0,
+                    transform: menuOpen ? 'translateY(0)' : 'translateY(-8px)',
+                  }}
+                >
+                  {itemContent}
+                </a>
+              )
+            })}
           </div>
 
           {/* Bottom Get Started Button */}
@@ -180,7 +258,10 @@ const Navbar = () => {
                 opacity: menuOpen ? 1 : 0,
                 transform: menuOpen ? 'translateY(0)' : 'translateY(-8px)',
               }}
-              onClick={closeMenu}
+              onClick={() => {
+                closeMenu();
+                navigate('/workspace');
+              }}
             >
               Get Started
             </button>
