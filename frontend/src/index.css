@@ -251,3 +251,91 @@ body {
     opacity: 0;
   }
 }
+
+/* Hand-Drawn SVG Loop Stroke Draw Animation */
+@keyframes drawSvgLoop {
+  0% {
+    stroke-dashoffset: 1200;
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+.animate-draw-loop {
+  stroke-dasharray: 1200;
+  stroke-dashoffset: 1200;
+  animation: drawSvgLoop 1.6s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;
+}
+
+/* Ambient Glow Floating & Breathing */
+@keyframes glowFloat {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translate(15px, -12px) scale(1.1);
+    opacity: 0.95;
+  }
+}
+
+.animate-glow-float {
+  animation: glowFloat 7s ease-in-out infinite;
+}
+
+/* Radar Pulse for Live Badges */
+@keyframes pulseRadar {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(77, 116, 255, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 8px rgba(77, 116, 255, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(77, 116, 255, 0);
+  }
+}
+
+.animate-radar {
+  animation: pulseRadar 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Accordion Smooth Fade & Slide In */
+@keyframes accordionSlide {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-accordion-content {
+  animation: accordionSlide 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes subtitleReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-subtitle-reveal {
+  animation: subtitleReveal 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
