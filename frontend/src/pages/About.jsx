@@ -89,9 +89,6 @@ export const About = () => {
       {/* Top Main Navigation */}
       <Navbar />
 
-      {/* =========================================================================
-          HERO SECTION (Matching Reference: Big Editorial Headline + Glowing Red/Blue Core + Hand-Drawn Oval)
-          ========================================================================= */}
       <section className="relative z-10 mx-4 sm:mx-6 lg:mx-8 my-4 mt-2 sm:mt-4 min-h-[75vh] sm:min-h-[85vh] flex flex-col justify-between pt-6 sm:pt-10 pb-16 overflow-hidden">
         
         {/* Soft Multi-Color Ambient Glow Behind Headline (Breathing Floating Animation) */}
@@ -370,9 +367,7 @@ export const About = () => {
         </div>
       </section>
 
-      {/* =========================================================================
-          SECTION 4: BIG CALL-TO-ACTION WITH HAND-DRAWN NEON LOOP (Matching Reference)
-          ========================================================================= */}
+
       <section className="relative py-24 sm:py-36 px-4 sm:px-6 lg:px-8 bg-[#050505] w-full max-w-full overflow-hidden flex flex-col items-center justify-center text-center">
         {/* Soft Ambient Radial Corner Glows */}
         <div className="pointer-events-none absolute bottom-0 left-0 w-[400px] h-[300px] bg-[radial-gradient(ellipse_at_bottom_left,rgba(239,68,68,0.25),transparent_70%)] blur-3xl z-0 animate-glow-float" />
