@@ -57,7 +57,16 @@ import { useTheme } from '../context/ThemeContext.jsx';
 import { SettingsPanel } from '../components/SettingsPanel.jsx';
 import { ContactPanel } from '../components/ContactPanel.jsx';
 
-const API_URL = 'http://localhost:5000/api/chat';
+const getApiHost = () => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  const hostname = typeof window !== 'undefined' && window.location.hostname ? window.location.hostname : 'localhost';
+  return `http://${hostname}:5000`;
+};
+
+const API_URL = `${getApiHost()}/api/chat`;
+
 
 /* ---------- Markdown & Inline Formatter ---------- */
 

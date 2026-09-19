@@ -1,7 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react'
 import axios from 'axios'
-import { loginUser, registerUser } from '../services/auth.service.js'
-import { loginUser, registerUser, getCurrentUser } from '../services/auth.service.js'
+import { loginUser, registerUser, getCurrentUser, API_BASE_URL } from '../services/auth.service.js'
 
 const AuthContext = createContext(null)
 
@@ -53,16 +52,13 @@ export const AuthProvider = ({ children }) => {
 
   // Verify auth on mount
   useEffect(() => {
-    const initializeAuth = () => {
     const initializeAuth = async () => {
       try {
         const storedToken = localStorage.getItem('token')
         const storedUser = localStorage.getItem('user')
 
-        if (storedToken && storedUser) {
         if (storedToken) {
           setToken(storedToken)
-          setUser(JSON.parse(storedUser))
           axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`
           if (storedUser) {
             setUser(JSON.parse(storedUser))
@@ -108,7 +104,11 @@ export const AuthProvider = ({ children }) => {
       return { success: false, message: 'Invalid response from server' }
     } catch (err) {
       console.error('Login error:', err)
-      const errorMsg = err.response?.data?.message || 'Login failed. Please try again.'
+      const errorMsg =
+        err.response?.data?.message ||
+        (err.code === 'ERR_NETWORK' || !err.response
+          ? `Unable to connect to backend server at ${API_BASE_URL}. Please ensure the backend server is running.`
+          : err.message || 'Login failed. Please try again.')
       return { success: false, message: errorMsg }
     } finally {
       setLoading(false)
@@ -129,7 +129,11 @@ export const AuthProvider = ({ children }) => {
       return { success: true, message: 'Registration successful! Please log in.' }
     } catch (err) {
       console.error('Registration error:', err)
-      const errorMsg = err.response?.data?.message || 'Registration failed. Please try again.'
+      const errorMsg =
+        err.response?.data?.message ||
+        (err.code === 'ERR_NETWORK' || !err.response
+          ? `Unable to connect to backend server at ${API_BASE_URL}. Please ensure the backend server is running.`
+          : err.message || 'Registration failed. Please try again.')
       return { success: false, message: errorMsg }
     } finally {
       setLoading(false)
@@ -172,3 +176,4 @@ export const useAuth = () => {
   }
   return context
 }
+
