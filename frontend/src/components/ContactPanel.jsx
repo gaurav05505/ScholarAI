@@ -370,7 +370,3 @@ export const ContactPanel = () => {
     </div>
   );
 };
-
-
-
-

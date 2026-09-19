@@ -172,93 +172,76 @@ const Navbar = () => {
         </button>
       </div>
 
-      {/* Menu overlay - opens whenever the hamburger is active (mobile always, desktop when scrolled) */}
+      {/* Backdrop overlay */}
       <div
-        className={`fixed inset-0 z-40 transition-opacity duration-300 ${
+        className={`fixed inset-0 z-40 bg-black/50 backdrop-blur-xs transition-opacity duration-300 ${
           menuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
+        onClick={closeMenu}
+        aria-hidden="true"
+      />
+
+      {/* Floating Menu Dropdown Panel (Contained in one page/view, no whole-page scroll) */}
+      <div
+        id="mobile-menu"
+        className={`absolute top-full right-4 left-4 sm:left-auto sm:right-6 sm:w-80 z-50 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          menuOpen
+            ? 'opacity-100 translate-y-2 scale-100 pointer-events-auto'
+            : 'opacity-0 -translate-y-3 scale-95 pointer-events-none'
+        }`}
       >
-        {/* Backdrop */}
-        <div
-          className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-          onClick={closeMenu}
-          aria-hidden="true"
-        />
+        <div className="w-full bg-[#0a0a0d]/95 backdrop-blur-2xl border border-white/15 rounded-2xl p-4 sm:p-5 shadow-[0_20px_50px_rgba(0,0,0,0.9)] flex flex-col gap-1.5">
+          {/* Menu Links with active states */}
+          {NAV_LINKS.map((link) => {
+            const active = isLinkActive(link.href)
+            const isInternal = link.href.startsWith('/') && !link.href.includes('#')
+            const itemClasses = `group flex items-center justify-between px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 cursor-pointer ${
+              active
+                ? 'bg-white/10 text-white font-semibold shadow-inner'
+                : 'text-zinc-300 hover:text-white hover:bg-white/5'
+            }`
 
-        {/* Panel */}
-        <div
-          id="mobile-menu"
-          className={`absolute top-0 right-0 h-full w-[80%] max-w-xs bg-[#050505]/95 backdrop-blur-xl border-l border-white/10 shadow-2xl flex flex-col justify-between pt-24 pb-8 px-8 transition-transform duration-300 ease-out ${
-            menuOpen ? 'translate-x-0' : 'translate-x-full'
-          }`}
-        >
-          {/* Menu Links with active states and animation */}
-          <div className="flex flex-col">
-            {NAV_LINKS.map((link, i) => {
-              const active = isLinkActive(link.href)
-              const isInternal = link.href.startsWith('/') && !link.href.includes('#')
-              const itemContent = (
-                <>
-                  <span className={`transition-colors ${active ? 'text-white font-bold' : 'text-zinc-300 group-hover:text-white'}`}>
-                    {link.label}
-                  </span>
-                  <span
-                    className={`w-2 h-2 rounded-full bg-[#4D74FF] transition-all duration-200 ${
-                      active
-                        ? 'opacity-100 scale-100 shadow-[0_0_10px_#4D74FF]'
-                        : 'opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 shadow-[0_0_8px_#4D74FF]'
-                    }`}
-                  />
-                </>
-              )
-              const itemClasses = `group flex items-center justify-between py-4 text-lg border-b border-white/10 transition-all duration-200 ${
-                active ? 'bg-white/5 px-3 rounded-xl border-transparent' : 'hover:translate-x-1.5'
-              }`
+            const linkContent = (
+              <>
+                <span>{link.label}</span>
+                <span
+                  className={`w-2 h-2 rounded-full bg-[#4D74FF] transition-all duration-200 ${
+                    active
+                      ? 'opacity-100 scale-100 shadow-[0_0_10px_#4D74FF]'
+                      : 'opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 shadow-[0_0_8px_#4D74FF]'
+                  }`}
+                />
+              </>
+            )
 
-              return isInternal ? (
-                <Link
-                  key={link.label}
-                  to={link.href}
-                  onClick={closeMenu}
-                  className={itemClasses}
-                  style={{
-                    transitionDelay: menuOpen ? `${i * 60 + 100}ms` : '0ms',
-                    opacity: menuOpen ? 1 : 0,
-                    transform: menuOpen ? 'translateY(0)' : 'translateY(-8px)',
-                  }}
-                >
-                  {itemContent}
-                </Link>
-              ) : (
-                <a
-                  key={link.label}
-                  href={link.href}
-                  onClick={closeMenu}
-                  className={itemClasses}
-                  style={{
-                    transitionDelay: menuOpen ? `${i * 60 + 100}ms` : '0ms',
-                    opacity: menuOpen ? 1 : 0,
-                    transform: menuOpen ? 'translateY(0)' : 'translateY(-8px)',
-                  }}
-                >
-                  {itemContent}
-                </a>
-              )
-            })}
-          </div>
+            return isInternal ? (
+              <Link
+                key={link.label}
+                to={link.href}
+                onClick={closeMenu}
+                className={itemClasses}
+              >
+                {linkContent}
+              </Link>
+            ) : (
+              <a
+                key={link.label}
+                href={link.href}
+                onClick={closeMenu}
+                className={itemClasses}
+              >
+                {linkContent}
+              </a>
+            )
+          })}
 
           {/* Bottom Get Started Button */}
-          <div className="mt-auto pt-8">
+          <div className="pt-3 border-t border-white/10 mt-1">
             <button
-              className="get-started w-full block text-center cursor-pointer transition-all duration-300"
-              style={{
-                transitionDelay: menuOpen ? `${NAV_LINKS.length * 60 + 100}ms` : '0ms',
-                opacity: menuOpen ? 1 : 0,
-                transform: menuOpen ? 'translateY(0)' : 'translateY(-8px)',
-              }}
+              className="get-started w-full block text-center py-2.5 rounded-xl cursor-pointer text-sm font-semibold transition-all duration-300"
               onClick={() => {
-                closeMenu();
-                navigate('/workspace');
+                closeMenu()
+                navigate('/workspace')
               }}
             >
               Get Started

@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect, useContext } from 'react'
 import axios from 'axios'
 import { loginUser, registerUser } from '../services/auth.service.js'
+import { loginUser, registerUser, getCurrentUser } from '../services/auth.service.js'
 
 const AuthContext = createContext(null)
 
@@ -53,13 +54,33 @@ export const AuthProvider = ({ children }) => {
   // Verify auth on mount
   useEffect(() => {
     const initializeAuth = () => {
+    const initializeAuth = async () => {
       try {
         const storedToken = localStorage.getItem('token')
         const storedUser = localStorage.getItem('user')
 
         if (storedToken && storedUser) {
+        if (storedToken) {
           setToken(storedToken)
           setUser(JSON.parse(storedUser))
+          axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`
+          if (storedUser) {
+            setUser(JSON.parse(storedUser))
+          }
+          try {
+            const data = await getCurrentUser()
+            if (data?.user) {
+              setUser(data.user)
+              localStorage.setItem('user', JSON.stringify(data.user))
+            }
+          } catch (err) {
+            if (err.response && err.response.status === 401) {
+              localStorage.removeItem('token')
+              localStorage.removeItem('user')
+              setToken(null)
+              setUser(null)
+            }
+          }
         }
       } catch (err) {
         console.error('Error reading auth state from localStorage:', err)
