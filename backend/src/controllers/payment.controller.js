@@ -3,12 +3,12 @@ import razorpay from '../services/razorpay.service.js';
 const PLANS = {
 
     PRO: {
-        amount: 299, 
+        amount: 499, 
         name: "Pro", 
 
     },
     premium : {
-        amount: 599, 
+        amount: 799, 
         name : "premium", 
     }, 
 }
