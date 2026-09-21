@@ -239,7 +239,7 @@ export const ContactPanel = () => {
                       Send Us a Message
                     </h2>
                     <p className="text-xs text-zinc-500 dark:text-[#8B9099] mt-0.5">
-                      Fill out the details below and we'll route your request to the right specialist.
+                      Fill out the details below and we'  ll route your request to the right specialist.
                     </p>
                   </div>
 
