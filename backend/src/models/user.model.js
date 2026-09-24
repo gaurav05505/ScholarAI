@@ -45,9 +45,16 @@ const userSchema = new mongoose.Schema({
             type: String,
             default: null,
         },
-        
-
+        razorpayPaymentId: {
+            type: String,
+            default: null,
+        },
+        razorpayOrderId: {
+            type: String,
+            default: null,
+        },
     }, 
+
 
     usage: {
       weeklyChats: {
