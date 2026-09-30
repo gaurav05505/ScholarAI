@@ -5,9 +5,7 @@ import { Learning_Fields } from '../constants/learningField.constant.js';
 import { getFallbackQuestion } from '../constants/learningQuestion.constant.js';
 import { roadmapNode } from './roadmap.node.js';
 
-/**
- * Safely extracts and parses JSON content from AI responses.
- */
+
 function cleanAndParseJSON(str) {
   if (typeof str !== 'string') return str;
   let cleaned = str.trim();
