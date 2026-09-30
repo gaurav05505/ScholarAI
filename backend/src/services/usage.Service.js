@@ -20,7 +20,7 @@ export const recordChatUsage = async (userId) => {
     await user.save();
     return user;
   } catch (error) {
-      console.error('Failed to record chat usage:', error);
+      console.error('Failed to record chat usage:');
       return null;
   }
 };
