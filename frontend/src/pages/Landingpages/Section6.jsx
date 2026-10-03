@@ -1,5 +1,6 @@
 import React from 'react'
 import ScrollReveal from '../../components/ScrollReveal'
+import {createSubscription} from '../../services/subscription.service.js'
 
 const plans = [
   {
@@ -53,6 +54,25 @@ const plans = [
 ]
 
 const Section6 = () => {
+
+  const handelUpgrade = async (plan) =>{
+    console.log("BUTTON CLICKED");
+    console.log("PLAN:", plan);
+
+    try {
+      const token = localStorage.getItem('token');
+
+      console.log("TOKEN:", token);
+
+      const data = await createSubscription(plan, token);
+
+      console.log("SUBSCRIPTION RESPONSE:", data);
+
+    } catch (error) {
+      console.error("SUBSCRIPTION ERROR:", error);
+    }
+  }
+
   return (
     <section className="relative w-full bg-black py-20 sm:py-28 lg:py-32 px-6 sm:px-12 lg:px-20 overflow-hidden">
       {/* soft radial glow background */}
@@ -107,7 +127,8 @@ const Section6 = () => {
 
               {/* Price */}
               <div className="flex items-baseline gap-2 mb-6">
-                <span className="text-3xl font-semibold text-white">{plan.price}</span>
+                <span className="text-3xl font-semibold te
+                xt-white">{plan.price}</span>
                 <span className="text-base text-neutral-600 line-through">
                   {plan.originalPrice}
                 </span>
@@ -116,6 +137,20 @@ const Section6 = () => {
               {/* CTA */}
               <button
                 type="button"
+                onClick={() => {
+                  if(plan.name == 'pro'){
+                    handelUpgrade('pro')
+                    
+                  }
+
+                  if(plan.name == 'Researcher'){
+                    handelUpgrade('premium')
+                  }
+
+
+                }}
+
+
                 className={
                   plan.ctaStyle === 'filled'
                     ? 'w-full rounded-2xl bg-indigo-600 hover:bg-indigo-500 transition-colors py-3 text-sm font-medium text-white mb-7 cursor-pointer shadow-[0_0_20px_rgba(79,70,229,0.3)]'
