@@ -24,3 +24,4 @@ export const recordChatUsage = async (userId) => {
       return null;
   }
 };
+
