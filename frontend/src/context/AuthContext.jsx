@@ -155,6 +155,16 @@ export const AuthProvider = ({ children }) => {
     })
   }
 
+  const refreshUser = async () => {
+    const data = await getCurrentUser()
+    if (data?.user) {
+      setUser(data.user)
+      localStorage.setItem('user', JSON.stringify(data.user))
+      return data.user
+    }
+    return null
+  }
+
   const value = {
     user,
     token,
@@ -164,6 +174,7 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     updateUser,
+    refreshUser,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

@@ -1,18 +1,18 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import ScrollReveal from '../../components/ScrollReveal'
-import {createSubscription} from '../../services/subscription.service.js'
+import { getPlans, openRazorpayCheckout } from '../../services/payment.service.js'
+import { useAuth } from '../../context/AuthContext.jsx'
 
 const plans = [
   {
+    id: 'free',
     name: 'Standard',
     description: 'Casual Exploration, Quick Roadmaps, And Testing Out The Platform.',
-    price: '$0',
-    originalPrice: '$10',
-    cta: 'Start Free',
+    cta: 'Included',
     ctaStyle: 'outline',
     recommended: false,
     features: [
-      '3 Active Knowledge Trees / Month',
+      '2 AI Tutor Chats Per Week',
       'Standard Roadmap Generation (Beginner To Intermediate Depth)',
       'Basic AI Study Notes (Markdown Format)',
       'Standard Response Speed',
@@ -20,15 +20,14 @@ const plans = [
     ],
   },
   {
+    id: 'pro',
     name: 'Pro',
     description: 'Unlimited Dynamic Roadmaps, Adaptive Quiz Loops, And Full Note Synthesis.',
-    price: '$12',
-    originalPrice: '$20',
     cta: 'Upgrade To Pro',
     ctaStyle: 'filled',
     recommended: true,
     features: [
-      'Unlimited Active Knowledge Trees',
+      '50 AI Tutor Chats Per 30 Days',
       'Adaptive Learning Loops (Sub-Branching When You Get Stuck)',
       'Full Note Synthesis',
       'Active Recall Quiz Generator',
@@ -36,10 +35,9 @@ const plans = [
     ],
   },
   {
+    id: 'premium',
     name: 'Researcher',
     description: 'For Academics, Deep-Tech Researchers, And Complex Paper Synthesis.',
-    price: '$29',
-    originalPrice: '$36',
     cta: 'Get Research Access',
     ctaStyle: 'outline',
     recommended: false,
@@ -54,24 +52,59 @@ const plans = [
 ]
 
 const Section6 = () => {
+  const { user, token, refreshUser } = useAuth()
+  const [serverPlans, setServerPlans] = useState([])
+  const [loadingPlans, setLoadingPlans] = useState(true)
+  const [processingPlan, setProcessingPlan] = useState(null)
+  const [notice, setNotice] = useState(null)
 
-  const handelUpgrade = async (plan) =>{
-    console.log("BUTTON CLICKED");
-    console.log("PLAN:", plan);
+  useEffect(() => {
+    let mounted = true
+    getPlans().then((items) => { if (mounted) setServerPlans(items) })
+      .catch(() => { if (mounted) setNotice({ type: 'error', text: 'Pricing is unavailable right now. Please refresh and try again.' }) })
+      .finally(() => { if (mounted) setLoadingPlans(false) })
+    return () => { mounted = false }
+  }, [])
 
-    try {
-      const token = localStorage.getItem('token');
-
-      console.log("TOKEN:", token);
-
-      const data = await createSubscription(plan, token);
-
-      console.log("SUBSCRIPTION RESPONSE:", data);
-
-    } catch (error) {
-      console.error("SUBSCRIPTION ERROR:", error);
+  const handleUpgrade = async (planId) => {
+    if (processingPlan) return
+    if (!token) {
+      setNotice({ type: 'error', text: 'Sign in to purchase a plan.' })
+      return
     }
+    setProcessingPlan(planId)
+    setNotice({ type: 'processing', text: 'Preparing secure checkout…' })
+    await openRazorpayCheckout({
+      plan: planId,
+      token,
+      user,
+      onSuccess: async (result) => {
+        try {
+          await refreshUser()
+          setNotice({ type: 'success', text: result.message || 'Payment verified. Your plan is active.' })
+        } catch {
+          setNotice({ type: 'success', text: 'Payment verified. Refresh the page to load your updated plan.' })
+        } finally {
+          setProcessingPlan(null)
+        }
+      },
+      onError: async (message) => {
+        setNotice({ type: 'error', text: message })
+        setProcessingPlan(null)
+        try { await refreshUser() } catch { /* Keep the last known user state when the network is unavailable. */ }
+      },
+      onCancelled: () => {
+        setNotice({ type: 'cancelled', text: 'Checkout cancelled. Your plan has not changed.' })
+        setProcessingPlan(null)
+      },
+    })
   }
+
+  const subscription = user?.subscription
+  const currentPlan = subscription?.plan !== 'free' && subscription?.status === 'active' && subscription?.endDate && new Date(subscription.endDate) > new Date()
+    ? subscription.plan
+    : 'free'
+  const formatPrice = (amount, currency) => new Intl.NumberFormat('en-IN', { style: 'currency', currency, maximumFractionDigits: 0 }).format(amount / 100)
 
   return (
     <section className="relative w-full bg-black py-20 sm:py-28 lg:py-32 px-6 sm:px-12 lg:px-20 overflow-hidden">
@@ -98,7 +131,9 @@ const Section6 = () => {
 
         {/* 2. Pricing Cards: Each reveals individually on scroll */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-start">
-          {plans.map((plan, idx) => (
+          {plans.map((plan, idx) => {
+            const planConfig = serverPlans.find((item) => item.id === plan.id)
+            return (
             <ScrollReveal
               key={plan.name}
               delay={idx * 120}
@@ -113,7 +148,9 @@ const Section6 = () => {
               {/* Plan name + badge */}
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-lg font-medium text-white">{plan.name}</h3>
-                {plan.recommended && (
+                {currentPlan === plan.id ? (
+                  <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs text-emerald-300">Current plan</span>
+                ) : plan.recommended && (
                   <span className="rounded-full bg-indigo-500 px-4 py-1.5 text-xs font-medium tracking-wide text-white">
                     Recommended
                   </span>
@@ -126,38 +163,31 @@ const Section6 = () => {
               </p>
 
               {/* Price */}
-              <div className="flex items-baseline gap-2 mb-6">
-                <span className="text-3xl font-semibold te
-                xt-white">{plan.price}</span>
-                <span className="text-base text-neutral-600 line-through">
-                  {plan.originalPrice}
+              <div className="mb-6">
+                <span className="text-3xl font-semibold text-white">
+                  {loadingPlans ? '…' : plan.id === 'free' ? 'Free' : planConfig ? formatPrice(planConfig.amount, planConfig.currency) : 'Unavailable'}
                 </span>
+                {plan.id !== 'free' && <span className="ml-2 text-sm text-neutral-500">/ 30 days</span>}
+                <p className="mt-1 text-xs text-neutral-600">{plan.id === 'free' ? 'No billing' : 'One-time purchase · 30-day access'}</p>
+                <p className="mt-1 text-xs text-neutral-500">
+                  {planConfig?.weeklyChatLimit ? `${planConfig.weeklyChatLimit} AI chats per week` : planConfig?.monthlyChatLimit ? `${planConfig.monthlyChatLimit} AI chats per 30 days` : plan.id === 'premium' && planConfig ? 'Unlimited AI chats' : ''}
+                </p>
               </div>
 
               {/* CTA */}
               <button
                 type="button"
-                onClick={() => {
-                  if(plan.name == 'pro'){
-                    handelUpgrade('pro')
-                    
-                  }
-
-                  if(plan.name == 'Researcher'){
-                    handelUpgrade('premium')
-                  }
+                onClick={() => plan.id !== 'free' && handleUpgrade(plan.id)}
+                disabled={loadingPlans || (plan.id !== 'free' && !planConfig) || !!processingPlan || currentPlan === plan.id || plan.id === 'free'}
 
 
-                }}
-
-
-                className={
+                className={(
                   plan.ctaStyle === 'filled'
                     ? 'w-full rounded-2xl bg-indigo-600 hover:bg-indigo-500 transition-colors py-3 text-sm font-medium text-white mb-7 cursor-pointer shadow-[0_0_20px_rgba(79,70,229,0.3)]'
-                    : 'w-full rounded-2xl border border-white/15 hover:bg-white/5 transition-colors py-3 text-sm font-medium text-white mb-7 cursor-pointer'
-                }
+                  : 'w-full rounded-2xl border border-white/15 hover:bg-white/5 transition-colors py-3 text-sm font-medium text-white mb-7 cursor-pointer'
+                ) + ' disabled:opacity-50 disabled:cursor-not-allowed'}
               >
-                {plan.cta}
+                {processingPlan === plan.id ? 'Processing…' : currentPlan === plan.id ? 'Current plan' : plan.id === 'free' ? plan.cta : plan.cta}
               </button>
 
               {/* Features */}
@@ -173,8 +203,9 @@ const Section6 = () => {
                 </ul>
               </div>
             </ScrollReveal>
-          ))}
+          )})}
         </div>
+        {notice && <p role="status" aria-live="polite" className={`mx-auto mt-8 max-w-2xl rounded-xl border px-4 py-3 text-sm ${notice.type === 'success' ? 'border-emerald-400/20 bg-emerald-400/5 text-emerald-300' : notice.type === 'error' ? 'border-rose-400/20 bg-rose-400/5 text-rose-300' : 'border-white/10 bg-white/5 text-neutral-300'}`}>{notice.text}</p>}
       </div>
     </section>
   )
