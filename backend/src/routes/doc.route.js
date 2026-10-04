@@ -1,12 +1,13 @@
 import express from 'express';
 import docController from '../controllers/doc.controller.js';
 import protect from '../middlewares/auth.middlerware.js';
+import requirePlan from '../middlewares/requirePlan.js';
 import upload from '../middlewares/upload.middleware.js';
 
 const router = express.Router();
 
-router.post('/upload', protect, upload.single('file'), docController.uploadDoc);
-router.post('/:id/ask', protect, docController.askDocQuestion);
+router.post('/upload', protect, requirePlan('premium'), upload.single('file'), docController.uploadDoc);
+router.post('/:id/ask', protect, requirePlan('premium'), docController.askDocQuestion);
 router.get('/', protect, docController.listDocs);
 router.get('/:id', protect, docController.getDocById);
 router.get('/:id/view', protect, docController.viewDocFile);

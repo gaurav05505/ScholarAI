@@ -28,7 +28,7 @@ const userSchema = new mongoose.Schema({
         }, 
         status: {
             type : String, 
-            enum : ["active", "cancelled", "expired", "pending"],
+            enum : ["active", "cancelled", "expired", "pending", "payment_failed"],
             default : "active", 
 
         },
@@ -85,4 +85,4 @@ const userSchema = new mongoose.Schema({
 })
 
 const user = mongoose.model("User" , userSchema); 
-export default user; 
+export default user;

@@ -6,7 +6,6 @@ import Roadmap from "../models/Roadmap.mode.js";
 import Aichat from "../utils/aiClint.util.js";
 import mongoose from "mongoose";
 import { getEmbeddings, searchPinecone } from "../services/rag.service.js";
-import { recordChatUsage } from "../services/usage.Service.js";
   
 export async function chat(req, res) {
   try {
@@ -53,9 +52,6 @@ IMPORTANT: Do NOT output or re-generate the entire syllabus or roadmap structure
 Make your response clean, professional, and formatted in rich Markdown.`;
 
         const answer = await Aichat(tutorPrompt, message);
-        if (userId) {
-          await recordChatUsage(userId);
-        }
         return res.status(200).json({
           success: true,
           response: answer,
@@ -150,7 +146,10 @@ function greet(user) {
     let finalPrompt = message;
     let retrievedSources = [];
 
-    if (semanticSearchEnabled && userId) {
+    const hasActivePremium = req.currentUser?.subscription?.plan === 'premium'
+      && req.currentUser?.subscription?.status === 'active'
+      && req.currentUser?.subscription?.endDate > new Date();
+    if (semanticSearchEnabled && userId && hasActivePremium) {
       try {
         console.log(`Performing RAG semantic search for user: ${userId}`);
         const queryVectors = await getEmbeddings([message], true);
@@ -195,10 +194,6 @@ ANSWER:`;
     }
 
     const answer = await chatWithLLM(finalPrompt);
-
-    if (userId) {
-      await recordChatUsage(userId);
-    }
 
     return res.status(200).json({
       success: true,

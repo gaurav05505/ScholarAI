@@ -1,4 +1,5 @@
 import UserModel from '../models/user.model.js';
+import PLANS from '../config/plans.js';
 
 const subscriptionMiddleware = async (req, res, next) => {
   try {
@@ -20,8 +21,16 @@ const subscriptionMiddleware = async (req, res, next) => {
       });
     }
 
-    const plan = user.subscription?.plan || 'free';
     const now = new Date();
+    let plan = PLANS[user.subscription?.plan] ? user.subscription.plan : 'free';
+
+    if (plan !== 'free' && (user.subscription?.status !== 'active' || !user.subscription?.endDate || user.subscription.endDate <= now)) {
+      plan = 'free';
+      if (user.subscription?.status === 'active' && user.subscription?.endDate && user.subscription.endDate <= now) {
+        user.subscription.status = 'expired';
+        await user.save();
+      }
+    }
 
     // 1. FREE PLAN
     if (plan === 'free') {
@@ -36,17 +45,9 @@ const subscriptionMiddleware = async (req, res, next) => {
         await user.save();
       }
 
-      // Free plan limit: 2 chats per week
-      if (user.usage.weeklyChats >= 2) {
-        return res.status(403).json({
-          success: false,
-          message: 'You have reached your weekly free chat limit (2 chats). Please upgrade to Pro for more.',
-          plan: 'free',
-          limit: 2,
-          used: user.usage.weeklyChats,
-          upgradeRequired: true,
-        });
-      }
+      const limit = PLANS.free.weeklyChatLimit;
+      const reservation = await UserModel.updateOne({ _id: user._id, 'usage.weeklyChats': { $lt: limit } }, { $inc: { 'usage.weeklyChats': 1 } });
+      if (!reservation.modifiedCount) return limitReached(res, 'free', limit, user.usage.weeklyChats);
     }
 
     // 2. PRO PLAN
@@ -62,17 +63,9 @@ const subscriptionMiddleware = async (req, res, next) => {
         await user.save();
       }
 
-      // Pro plan limit: 50 chats per month
-      if (user.usage.monthlyChats >= 50) {
-        return res.status(403).json({
-          success: false,
-          message: 'You have reached your monthly Pro chat limit (50 chats). Please upgrade to Premium for unlimited access.',
-          plan: 'pro',
-          limit: 50,
-          used: user.usage.monthlyChats,
-          upgradeRequired: true,
-        });
-      }
+      const limit = PLANS.pro.monthlyChatLimit;
+      const reservation = await UserModel.updateOne({ _id: user._id, 'usage.monthlyChats': { $lt: limit } }, { $inc: { 'usage.monthlyChats': 1 } });
+      if (!reservation.modifiedCount) return limitReached(res, 'pro', limit, user.usage.monthlyChats);
     }
 
     // 3. PREMIUM PLAN: Unlimited access
@@ -90,5 +83,14 @@ const subscriptionMiddleware = async (req, res, next) => {
     });
   }
 };
+
+function limitReached(res, plan, limit, used) {
+  const period = plan === 'free' ? 'weekly free' : 'monthly Pro';
+  return res.status(403).json({
+    success: false,
+    message: `You have reached your ${period} chat limit (${limit} chats). Please upgrade for more.`,
+    plan, limit, used, upgradeRequired: true,
+  });
+}
 
 export default subscriptionMiddleware;
