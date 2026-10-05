@@ -7,6 +7,7 @@ import About from '../pages/About.jsx'
 import Login from '../pages/authPages/Login.jsx'
 import Register from '../pages/authPages/Register.jsx'
 import Workspace from '../pages/Workspace.jsx'
+import Checkout from '../pages/Checkout.jsx'
 
 const AppRoutes = () => {
   return ( 
@@ -14,6 +15,7 @@ const AppRoutes = () => {
       {/* Public Routes */}
       <Route path="/" element={<PageTransition><Home /></PageTransition>} />
       <Route path="/about" element={<PageTransition><About /></PageTransition>} />
+      <Route path="/checkout" element={<PageTransition><Checkout /></PageTransition>} />
       <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
       <Route path="/register" element={<PageTransition><Register /></PageTransition>} />
 
