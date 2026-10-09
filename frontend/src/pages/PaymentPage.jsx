@@ -3,7 +3,9 @@ import React from 'react'
 const PaymentPage = () => {
   return (
     <div>
-      impot this rest from the compound page 
+      <p>
+        here will br check out page 
+      </p>
     </div>
   )
 }
