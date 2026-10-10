@@ -3,9 +3,9 @@ import React from 'react'
 const PaymentPage = () => {
   return (
     <div>
-      <p>
-        here will br check out page 
-      </p>
+      <head>this is know </head>
+
+      <p>thos is sis unknown</p>
     </div>
   )
 }
